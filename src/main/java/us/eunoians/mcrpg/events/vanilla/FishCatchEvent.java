@@ -233,7 +233,7 @@ public class FishCatchEvent implements Listener {
             mp.setGuardianSummonChance(config.getDouble(key + "DefaultSummonChance"));
             LivingEntity entity = (LivingEntity) currentLoc.getWorld().spawnEntity(e.getPlayer().getLocation(), EntityType.fromName(config.getString(key + "GuardianType")));
             //entity.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(config.getDouble(key + "Health"));
-            entity.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(config.getDouble(key + "Health"));
+            entity.getAttribute(Attribute.MAX_HEALTH).setBaseValue(config.getDouble(key + "Health"));
             entity.setHealth(config.getDouble(key + "Health"));
             entity.setCustomName(Methods.color(McRPG.getInstance().getLangFile().getString("Messages.Misc.PoseidonsGuardianName")));
             ItemStack weapon = new ItemStack(Material.valueOf(config.getString(key + "Weapon")));

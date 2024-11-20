@@ -103,7 +103,7 @@ public class CallOfWildListener implements Listener{
           FileConfiguration soundFile = McRPG.getInstance().getFileManager().getFile(FileManager.Files.SOUNDS_FILE);
           player.getLocation().getWorld().playSound(player.getLocation(), Sound.valueOf(soundFile.getString("Sounds.Taming.CallOfWild.Sound")),
             Float.parseFloat(soundFile.getString("Sounds.Taming.CallOfWild.Volume")), Float.parseFloat(soundFile.getString("Sounds.Taming.CallOfWild.Pitch")));          LivingEntity livingEntity = (LivingEntity) player.getWorld().spawnEntity(player.getLocation(), callOfWildWrapper.getEntityToSummon());
-          livingEntity.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(callOfWildWrapper.getHealth());
+          livingEntity.getAttribute(Attribute.MAX_HEALTH).setBaseValue(callOfWildWrapper.getHealth());
           livingEntity.setHealth(callOfWildWrapper.getHealth());
           if(livingEntity instanceof Tameable){
             ((Tameable) livingEntity).setOwner(player);

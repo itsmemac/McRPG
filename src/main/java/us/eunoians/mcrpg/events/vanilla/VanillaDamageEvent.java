@@ -714,7 +714,7 @@ public class VanillaDamageEvent implements Listener{
             Bukkit.getPluginManager().callEvent(linkedFangsEvent);
             if(!linkedFangsEvent.isCancelled()){
               LivingEntity len = (LivingEntity) e.getDamager();
-              len.setHealth(Math.min(len.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue(), len.getHealth() + linkedFangsEvent.getHealthToRestore()));
+              len.setHealth(Math.min(len.getAttribute(Attribute.MAX_HEALTH).getValue(), len.getHealth() + linkedFangsEvent.getHealthToRestore()));
               mp.getPlayer().setFoodLevel(Math.min(20, mp.getPlayer().getFoodLevel() + linkedFangsEvent.getHungerToRestore()));
               if(mp.getPlayer().getSaturation() < 10){
                 mp.getPlayer().setSaturation(Math.min(10, mp.getPlayer().getSaturation() + linkedFangsEvent.getSaturationToRestore()));
@@ -1434,7 +1434,7 @@ public class VanillaDamageEvent implements Listener{
                   hellHound.setCollarColor(DyeColor.ORANGE);
                   hellHound.setAdult();
                   hellHound.setOwner(mp.getPlayer());
-                  hellHound.getAttribute(Attribute.GENERIC_MAX_HEALTH).setBaseValue(furyOfCerberusEvent.getHellHoundHealth());
+                  hellHound.getAttribute(Attribute.MAX_HEALTH).setBaseValue(furyOfCerberusEvent.getHellHoundHealth());
                   hellHound.setHealth(furyOfCerberusEvent.getHellHoundHealth());
                   hellHound.getPersistentDataContainer().set(HELL_HOUND_KEY, PersistentDataType.STRING, "true");
                   hellHound.getPersistentDataContainer().set(HELL_HOUND_IGNITE_KEY, PersistentDataType.STRING, Boolean.toString(furyOfCerberusEvent.isIgniteTarget()));
