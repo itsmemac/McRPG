@@ -57,10 +57,10 @@ dependencies {
     val intellijAnnotationVersion = "12.0"
     implementation("com.intellij:annotations:$intellijAnnotationVersion")
 
-    val spigotVersion = "1.21.3-R0.1-SNAPSHOT"
+    val spigotVersion = "1.21.4-R0.1-SNAPSHOT"
     compileOnly("org.spigotmc:spigot-api:$spigotVersion")
 
-    val nbtAPIVersion = "2.14.0"
+    val nbtAPIVersion = "2.14.1"
     implementation("de.tr7zw:item-nbt-api:$nbtAPIVersion")
 
     val bstatsVersion = "2.2.1"
