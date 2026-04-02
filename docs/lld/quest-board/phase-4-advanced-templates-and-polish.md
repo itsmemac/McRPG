@@ -2425,7 +2425,9 @@ entries.add(new DistributionRewardEntry(reward, potBehavior, remainder, minScale
 
 ### 5.11 `BoardOfferingSlot` -- Rich Lore and Rarity Effects
 
-Replace inline lore construction with `OfferingLoreBuilder` delegation and add rarity-based visual effects:
+> **Status:** Implemented. The weight-threshold-based glint approach and typed `getCustomModelData()` described in the original design were **not used** — see section 5.13 for the actual `iconSection`/`configureIcon(ItemBuilder)` approach.
+
+Replace inline lore construction with `OfferingLoreBuilder` delegation and apply rarity visual effects via `QuestRarity.configureIcon(ItemBuilder)`:
 
 ```java
 @Override
@@ -2437,47 +2439,16 @@ public ItemStack getItem(@NotNull McRPGPlayer player) {
     ItemBuilder builder = ItemBuilder.of(Material.PAPER)
             .name(resolveDisplayName(definition));
 
-    // Delegate lore to builder
     List<Component> lore = OfferingLoreBuilder.buildOfferingLore(
             offering, player, definition, rarity, timeProvider(), localization());
     builder.lore(lore);
 
-    // Apply rarity visual effects
-    applyRarityEffects(builder, rarity);
+    // Apply all rarity visual effects (material, glint, custom-model-data, etc.)
+    // driven entirely from the per-rarity display: section in board.yml -- see section 5.13
+    rarity.configureIcon(builder);
 
     return builder.build();
 }
-
-private void applyRarityEffects(@NotNull ItemBuilder builder, @NotNull QuestRarity rarity) {
-    // Enchantment glint for configured rarity weight threshold
-    if (rarity.getWeight() <= rarityGlintThreshold()) {
-        builder.enchantGlint(true);
-    }
-    // Custom model data for per-rarity item appearances (if configured in localization)
-    rarity.getCustomModelData().ifPresent(builder::customModelData);
-}
-```
-
-**`QuestRarity` addition:** An optional `customModelData` field (nullable `Integer`) parsed from `board.yml` under each rarity entry. Enables resource pack integration for per-rarity item appearances.
-
-```yaml
-rarities:
-  COMMON:
-    weight: 60
-    difficulty-multiplier: 1.0
-    reward-multiplier: 1.0
-  RARE:
-    weight: 10
-    difficulty-multiplier: 1.5
-    reward-multiplier: 2.0
-    custom-model-data: 1001
-    glint: true
-  LEGENDARY:
-    weight: 5
-    difficulty-multiplier: 2.0
-    reward-multiplier: 3.0
-    custom-model-data: 1002
-    glint: true
 ```
 
 ### 5.12 `ScopedOfferingSlot` -- Rich Lore, Rarity Effects, and Distribution Preview
@@ -3187,8 +3158,7 @@ All new YAML fields have defaults that match Phase 3 behavior:
 - `pot-behavior`: absent → `SCALE`
 - `remainder-strategy`: absent → `DISCARD`
 - `min-scaled-amount`: absent → `1` (current Phase 3 minimum)
-- `glint`: absent → `false`
-- `custom-model-data`: absent → none
+- `display:` section: absent → no visual overrides (base item material, no glint, no custom model data)
 
 Existing template and quest YAML files work identically without modification.
 

@@ -207,19 +207,37 @@ rarities:
     weight: 60
     difficulty-multiplier: 1.0
     reward-multiplier: 1.0
+    display:
+      material: PAPER
+      name-color: "<white>"
   UNCOMMON:
     weight: 25
     difficulty-multiplier: 1.25
     reward-multiplier: 1.5
+    display:
+      material: WRITABLE_BOOK
+      name-color: "<green>"
   RARE:
     weight: 10
     difficulty-multiplier: 1.5
     reward-multiplier: 2.0
+    display:
+      material: ENCHANTED_BOOK
+      name-color: "<aqua>"
+      settings:
+        glowing: true
   LEGENDARY:
     weight: 5
     difficulty-multiplier: 2.0
     reward-multiplier: 3.0
+    display:
+      material: NETHER_STAR
+      name-color: "<gold>"
+      settings:
+        glowing: true
 ```
+
+The optional `display:` sub-section uses the same `ItemBuilder.from(Section)` format as the rest of the GUI localization system. Any item property (`material`, `settings.glowing` for enchantment glint, `custom-model-data`, display name color) can be set here. When absent, the slot uses its base item with no visual overrides.
 
 **Localization** (in `en.yml`, resolved via `McRPGLocalizationManager`):
 
@@ -1103,7 +1121,7 @@ Each phase includes unit tests alongside implementation. Key areas to test:
 - `min-scaled-amount` per-reward config to prevent minimum-1 clamping from exceeding pot totals (`0` disables minimum and prevents pot overrun)
 - `QuestRewardType.getNumericAmount()` default method for remainder calculation
 - `QuestAcceptorDistributionType` (`mcrpg:quest_acceptor`) -- distribution type that resolves exclusively to the player who accepted a scoped quest; restricted to scoped quests at config load time
-- Rarity visual effects: per-rarity `icon:` section on `QuestRarity` config in `board.yml` (same `ItemBuilder.from(Section)` format used throughout GUI localization); `QuestRarity` stores the section and exposes `configureIcon(ItemBuilder)` rather than typed `glint`/`custom-model-data` fields — any item property can be driven from config without schema changes
+- Rarity visual effects: per-rarity `display:` section on `QuestRarity` config in `board.yml` (same `ItemBuilder.from(Section)` format used throughout GUI localization); `QuestRarity` stores the section as `iconSection` and exposes `configureIcon(ItemBuilder)` rather than typed `glint`/`custom-model-data` fields — any item property (material, glint via `settings.glowing`, custom model data, display name color) can be driven from config without schema changes
 - Board GUI polish: `OfferingLoreBuilder` utility (objective summary, reward preview, timer countdown lines); centralized to ensure consistency between `BoardOfferingSlot` and `ScopedOfferingSlot`
 - `DistributionPreviewResolver` utility + `DistributionPreviewEntry` record -- live contribution preview embedded as lore lines on the active scoped quest display
 - Objective-level `reward-distribution` serialization in `GeneratedQuestDefinitionSerializer` (gap from Phase 3)
