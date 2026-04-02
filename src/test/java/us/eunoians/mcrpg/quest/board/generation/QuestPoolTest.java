@@ -25,8 +25,12 @@ import us.eunoians.mcrpg.quest.board.template.variable.RangeVariable;
 import us.eunoians.mcrpg.quest.board.template.variable.TemplateVariable;
 import us.eunoians.mcrpg.quest.definition.PhaseCompletionMode;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
+import us.eunoians.mcrpg.quest.definition.QuestDefinitionMetadata;
 import us.eunoians.mcrpg.quest.definition.QuestDefinitionRegistry;
+import us.eunoians.mcrpg.quest.definition.QuestRepeatMode;
 import us.eunoians.mcrpg.registry.McRPGRegistryKey;
+
+import us.eunoians.mcrpg.quest.board.template.condition.QuestCompletionHistory;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,13 +38,17 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class QuestPoolTest extends McRPGBaseTest {
@@ -59,15 +67,15 @@ public class QuestPoolTest extends McRPGBaseTest {
         registry = new QuestDefinitionRegistry();
         templateRegistry = RegistryAccess.registryAccess().registry(McRPGRegistryKey.QUEST_TEMPLATE);
         templateEngine = mock(QuestTemplateEngine.class);
-        questPool = new QuestPool(registry);
+        questPool = new QuestPool(registry, templateRegistry, mcRPG.getLogger());
     }
 
     private static final NamespacedKey SINGLE_PLAYER_SCOPE = new NamespacedKey("mcrpg", "single_player");
 
     private QuestDefinition questWithBoardMetadata(String questKey, boolean boardEligible, Set<NamespacedKey> supportedRarities) {
         var stage = QuestTestHelper.singleStageDef(questKey + "_stage", questKey + "_obj");
-        var phase = QuestTestHelper.singlePhaseDef(us.eunoians.mcrpg.quest.definition.PhaseCompletionMode.ALL, stage);
-        Map<NamespacedKey, us.eunoians.mcrpg.quest.definition.QuestDefinitionMetadata> metadata = Map.of(
+        var phase = QuestTestHelper.singlePhaseDef(PhaseCompletionMode.ALL, stage);
+        Map<NamespacedKey, QuestDefinitionMetadata> metadata = Map.of(
                 BoardMetadata.METADATA_KEY, new BoardMetadata(boardEligible, supportedRarities, Set.of(), null, null)
         );
         return new QuestDefinition(
@@ -76,7 +84,7 @@ public class QuestPoolTest extends McRPGBaseTest {
                 null,
                 List.of(phase),
                 List.of(),
-                us.eunoians.mcrpg.quest.definition.QuestRepeatMode.ONCE,
+                QuestRepeatMode.ONCE,
                 null,
                 -1,
                 null,
@@ -223,13 +231,32 @@ public class QuestPoolTest extends McRPGBaseTest {
         assertTrue(result.isEmpty());
     }
 
-    @DisplayName("generateFromTemplate: TemplateQuestGenerateEvent cancellation returns empty")
+    @DisplayName("generateFromTemplate: returns result directly without firing TemplateQuestGenerateEvent")
     @Test
-    void generateFromTemplate_eventCancelled_returnsEmpty() {
+    void generateFromTemplate_returnsResult_withoutFiringEvent() {
         QuestTemplate template = createTemplate("cancel_tmpl", Set.of(COMMON_KEY));
         templateRegistry.register(template);
 
         QuestDefinition mockDef = QuestTestHelper.singlePhaseQuest("gen_cancel_tmpl_result");
+        GeneratedQuestResult mockResult = new GeneratedQuestResult(mockDef, template.getKey(), "{}");
+        when(templateEngine.generate(any(), any(), any())).thenReturn(mockResult);
+
+        // Event cancellation no longer applies to generateFromTemplate — the event is fired by selectForSlot
+        Optional<GeneratedQuestResult> result = questPool.generateFromTemplate(COMMON_KEY, new Random(42), templateEngine);
+        assertTrue(result.isPresent());
+        assertEquals(mockResult, result.get());
+    }
+
+    @DisplayName("selectForSlot: TemplateQuestGenerateEvent cancellation falls back to hand-crafted when available")
+    @Test
+    void selectForSlot_eventCancelled_fallsBackToHandCrafted() {
+        QuestDefinition hcQuest = questWithBoardMetadata("hc_fallback_cancel", true, Set.of(COMMON_KEY));
+        registry.register(hcQuest);
+
+        QuestTemplate template = createTemplate("select_cancel_tmpl", Set.of(COMMON_KEY));
+        templateRegistry.register(template);
+
+        QuestDefinition mockDef = QuestTestHelper.singlePhaseQuest("gen_select_cancel_result");
         GeneratedQuestResult mockResult = new GeneratedQuestResult(mockDef, template.getKey(), "{}");
         when(templateEngine.generate(any(), any(), any())).thenReturn(mockResult);
 
@@ -242,7 +269,38 @@ public class QuestPoolTest extends McRPGBaseTest {
         Bukkit.getPluginManager().registerEvents(canceller, McRPG.getInstance());
 
         try {
-            Optional<GeneratedQuestResult> result = questPool.generateFromTemplate(COMMON_KEY, new Random(42), templateEngine);
+            Optional<SlotSelection> result = questPool.selectForSlot(
+                    COMMON_KEY, new Random(42), templateEngine, 0, 100, (String) null, Set.of());
+            // With event cancelled and an HC fallback present, a HandCrafted selection is returned
+            assertTrue(result.isPresent());
+            assertInstanceOf(SlotSelection.HandCrafted.class, result.get());
+        } finally {
+            TemplateQuestGenerateEvent.getHandlerList().unregister(canceller);
+        }
+    }
+
+    @DisplayName("selectForSlot: TemplateQuestGenerateEvent cancellation returns empty when no hand-crafted fallback")
+    @Test
+    void selectForSlot_eventCancelled_returnsEmptyWhenNoFallback() {
+        QuestTemplate template = createTemplate("select_cancel_nofallback_tmpl", Set.of(COMMON_KEY));
+        templateRegistry.register(template);
+
+        QuestDefinition mockDef = QuestTestHelper.singlePhaseQuest("gen_select_cancel_nofallback_result");
+        GeneratedQuestResult mockResult = new GeneratedQuestResult(mockDef, template.getKey(), "{}");
+        when(templateEngine.generate(any(), any(), any())).thenReturn(mockResult);
+
+        Listener canceller = new Listener() {
+            @EventHandler
+            public void onGenerate(TemplateQuestGenerateEvent event) {
+                event.setCancelled(true);
+            }
+        };
+        Bukkit.getPluginManager().registerEvents(canceller, McRPG.getInstance());
+
+        try {
+            Optional<SlotSelection> result = questPool.selectForSlot(
+                    COMMON_KEY, new Random(42), templateEngine, 0, 100, (String) null, Set.of());
+            // No HC fallback, event cancelled — should return empty
             assertTrue(result.isEmpty());
         } finally {
             TemplateQuestGenerateEvent.getHandlerList().unregister(canceller);
@@ -363,6 +421,39 @@ public class QuestPoolTest extends McRPGBaseTest {
         Optional<SlotSelection> result = questPool.selectForSlot(COMMON_KEY, new Random(42), templateEngine, 0, 100);
         assertTrue(result.isPresent());
         assertInstanceOf(SlotSelection.HandCrafted.class, result.get());
+    }
+
+    @DisplayName("selectForSlot with player context forwards UUID and completion history to the template engine")
+    @Test
+    void selectForSlot_forwardsPlayerContextToEngine_whenPlayerProvided() {
+        QuestTemplate template = createTemplate("ctx_tmpl", Set.of(COMMON_KEY));
+        templateRegistry.register(template);
+
+        QuestDefinition generatedDef = questWithBoardMetadata("gen_ctx", true, Set.of(COMMON_KEY));
+        GeneratedQuestResult genResult = new GeneratedQuestResult(generatedDef, template.getKey(), "{}");
+        when(templateEngine.generate(any(), any(), any(), any(), any())).thenReturn(genResult);
+
+        UUID playerUUID = UUID.randomUUID();
+        QuestCompletionHistory history = mock(QuestCompletionHistory.class);
+
+        questPool.selectForSlot(COMMON_KEY, new Random(42), templateEngine, 0, 100, playerUUID, history);
+
+        verify(templateEngine).generate(any(), any(), any(), eq(playerUUID), eq(history));
+    }
+
+    @DisplayName("selectForSlot without player context passes null UUID and null history to the template engine")
+    @Test
+    void selectForSlot_passesNullContext_whenNoPlayerProvided() {
+        QuestTemplate template = createTemplate("noctx_tmpl", Set.of(COMMON_KEY));
+        templateRegistry.register(template);
+
+        QuestDefinition generatedDef = questWithBoardMetadata("gen_noctx", true, Set.of(COMMON_KEY));
+        GeneratedQuestResult genResult = new GeneratedQuestResult(generatedDef, template.getKey(), "{}");
+        when(templateEngine.generate(any(), any(), any(), any(), any())).thenReturn(genResult);
+
+        questPool.selectForSlot(COMMON_KEY, new Random(42), templateEngine, 0, 100, (UUID) null, (QuestCompletionHistory) null);
+
+        verify(templateEngine).generate(any(), any(), any(), isNull(), isNull());
     }
 
     private QuestTemplate createTemplate(String key, Set<NamespacedKey> rarities) {

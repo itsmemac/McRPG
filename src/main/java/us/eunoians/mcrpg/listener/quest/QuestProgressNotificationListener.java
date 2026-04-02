@@ -1,7 +1,9 @@
 package us.eunoians.mcrpg.listener.quest;
 
+import com.diamonddagger590.mccore.configuration.ReloadableContent;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
+import com.diamonddagger590.mccore.registry.manager.ManagerKey;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import net.kyori.adventure.text.Component;
 import org.bukkit.event.EventHandler;
@@ -41,6 +43,43 @@ import java.util.UUID;
 public class QuestProgressNotificationListener implements Listener {
 
     /**
+     * Cached list of percentage thresholds loaded from {@code board.yml}.
+     * Backed by {@link ReloadableContent} so it stays in sync with config reloads
+     * without re-reading the YAML document on every {@link QuestObjectiveProgressEvent}.
+     * Eviction policy: refreshed whenever the plugin reloads config via
+     * {@link com.diamonddagger590.mccore.configuration.ReloadableContentManager#reloadAllContent()}.
+     */
+    private final ReloadableContent<List<Integer>> thresholds;
+
+    /**
+     * Constructs the listener and wires the threshold cache to the board config.
+     *
+     * @param plugin the McRPG plugin instance, used to resolve the board config
+     *               and register the reloadable threshold list
+     */
+    public QuestProgressNotificationListener(@NotNull McRPG plugin) {
+        YamlDocument boardConfig = plugin.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(McRPGManagerKey.FILE)
+                .getFile(FileType.BOARD_CONFIG);
+        this.thresholds = new ReloadableContent<>(boardConfig, BoardConfigFile.PROGRESS_NOTIFICATION_THRESHOLDS,
+                (doc, route) -> {
+                    List<?> raw = doc.getList(route);
+                    if (raw == null || raw.isEmpty()) {
+                        return List.of(25, 50, 75);
+                    }
+                    return raw.stream()
+                            .filter(o -> o instanceof Number)
+                            .map(o -> ((Number) o).intValue())
+                            .toList();
+                });
+        plugin.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(ManagerKey.RELOADABLE_CONTENT)
+                .trackReloadableContent(thresholds);
+    }
+
+    /**
      * Checks whether the progress delta crosses any configured threshold and, if so,
      * sends the contributing player a localized notification — provided their setting
      * is enabled.
@@ -78,8 +117,7 @@ public class QuestProgressNotificationListener implements Listener {
         long currentProgress = objectiveInstance.getCurrentProgression();
         long progressDelta = event.getProgressDelta();
 
-        List<Integer> thresholds = loadThresholds();
-        int crossedAt = findCrossedThreshold(currentProgress, progressDelta, required, thresholds);
+        int crossedAt = findCrossedThreshold(currentProgress, progressDelta, required, thresholds.getContent());
 
         if (crossedAt < 0) {
             return;
@@ -129,28 +167,6 @@ public class QuestProgressNotificationListener implements Listener {
             }
         }
         return -1;
-    }
-
-    /**
-     * Loads the configured progress threshold list from {@code board.yml}.
-     * Returns the default list {@code [25, 50, 75]} if the config entry is missing.
-     *
-     * @return list of integer percentage thresholds (e.g. [25, 50, 75])
-     */
-    @NotNull
-    private List<Integer> loadThresholds() {
-        YamlDocument boardConfig = McRPG.getInstance().registryAccess()
-                .registry(RegistryKey.MANAGER)
-                .manager(McRPGManagerKey.FILE)
-                .getFile(FileType.BOARD_CONFIG);
-        List<?> raw = boardConfig.getList(BoardConfigFile.PROGRESS_NOTIFICATION_THRESHOLDS);
-        if (raw == null || raw.isEmpty()) {
-            return List.of(25, 50, 75);
-        }
-        return raw.stream()
-                .filter(o -> o instanceof Number)
-                .map(o -> ((Number) o).intValue())
-                .toList();
     }
 
     /**

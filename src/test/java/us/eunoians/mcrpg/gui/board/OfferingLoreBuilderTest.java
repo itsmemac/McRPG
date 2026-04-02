@@ -9,8 +9,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Verifies that all localization keys used by {@link OfferingLoreBuilder} are declared
- * and have non-null routes. Full end-to-end lore generation is tested in integration
- * tests that have a running localization manager.
+ * and have non-null routes. For behavioral tests against the localization manager,
+ * see {@link OfferingLoreBuilderBehaviorTest}.
  */
 class OfferingLoreBuilderTest {
 

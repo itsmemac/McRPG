@@ -33,8 +33,8 @@ Adopt the Testing Auditor Persona. You are a test engineer reviewing whether thi
 
 **Test Quality**
 - Does every test method have at least one assertion? A test with no assertion cannot fail.
-- Does every test method follow the `givenContext_whenAction_thenOutcome` naming convention (e.g., `givenPlayerOnCooldown_whenAbilityActivates_thenActivationIsSkipped`)?
-- Does every test method carry a `@DisplayName` annotation with a human-readable sentence describing the scenario (e.g., `@DisplayName("Given player is on cooldown, ability activation is skipped")`)?
+- Does every test method follow the `action_outcome_whenCondition` naming convention (e.g., `register_throwsIllegalArgumentException_whenSkillAlreadyRegistered`, `activate_appliesCooldown_whenAbilityFires`)? The `_whenCondition` suffix is optional when the context is obvious from the action and outcome alone.
+- Does every test method carry a `@DisplayName` annotation with a human-readable sentence describing the scenario (e.g., `@DisplayName("register throws IllegalArgumentException when skill is already registered")`)?
 
 ## Instructions
 

@@ -25,6 +25,8 @@ Players always implement all three. Non-player entities use `AbilityHolder` dire
 
 ## Domain Terminology
 
+### Ability & Skill System
+
 | Term | Meaning |
 |------|---------|
 | Ability | An action or passive effect an entity can use (active or passive) |
@@ -40,6 +42,26 @@ Players always implement all three. Non-player entities use `AbilityHolder` dire
 | Attribute | `AbilityAttribute<T>` in `AbilityData` — per-holder ability state, no reflection |
 | ContentExpansion | Module bundling skills, abilities, settings, and localization for registration |
 | DAO | Static JDBC methods for reading/writing data (`SkillDAO`, `LoadoutAbilityDAO`) |
+
+### Quest System
+
+| Term | Meaning |
+|------|---------|
+| QuestDefinition | Immutable blueprint for a quest (phases, scope type, rewards, repeat mode). Shared across all runtime instances. |
+| QuestPhaseDefinition | Ordered group of stages in a definition; `ALL` or `ANY` completion mode. Not persisted — state computed from child stages. |
+| QuestStageDefinition | Group of objectives in a definition; all objectives must complete for the stage to finish. |
+| QuestObjectiveDefinition | Single trackable objective (e.g., "break 50 stone"). Carries `QuestObjectiveType` key and config. |
+| QuestInstance | Mutable runtime object created from a `QuestDefinition`. Tracks state, scope, timestamps, and child stage/objective instances. |
+| QuestState | Enum: `NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED` |
+| QuestScope | The set of players participating in a `QuestInstance` (single player, permission group, land, etc.) |
+| QuestScopeProvider | Abstract factory that creates/loads `QuestScope` instances for a specific scope type; registered by `NamespacedKey` |
+| QuestSource | How a quest was obtained (board, ability upgrade, manual, etc.); controls abandonability |
+| QuestObjectiveType | Extensible interface defining behavior and progress tracking for an objective category |
+| QuestRewardType | Extensible interface defining how a specific reward is granted |
+| PendingReward | Serialized reward queued for an offline player; granted at next login, expires after configurable duration |
+| BoardOffering | A single quest slot on the board. State: `AVAILABLE` → `ACCEPTED` → `COMPLETED`/`EXPIRED` |
+| QuestRarity | Rarity tier assigned to board offerings; affects template scaling and visual display |
+| QuestTemplate | Declarative YAML blueprint for procedurally generating `QuestDefinition` instances |
 
 ## Registry Access Pattern
 
@@ -92,6 +114,12 @@ Ability `NamespacedKey` constants are `static final` on the ability class: `new 
 - **No direct entity casts** — use `instanceof` pattern matching: `if (entity instanceof Player p) { ... }`
 - **No McRPG-specific logic in McCore** — McCore changes affect all downstream plugins
 - **No fully-qualified type references in method bodies** — always use a top-level `import` statement; inline package paths (e.g. `org.bukkit.Location loc`) are forbidden
+- **No `e.printStackTrace()`** — always use `Logger.log(Level.SEVERE, "context message", e)` so stack traces route through the server logger and are preserved in log aggregators
+- **No `Optional.get()` without a guard** — use `orElse`, `orElseGet`, `orElseThrow`, or an `isPresent()` check first; bare `.get()` crashes on the empty path
+- **No Bukkit API calls from async threads** — world, entity, and inventory mutations must be scheduled on the main thread via `Bukkit.getScheduler().runTask(plugin, () -> { ... })`
+- **No blocking `.get()` / `.join()` on a `CompletableFuture` from the main thread** — deadlocks when the future's completion path needs the main-thread scheduler
+- **No entity or player object references in long-lived collections** — store `UUID` instead; holding `Entity`/`Player` objects prevents GC of unloaded entities
+- **No unbounded `Map` or `Set` fields without a documented eviction strategy** — insert-only caches are memory leaks; document the cleanup lifecycle event in a Javadoc comment
 
 ---
 

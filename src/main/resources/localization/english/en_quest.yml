@@ -1,0 +1,104 @@
+# Quest-specific localization file.
+# This file contains locale strings for quest reward display labels and other
+# quest content that does not belong in the command, GUI, or general locale files.
+#
+# -----------------------------------------------------------------------
+# HOW REWARD DISPLAY LABELS WORK
+# -----------------------------------------------------------------------
+#
+# McRPG automatically generates a localization route for every command reward
+# based on the quest key and the reward's YAML section key. You don't need to
+# configure the route yourself — just add an entry at the derived path.
+#
+# Route patterns:
+#
+#   Quest-level reward:
+#     quests.<namespace>.<quest_key>.rewards.<reward_label>
+#     e.g.  quests.mcrpg.daily_ore_rush.rewards.hero_title
+#
+#   Objective-level reward:
+#     quests.<namespace>.<quest_key>.objectives.<objective_key>.rewards.<reward_label>
+#     e.g.  quests.mcrpg.daily_ore_rush.objectives.break_gold.rewards.hero_title
+#
+#   Stage-level reward:
+#     quests.<namespace>.<quest_key>.stages.<stage_key>.rewards.<reward_label>
+#
+#   Template reward (applies to all quests generated from that template):
+#     templates.<namespace>.<template_key>.rewards.<reward_label>
+#     e.g.  templates.mcrpg.template_champion_challenge.rewards.champion_title
+#
+# Fallback order:
+#   1. display-key locale route (explicit override, see legacy section below)
+#   2. Auto-derived route above
+#   3. Inline 'display' field on the reward in quest YAML
+#   4. Generic type fallback (see quest-reward-types section below)
+#
+# Example quest YAML:
+#   rewards:
+#     hero_title:
+#       type: mcrpg:command
+#       commands:
+#         - "title grant {player} hero"
+#       display: "Hero Title"    # inline fallback if no locale entry exists
+#
+# Then in this file (or any DynamicLocale file for the player's language):
+#   quests:
+#     mcrpg:
+#       daily_ore_rush:
+#         rewards:
+#           hero_title: "Hero Title"
+#
+# Display strings use MiniMessage <variable> syntax for placeholders.
+# Note: {player} / {amount} inside 'commands' entries are Bukkit dispatch
+# substitutions — those stay as {} and are NOT localization placeholders.
+#
+# -----------------------------------------------------------------------
+# LEGACY: display-key
+# -----------------------------------------------------------------------
+#
+# The 'display-key' field on a reward is still supported as an explicit
+# override. It points to any route in any locale file, and is checked
+# before the auto-derived route above. Useful for sharing one translation
+# across many quests:
+#
+#   rewards:
+#     title_reward:
+#       type: mcrpg:command
+#       display-key: "quest-reward-display.hero-title"
+#
+# The quest-reward-display section below is kept for backwards compatibility.
+# New quests should use the auto-derived route pattern instead.
+
+locale: en
+config-version: 1
+
+quest-reward-display:
+  # Legacy section. New quests should use auto-derived routes (see above).
+  # Add shared reward label entries here if you use display-key on multiple quests:
+  # hero-title: "Hero Title"
+  # mining-champion: "Mining Champion Badge"
+
+# Fallback descriptions for built-in objective types.
+# These are shown when no quest-specific locale entry exists for an objective
+# (e.g. for procedurally generated quests from templates).
+# Placeholders: <count> = required progress amount, <block>/<entity> = the target name.
+quest-objective-types:
+  block-break:
+    any: "Break <count> blocks"
+    single: "Break <count> <block>"
+    multi-header: "Break <count> blocks"
+    multi-item: "  - <block>"
+  mob-kill:
+    any: "Kill <count> mobs"
+    single: "Kill <count> <entity>"
+    multi-header: "Kill <count> mobs"
+    multi-item: "  - <entity>"
+
+# Fallback display labels for built-in reward types.
+# These are shown when no locale entry and no 'display' field is configured on the reward.
+quest-reward-types:
+  command:
+    fallback-display: "Special Reward"
+  scalable-command:
+    fallback-display: "Scaled Reward"
+    amount-suffix: " (x<amount>)"

@@ -1,35 +1,46 @@
 package us.eunoians.mcrpg.quest.board.template.condition;
 
-import com.diamonddagger590.mccore.registry.RegistryAccess;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 import us.eunoians.mcrpg.util.McRPGMethods;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
-import java.util.logging.Logger;
 
 /**
- * Utility for parsing {@link TemplateCondition} instances from YAML sections.
+ * Parses {@link TemplateCondition} instances from YAML sections.
  * Supports both shorthand syntax for built-in conditions and explicit {@code type:}
  * key syntax for any registered condition type.
+ * <p>
+ * An instance of this class is created with an injected {@link TemplateConditionRegistry}
+ * so that explicit-type lookups do not depend on the global {@code RegistryAccess} singleton.
+ * The instance is also passed into {@link TemplateCondition#fromConfig} so that compound
+ * or recursive conditions can delegate sub-condition parsing back through the same parser.
  */
 public final class ConditionParser {
 
-    private static final Logger LOGGER = Logger.getLogger(ConditionParser.class.getName());
+    private final TemplateConditionRegistry conditionRegistry;
 
-    private ConditionParser() {}
+    /**
+     * Creates a new {@code ConditionParser} backed by the given registry.
+     *
+     * @param conditionRegistry the registry used to resolve explicit {@code type:} condition keys
+     */
+    public ConditionParser(@NotNull TemplateConditionRegistry conditionRegistry) {
+        this.conditionRegistry = conditionRegistry;
+    }
 
     /**
      * Parses a condition from a section containing a {@code condition:} block.
      * Returns null if no condition block is present.
+     *
+     * @param parent the YAML section that may contain a nested {@code condition:} key
+     * @return the parsed condition, or {@code null} if none is present
      */
     @Nullable
-    public static TemplateCondition parseConditionBlock(@NotNull Section parent) {
+    public TemplateCondition parseConditionBlock(@NotNull Section parent) {
         if (!parent.contains("condition")) {
             return null;
         }
@@ -40,9 +51,12 @@ public final class ConditionParser {
     /**
      * Parses a prerequisite from a section containing a {@code prerequisite:} block.
      * Returns null if no prerequisite block is present.
+     *
+     * @param parent the YAML section that may contain a nested {@code prerequisite:} key
+     * @return the parsed prerequisite condition, or {@code null} if none is present
      */
     @Nullable
-    public static TemplateCondition parsePrerequisiteBlock(@NotNull Section parent) {
+    public TemplateCondition parsePrerequisiteBlock(@NotNull Section parent) {
         if (!parent.contains("prerequisite")) {
             return null;
         }
@@ -53,9 +67,13 @@ public final class ConditionParser {
     /**
      * Parses a single condition from a YAML section. Tries shorthand keys first,
      * then falls back to explicit {@code type:} key resolution.
+     *
+     * @param section the YAML section describing a single condition
+     * @return the parsed condition
+     * @throws IllegalArgumentException if the section does not match any recognized condition format
      */
     @NotNull
-    public static TemplateCondition parseSingle(@NotNull Section section) {
+    public TemplateCondition parseSingle(@NotNull Section section) {
         // Compound conditions
         if (section.contains("all")) {
             return parseCompound(section, CompoundCondition.LogicMode.ALL);
@@ -66,7 +84,7 @@ public final class ConditionParser {
 
         // Shorthand: rarity-at-least
         if (section.contains("rarity-at-least")) {
-            NamespacedKey rarityKey = parseNamespacedKey(section.getString("rarity-at-least"));
+            NamespacedKey rarityKey = McRPGMethods.parseNamespacedKey(section.getString("rarity-at-least"));
             return new RarityCondition(rarityKey);
         }
 
@@ -100,7 +118,7 @@ public final class ConditionParser {
     }
 
     @NotNull
-    private static TemplateCondition parseCompound(@NotNull Section section, @NotNull CompoundCondition.LogicMode mode) {
+    private TemplateCondition parseCompound(@NotNull Section section, @NotNull CompoundCondition.LogicMode mode) {
         String key = mode == CompoundCondition.LogicMode.ALL ? "all" : "any";
         Section children = section.getSection(key);
         Map<String, TemplateCondition> parsed = new LinkedHashMap<>();
@@ -111,7 +129,7 @@ public final class ConditionParser {
     }
 
     @NotNull
-    private static VariableCondition parseVariableCondition(@NotNull Section section) {
+    private VariableCondition parseVariableCondition(@NotNull Section section) {
         String name = section.getString("name");
         VariableCheck check = parseVariableCheck(section);
         return new VariableCondition(name, check);
@@ -119,6 +137,14 @@ public final class ConditionParser {
 
     /**
      * Parses a {@link VariableCheck} from a variable condition section.
+     * Supports {@code contains-any}, {@code greater-than}, {@code less-than},
+     * {@code at-least}, and {@code at-most} shorthand keys.
+     * <p>
+     * Static because it is a pure function with no dependency on registry state.
+     *
+     * @param section the YAML section containing the check definition
+     * @return the parsed check
+     * @throws IllegalArgumentException if no recognized check key is present
      */
     @NotNull
     static VariableCheck parseVariableCheck(@NotNull Section section) {
@@ -145,41 +171,28 @@ public final class ConditionParser {
     }
 
     @NotNull
-    private static CompletionPrerequisiteCondition parseCompletionPrerequisite(@NotNull Section section) {
+    private CompletionPrerequisiteCondition parseCompletionPrerequisite(@NotNull Section section) {
         int count = section.getInt("min-completions");
         NamespacedKey category = section.contains("category")
-                ? parseNamespacedKey(section.getString("category"))
+                ? McRPGMethods.parseNamespacedKey(section.getString("category"))
                 : null;
         NamespacedKey rarity = section.contains("min-rarity")
-                ? parseNamespacedKey(section.getString("min-rarity"))
+                ? McRPGMethods.parseNamespacedKey(section.getString("min-rarity"))
                 : null;
         return new CompletionPrerequisiteCondition(count, category, rarity);
     }
 
     @NotNull
-    private static TemplateCondition parseExplicitType(@NotNull Section section) {
+    private TemplateCondition parseExplicitType(@NotNull Section section) {
         String typeStr = section.getString("type");
         NamespacedKey typeKey = NamespacedKey.fromString(typeStr.toLowerCase());
         if (typeKey == null) {
             throw new IllegalArgumentException("Invalid condition type key: " + typeStr);
         }
-        Optional<TemplateCondition> registered = RegistryAccess.registryAccess()
-                .registry(McRPGRegistryKey.TEMPLATE_CONDITION)
-                .get(typeKey);
-        if (registered.isEmpty()) {
-            throw new IllegalArgumentException("Unregistered condition type: " + typeKey);
-        }
-        return registered.get().fromConfig(section);
+        TemplateCondition registered = conditionRegistry
+                .get(typeKey)
+                .orElseThrow(() -> new IllegalArgumentException("Unregistered condition type: " + typeKey));
+        return registered.fromConfig(section, this);
     }
 
-    @Nullable
-    private static NamespacedKey parseNamespacedKey(@Nullable String input) {
-        if (input == null || input.isBlank()) {
-            return null;
-        }
-        if (input.contains(":")) {
-            return NamespacedKey.fromString(input.toLowerCase());
-        }
-        return new NamespacedKey(McRPGMethods.getMcRPGNamespace(), input.toLowerCase());
-    }
 }

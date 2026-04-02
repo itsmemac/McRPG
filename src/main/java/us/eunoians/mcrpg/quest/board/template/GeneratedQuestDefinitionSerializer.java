@@ -18,9 +18,17 @@ import us.eunoians.mcrpg.quest.definition.QuestRepeatMode;
 import us.eunoians.mcrpg.quest.definition.QuestStageDefinition;
 import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveType;
 import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveTypeRegistry;
+import us.eunoians.mcrpg.quest.board.distribution.DistributionRewardEntry;
 import us.eunoians.mcrpg.quest.board.distribution.DistributionTierConfig;
+import us.eunoians.mcrpg.quest.board.distribution.PotBehavior;
+import us.eunoians.mcrpg.quest.board.distribution.RemainderStrategy;
 import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionConfig;
 import us.eunoians.mcrpg.quest.board.distribution.RewardSplitMode;
+import us.eunoians.mcrpg.quest.board.template.condition.ConditionParser;
+import us.eunoians.mcrpg.quest.board.template.condition.TemplateCondition;
+import us.eunoians.mcrpg.quest.board.template.condition.QuestRewardEntry;
+import us.eunoians.mcrpg.quest.board.template.condition.TemplateConditionRegistry;
+import us.eunoians.mcrpg.quest.board.template.condition.RewardFallback;
 import us.eunoians.mcrpg.quest.reward.QuestRewardType;
 import us.eunoians.mcrpg.quest.reward.QuestRewardTypeRegistry;
 
@@ -89,10 +97,13 @@ public final class GeneratedQuestDefinitionSerializer {
         root.add("phases", phasesArray);
 
         JsonArray rewardsArray = new JsonArray();
-        for (QuestRewardType reward : definition.getRewards()) {
+        for (QuestRewardEntry entry : definition.getRewardEntries()) {
             JsonObject rewardObj = new JsonObject();
-            rewardObj.addProperty("type", reward.getKey().toString());
-            rewardObj.add("config", GSON.toJsonTree(reward.serializeConfig()));
+            rewardObj.addProperty("type", entry.reward().getKey().toString());
+            rewardObj.add("config", GSON.toJsonTree(entry.reward().serializeConfig()));
+            if (entry.fallback() != null) {
+                rewardObj.add("fallback", serializeRewardFallback(entry.fallback()));
+            }
             rewardsArray.add(rewardObj);
         }
         root.add("rewards", rewardsArray);
@@ -113,20 +124,21 @@ public final class GeneratedQuestDefinitionSerializer {
 
     /**
      * Deserializes a JSON string back into a {@link QuestDefinition}, resolving objective
-     * types and reward types from their registries.
+     * types, reward types, and condition types from their registries.
      *
-     * @param json                  the JSON string produced by {@link #serialize}
-     * @param objectiveTypeRegistry registry for looking up objective types by key
-     * @param rewardTypeRegistry    registry for looking up reward types by key
+     * @param json                   the JSON string produced by {@link #serialize}
+     * @param objectiveTypeRegistry  registry for looking up objective types by key
+     * @param rewardTypeRegistry     registry for looking up reward types by key
+     * @param conditionTypeRegistry  registry for looking up condition types used in {@link RewardFallback}s
      * @return the reconstructed quest definition
-     * @throws QuestDeserializationException if the JSON is malformed, or references an
-     *                                       objective type or reward type that is not
-     *                                       registered
+     * @throws QuestDeserializationException if the JSON is malformed, or references a
+     *                                       type that is not registered
      */
     @NotNull
     public static QuestDefinition deserialize(@NotNull String json,
                                               @NotNull QuestObjectiveTypeRegistry objectiveTypeRegistry,
-                                              @NotNull QuestRewardTypeRegistry rewardTypeRegistry) {
+                                              @NotNull QuestRewardTypeRegistry rewardTypeRegistry,
+                                              @NotNull TemplateConditionRegistry conditionTypeRegistry) {
         String questKeyString = null;
         try {
             JsonObject root = JsonParser.parseString(json).getAsJsonObject();
@@ -136,29 +148,31 @@ public final class GeneratedQuestDefinitionSerializer {
             NamespacedKey scopeKey = NamespacedKey.fromString(root.get("scope").getAsString());
 
             List<QuestPhaseDefinition> phases = deserializePhases(
-                    root.getAsJsonArray("phases"), objectiveTypeRegistry, rewardTypeRegistry, questKeyString);
-            List<QuestRewardType> rewards = deserializeRewards(
-                    root.getAsJsonArray("rewards"), rewardTypeRegistry, questKeyString);
+                    root.getAsJsonArray("phases"), objectiveTypeRegistry, rewardTypeRegistry,
+                    conditionTypeRegistry, questKeyString);
+            List<QuestRewardEntry> rewardEntries = deserializeRewardEntries(
+                    root.getAsJsonArray("rewards"), rewardTypeRegistry, conditionTypeRegistry, questKeyString);
 
             RewardDistributionConfig rewardDistribution = root.has("reward_distribution")
-                    ? deserializeDistribution(root.getAsJsonObject("reward_distribution"), rewardTypeRegistry, questKeyString)
+                    ? deserializeDistribution(root.getAsJsonObject("reward_distribution"), rewardTypeRegistry,
+                    conditionTypeRegistry, questKeyString)
                     : null;
 
             Map<String, String> inlineDisplay = null;
             if (root.has("inline_display")) {
-                inlineDisplay = new java.util.LinkedHashMap<>();
+                inlineDisplay = new LinkedHashMap<>();
                 JsonObject displayObj = root.getAsJsonObject("inline_display");
                 for (Map.Entry<String, com.google.gson.JsonElement> entry : displayObj.entrySet()) {
                     inlineDisplay.put(entry.getKey(), entry.getValue().getAsString());
                 }
             }
 
-            return new QuestDefinition(
+            return QuestDefinition.withEntries(
                     questKey,
                     scopeKey,
                     null,
                     phases,
-                    rewards,
+                    rewardEntries,
                     QuestRepeatMode.ONCE,
                     null,
                     -1,
@@ -262,6 +276,7 @@ public final class GeneratedQuestDefinitionSerializer {
      * @param phasesArray           the JSON array of phase objects
      * @param objectiveTypeRegistry registry for looking up objective types
      * @param rewardTypeRegistry    registry for looking up reward types (used for distribution tiers)
+     * @param conditionTypeRegistry registry for looking up condition types in {@link RewardFallback}s
      * @param questKeyString        the quest key string for error context
      * @return the deserialized phase definitions
      * @throws QuestDeserializationException if an objective type cannot be resolved
@@ -270,6 +285,7 @@ public final class GeneratedQuestDefinitionSerializer {
     private static List<QuestPhaseDefinition> deserializePhases(@NotNull JsonArray phasesArray,
                                                                 @NotNull QuestObjectiveTypeRegistry objectiveTypeRegistry,
                                                                 @NotNull QuestRewardTypeRegistry rewardTypeRegistry,
+                                                                @NotNull TemplateConditionRegistry conditionTypeRegistry,
                                                                 @NotNull String questKeyString) {
         List<QuestPhaseDefinition> phases = new ArrayList<>();
         for (int phaseIdx = 0; phaseIdx < phasesArray.size(); phaseIdx++) {
@@ -289,18 +305,21 @@ public final class GeneratedQuestDefinitionSerializer {
 
                 for (JsonElement objElement : objectivesArray) {
                     JsonObject objObj = objElement.getAsJsonObject();
-                    objectives.add(deserializeObjective(objObj, objectiveTypeRegistry, rewardTypeRegistry, questKeyString));
+                    objectives.add(deserializeObjective(objObj, objectiveTypeRegistry, rewardTypeRegistry,
+                            conditionTypeRegistry, questKeyString));
                 }
 
                 RewardDistributionConfig stageDist = stageObj.has("reward_distribution")
-                        ? deserializeDistribution(stageObj.getAsJsonObject("reward_distribution"), rewardTypeRegistry, questKeyString)
+                        ? deserializeDistribution(stageObj.getAsJsonObject("reward_distribution"), rewardTypeRegistry,
+                        conditionTypeRegistry, questKeyString)
                         : null;
 
                 stages.add(new QuestStageDefinition(stageKey, objectives, List.of(), stageDist));
             }
 
             RewardDistributionConfig phaseDist = phaseObj.has("reward_distribution")
-                    ? deserializeDistribution(phaseObj.getAsJsonObject("reward_distribution"), rewardTypeRegistry, questKeyString)
+                    ? deserializeDistribution(phaseObj.getAsJsonObject("reward_distribution"), rewardTypeRegistry,
+                    conditionTypeRegistry, questKeyString)
                     : null;
 
             phases.add(new QuestPhaseDefinition(phaseIdx, completionMode, stages, phaseDist));
@@ -315,6 +334,8 @@ public final class GeneratedQuestDefinitionSerializer {
      *
      * @param objObj                the JSON object representing the objective
      * @param objectiveTypeRegistry registry for looking up objective types
+     * @param rewardTypeRegistry    registry for looking up reward types in distributions
+     * @param conditionTypeRegistry registry for looking up condition types in {@link RewardFallback}s
      * @param questKeyString        the quest key string for error context
      * @return the deserialized objective definition
      * @throws QuestDeserializationException if the objective type is not registered
@@ -323,6 +344,7 @@ public final class GeneratedQuestDefinitionSerializer {
     private static QuestObjectiveDefinition deserializeObjective(@NotNull JsonObject objObj,
                                                                  @NotNull QuestObjectiveTypeRegistry objectiveTypeRegistry,
                                                                  @NotNull QuestRewardTypeRegistry rewardTypeRegistry,
+                                                                 @NotNull TemplateConditionRegistry conditionTypeRegistry,
                                                                  @NotNull String questKeyString) {
         NamespacedKey objectiveKey = NamespacedKey.fromString(objObj.get("key").getAsString());
         NamespacedKey typeKey = NamespacedKey.fromString(objObj.get("type").getAsString());
@@ -342,7 +364,7 @@ public final class GeneratedQuestDefinitionSerializer {
 
         RewardDistributionConfig objDist = objObj.has("reward_distribution")
                 ? deserializeDistribution(objObj.getAsJsonObject("reward_distribution"),
-                        rewardTypeRegistry, questKeyString)
+                        rewardTypeRegistry, conditionTypeRegistry, questKeyString)
                 : null;
 
         return new QuestObjectiveDefinition(objectiveKey, configuredType, requiredProgress, List.of(), objDist);
@@ -360,10 +382,12 @@ public final class GeneratedQuestDefinitionSerializer {
      * @throws QuestDeserializationException if a reward type is not registered
      */
     @NotNull
-    private static List<QuestRewardType> deserializeRewards(@NotNull JsonArray rewardsArray,
-                                                            @NotNull QuestRewardTypeRegistry rewardTypeRegistry,
-                                                            @NotNull String questKeyString) {
-        List<QuestRewardType> rewards = new ArrayList<>();
+    private static List<QuestRewardEntry> deserializeRewardEntries(
+            @NotNull JsonArray rewardsArray,
+            @NotNull QuestRewardTypeRegistry rewardTypeRegistry,
+            @NotNull TemplateConditionRegistry conditionTypeRegistry,
+            @NotNull String questKeyString) {
+        List<QuestRewardEntry> entries = new ArrayList<>();
         for (JsonElement element : rewardsArray) {
             JsonObject rewardObj = element.getAsJsonObject();
             NamespacedKey typeKey = NamespacedKey.fromString(rewardObj.get("type").getAsString());
@@ -375,14 +399,32 @@ public final class GeneratedQuestDefinitionSerializer {
                             questKeyString, "reward type " + typeKey));
 
             Map<String, Object> configMap = jsonObjectToMap(rewardObj.getAsJsonObject("config"));
-            rewards.add(baseType.fromSerializedConfig(configMap));
+            QuestRewardType reward = baseType.fromSerializedConfig(configMap);
+
+            RewardFallback fallback = null;
+            if (rewardObj.has("fallback")) {
+                fallback = deserializeFallback(rewardObj.getAsJsonObject("fallback"),
+                        conditionTypeRegistry, rewardTypeRegistry, questKeyString);
+            }
+            entries.add(new QuestRewardEntry(reward, fallback));
         }
-        return rewards;
+        return entries;
+    }
+
+    @NotNull
+    private static JsonObject serializeRewardFallback(@NotNull RewardFallback fallback) {
+        JsonObject obj = new JsonObject();
+        obj.addProperty("condition_type", fallback.condition().getKey().toString());
+        obj.add("condition_config", GSON.toJsonTree(fallback.condition().serializeConfig()));
+        obj.addProperty("fallback_reward_type", fallback.fallbackReward().getKey().toString());
+        obj.add("fallback_reward_config", GSON.toJsonTree(fallback.fallbackReward().serializeConfig()));
+        return obj;
     }
 
     @NotNull
     private static RewardDistributionConfig deserializeDistribution(@NotNull JsonObject distObj,
                                                                      @NotNull QuestRewardTypeRegistry rewardTypeRegistry,
+                                                                     @NotNull TemplateConditionRegistry conditionTypeRegistry,
                                                                      @NotNull String questKeyString) {
         JsonArray tiersArray = distObj.getAsJsonArray("tiers");
         List<DistributionTierConfig> tiers = new ArrayList<>();
@@ -397,8 +439,8 @@ public final class GeneratedQuestDefinitionSerializer {
                     ? jsonObjectToMap(tierObj.getAsJsonObject("type_parameters"))
                     : Map.of();
 
-            List<QuestRewardType> rewards = deserializeRewards(
-                    tierObj.getAsJsonArray("rewards"), rewardTypeRegistry, questKeyString);
+            List<DistributionRewardEntry> rewardEntries = deserializeDistributionRewardEntries(
+                    tierObj.getAsJsonArray("rewards"), rewardTypeRegistry, conditionTypeRegistry, questKeyString);
 
             NamespacedKey minRarity = tierObj.has("min_rarity")
                     ? NamespacedKey.fromString(tierObj.get("min_rarity").getAsString())
@@ -407,10 +449,105 @@ public final class GeneratedQuestDefinitionSerializer {
                     ? NamespacedKey.fromString(tierObj.get("required_rarity").getAsString())
                     : null;
 
-            tiers.add(new DistributionTierConfig(tierKey, typeKey, splitMode, rewards, typeParameters, minRarity, requiredRarity, true));
+            tiers.add(new DistributionTierConfig(tierKey, typeKey, splitMode, rewardEntries,
+                    typeParameters, minRarity, requiredRarity));
         }
 
         return new RewardDistributionConfig(tiers);
+    }
+
+    /**
+     * Deserializes reward entries within a distribution tier, reconstructing
+     * {@link DistributionRewardEntry} instances including their {@link PotBehavior},
+     * {@link RemainderStrategy}, min-scaled-amount, top-count, and optional
+     * {@link RewardFallback}.
+     * Falls back to defaults when fields are absent (backward compatibility with older snapshots).
+     *
+     * @param rewardsArray          the JSON array of reward entry objects
+     * @param rewardTypeRegistry    registry for looking up reward types
+     * @param conditionTypeRegistry registry for looking up condition types in fallbacks
+     * @param questKeyString        the quest key string for error context
+     * @return the list of distribution reward entries
+     */
+    @NotNull
+    private static List<DistributionRewardEntry> deserializeDistributionRewardEntries(
+            @NotNull JsonArray rewardsArray,
+            @NotNull QuestRewardTypeRegistry rewardTypeRegistry,
+            @NotNull TemplateConditionRegistry conditionTypeRegistry,
+            @NotNull String questKeyString) {
+        List<DistributionRewardEntry> entries = new ArrayList<>();
+        for (JsonElement element : rewardsArray) {
+            JsonObject rObj = element.getAsJsonObject();
+            NamespacedKey typeKey = NamespacedKey.fromString(rObj.get("type").getAsString());
+
+            QuestRewardType baseType = rewardTypeRegistry.get(typeKey)
+                    .orElseThrow(() -> new QuestDeserializationException(
+                            "Unknown reward type '" + typeKey + "' in distribution tier of quest " + questKeyString
+                                    + ". Is the type registered?",
+                            questKeyString, "distribution reward type " + typeKey));
+
+            Map<String, Object> configMap = jsonObjectToMap(rObj.getAsJsonObject("config"));
+            QuestRewardType reward = baseType.fromSerializedConfig(configMap);
+
+            PotBehavior potBehavior = rObj.has("pot_behavior")
+                    ? PotBehavior.valueOf(rObj.get("pot_behavior").getAsString())
+                    : PotBehavior.SCALE;
+            RemainderStrategy remainderStrategy = rObj.has("remainder_strategy")
+                    ? RemainderStrategy.valueOf(rObj.get("remainder_strategy").getAsString())
+                    : RemainderStrategy.DISCARD;
+            int minScaledAmount = rObj.has("min_scaled_amount") ? rObj.get("min_scaled_amount").getAsInt() : 1;
+            int topCount = rObj.has("top_count") ? rObj.get("top_count").getAsInt() : 1;
+
+            RewardFallback fallback = null;
+            if (rObj.has("fallback")) {
+                fallback = deserializeFallback(rObj.getAsJsonObject("fallback"),
+                        conditionTypeRegistry, rewardTypeRegistry, questKeyString);
+            }
+
+            entries.add(new DistributionRewardEntry(reward, potBehavior, remainderStrategy,
+                    minScaledAmount, topCount, fallback));
+        }
+        return entries;
+    }
+
+    /**
+     * Deserializes a {@link RewardFallback} from its JSON representation, reconstructing
+     * the condition from the {@link TemplateConditionRegistry} and the fallback reward
+     * from the {@link QuestRewardTypeRegistry}.
+     *
+     * @param fallbackObj           the JSON object containing condition and fallback reward data
+     * @param conditionTypeRegistry registry for looking up the condition type
+     * @param rewardTypeRegistry    registry for looking up the fallback reward type
+     * @param questKeyString        the quest key string for error context
+     * @return the reconstructed {@link RewardFallback}
+     * @throws QuestDeserializationException if the condition type or fallback reward type is not registered
+     */
+    @NotNull
+    private static RewardFallback deserializeFallback(@NotNull JsonObject fallbackObj,
+                                                      @NotNull TemplateConditionRegistry conditionTypeRegistry,
+                                                      @NotNull QuestRewardTypeRegistry rewardTypeRegistry,
+                                                      @NotNull String questKeyString) {
+        NamespacedKey condTypeKey = NamespacedKey.fromString(fallbackObj.get("condition_type").getAsString());
+        TemplateCondition baseCondition = conditionTypeRegistry.get(condTypeKey)
+                .orElseThrow(() -> new QuestDeserializationException(
+                        "Unknown condition type '" + condTypeKey + "' in reward fallback of quest " + questKeyString
+                                + ". Is the type registered?",
+                        questKeyString, "condition type " + condTypeKey));
+
+        Map<String, Object> condConfig = jsonObjectToMap(fallbackObj.getAsJsonObject("condition_config"));
+        TemplateCondition condition = createConfiguredCondition(baseCondition, condConfig, conditionTypeRegistry, questKeyString);
+
+        NamespacedKey fallbackTypeKey = NamespacedKey.fromString(fallbackObj.get("fallback_reward_type").getAsString());
+        QuestRewardType baseFallbackReward = rewardTypeRegistry.get(fallbackTypeKey)
+                .orElseThrow(() -> new QuestDeserializationException(
+                        "Unknown fallback reward type '" + fallbackTypeKey + "' in quest " + questKeyString
+                                + ". Is the type registered?",
+                        questKeyString, "fallback reward type " + fallbackTypeKey));
+
+        Map<String, Object> fallbackRewardConfig = jsonObjectToMap(fallbackObj.getAsJsonObject("fallback_reward_config"));
+        QuestRewardType fallbackReward = baseFallbackReward.fromSerializedConfig(fallbackRewardConfig);
+
+        return new RewardFallback(condition, fallbackReward);
     }
 
     /**
@@ -443,6 +580,65 @@ public final class GeneratedQuestDefinitionSerializer {
                     "Failed to create in-memory config for objective type " + baseType.getKey()
                             + " in quest " + questKeyString,
                     e, questKeyString, "objective type config " + baseType.getKey());
+        }
+    }
+
+    /**
+     * Creates a configured condition by populating an in-memory {@link YamlDocument} with
+     * the deserialized config entries and calling {@link TemplateCondition#fromConfig}.
+     * Uses recursive document population to handle nested structures such as
+     * {@link us.eunoians.mcrpg.quest.board.template.condition.CompoundCondition}.
+     *
+     * @param baseCondition  the base (unconfigured) condition type from the registry
+     * @param config         the config map deserialized from JSON
+     * @param questKeyString the quest key string for error context
+     * @return a configured condition instance
+     * @throws QuestDeserializationException if the in-memory document cannot be created
+     */
+    @NotNull
+    private static TemplateCondition createConfiguredCondition(@NotNull TemplateCondition baseCondition,
+                                                               @NotNull Map<String, Object> config,
+                                                               @NotNull TemplateConditionRegistry conditionTypeRegistry,
+                                                               @NotNull String questKeyString) {
+        if (config.isEmpty()) {
+            return baseCondition;
+        }
+        try {
+            YamlDocument doc = YamlDocument.create(new ByteArrayInputStream("{}".getBytes()));
+            populateDocument(doc, config, "");
+            var parser = new ConditionParser(conditionTypeRegistry);
+            return baseCondition.fromConfig(doc, parser);
+        } catch (IOException e) {
+            throw new QuestDeserializationException(
+                    "Failed to create in-memory config for condition type " + baseCondition.getKey()
+                            + " in quest " + questKeyString,
+                    e, questKeyString, "condition type config " + baseCondition.getKey());
+        }
+    }
+
+    /**
+     * Recursively populates a {@link YamlDocument} from a config map using dot-notation
+     * routes. Nested {@link Map} values are flattened into nested YAML sections so that
+     * {@link dev.dejvokep.boostedyaml.block.implementation.Section#getSection(String)} works
+     * correctly when condition {@code fromConfig} implementations read child sections.
+     *
+     * @param doc    the document to populate
+     * @param config the config map (possibly containing nested maps)
+     * @param prefix the current route prefix (empty string for the root level)
+     * @throws IOException if the document cannot be written to
+     */
+    private static void populateDocument(@NotNull YamlDocument doc,
+                                         @NotNull Map<String, Object> config,
+                                         @NotNull String prefix) throws IOException {
+        for (Map.Entry<String, Object> entry : config.entrySet()) {
+            String route = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
+            if (entry.getValue() instanceof Map<?, ?> nested) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> nestedMap = (Map<String, Object>) nested;
+                populateDocument(doc, nestedMap, route);
+            } else {
+                doc.set(route, entry.getValue());
+            }
         }
     }
 
@@ -518,10 +714,23 @@ public final class GeneratedQuestDefinitionSerializer {
             }
 
             JsonArray rewardsArray = new JsonArray();
-            for (QuestRewardType reward : tier.getRewards()) {
+            for (DistributionRewardEntry entry : tier.getRewardEntries()) {
                 JsonObject rObj = new JsonObject();
-                rObj.addProperty("type", reward.getKey().toString());
-                rObj.add("config", GSON.toJsonTree(reward.serializeConfig()));
+                rObj.addProperty("type", entry.reward().getKey().toString());
+                rObj.add("config", GSON.toJsonTree(entry.reward().serializeConfig()));
+                rObj.addProperty("pot_behavior", entry.potBehavior().name());
+                rObj.addProperty("remainder_strategy", entry.remainderStrategy().name());
+                rObj.addProperty("min_scaled_amount", entry.minScaledAmount());
+                rObj.addProperty("top_count", entry.topCount());
+                if (entry.fallback() != null) {
+                    RewardFallback fallback = entry.fallback();
+                    JsonObject fallbackObj = new JsonObject();
+                    fallbackObj.addProperty("condition_type", fallback.condition().getKey().toString());
+                    fallbackObj.add("condition_config", GSON.toJsonTree(fallback.condition().serializeConfig()));
+                    fallbackObj.addProperty("fallback_reward_type", fallback.fallbackReward().getKey().toString());
+                    fallbackObj.add("fallback_reward_config", GSON.toJsonTree(fallback.fallbackReward().serializeConfig()));
+                    rObj.add("fallback", fallbackObj);
+                }
                 rewardsArray.add(rObj);
             }
             tierObj.add("rewards", rewardsArray);

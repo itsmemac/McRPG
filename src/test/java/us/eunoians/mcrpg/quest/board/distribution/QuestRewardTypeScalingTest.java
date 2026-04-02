@@ -8,6 +8,8 @@ import us.eunoians.mcrpg.quest.reward.QuestRewardType;
 import us.eunoians.mcrpg.quest.reward.builtin.CommandRewardType;
 import us.eunoians.mcrpg.quest.reward.builtin.ExperienceRewardType;
 
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
@@ -21,7 +23,7 @@ public class QuestRewardTypeScalingTest extends McRPGBaseTest {
         @Test
         void scalingReturnsNewInstance() {
             var base = new ExperienceRewardType()
-                    .fromSerializedConfig(java.util.Map.of("skill", "MINING", "amount", 1000L));
+                    .fromSerializedConfig(Map.of("skill", "MINING", "amount", 1000L));
             QuestRewardType scaled = base.withAmountMultiplier(0.5);
 
             assertNotSame(base, scaled);
@@ -31,7 +33,7 @@ public class QuestRewardTypeScalingTest extends McRPGBaseTest {
         @Test
         void scalingClampToOne() {
             var base = new ExperienceRewardType()
-                    .fromSerializedConfig(java.util.Map.of("skill", "MINING", "amount", 1L));
+                    .fromSerializedConfig(Map.of("skill", "MINING", "amount", 1L));
             QuestRewardType scaled = base.withAmountMultiplier(0.01);
 
             assertNotSame(base, scaled);
@@ -45,7 +47,7 @@ public class QuestRewardTypeScalingTest extends McRPGBaseTest {
         @Test
         void scalingPreservesSkill() {
             var base = new ExperienceRewardType()
-                    .fromSerializedConfig(java.util.Map.of("skill", "HERBALISM", "amount", 500L));
+                    .fromSerializedConfig(Map.of("skill", "HERBALISM", "amount", 500L));
             QuestRewardType scaled = base.withAmountMultiplier(0.5);
 
             org.junit.jupiter.api.Assertions.assertEquals("HERBALISM", scaled.serializeConfig().get("skill"));
@@ -55,7 +57,7 @@ public class QuestRewardTypeScalingTest extends McRPGBaseTest {
         @Test
         void identityMultiplier() {
             var base = new ExperienceRewardType()
-                    .fromSerializedConfig(java.util.Map.of("skill", "MINING", "amount", 1000L));
+                    .fromSerializedConfig(Map.of("skill", "MINING", "amount", 1000L));
             QuestRewardType scaled = base.withAmountMultiplier(1.0);
 
             long amount = ((Number) scaled.serializeConfig().get("amount")).longValue();

@@ -13,8 +13,10 @@ import us.eunoians.mcrpg.database.McRPGDatabaseManager;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.entity.player.McRPGPlayerExtension;
 import us.eunoians.mcrpg.listener.quest.QuestCancelListener;
+import us.eunoians.mcrpg.quest.board.QuestBoardTerminator;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
+import us.eunoians.mcrpg.quest.impl.QuestState;
 import us.eunoians.mcrpg.quest.impl.scope.QuestScope;
 import us.eunoians.mcrpg.quest.impl.scope.QuestScopeProvider;
 import us.eunoians.mcrpg.quest.impl.scope.impl.SinglePlayerQuestScope;
@@ -80,7 +82,7 @@ public class QuestManagerRescopeExpirySweepTest extends McRPGBaseTest {
         server.getScheduler().performOneTick();
 
         verify(quest, times(1)).expire();
-        assertEquals(us.eunoians.mcrpg.quest.impl.QuestState.CANCELLED, quest.getQuestState());
+        assertEquals(QuestState.CANCELLED, quest.getQuestState());
     }
 
     @DisplayName("Given a non-expired active quest discovered during player rescope, when rescope runs, then quest.expire is not triggered")
@@ -102,7 +104,7 @@ public class QuestManagerRescopeExpirySweepTest extends McRPGBaseTest {
         server.getScheduler().performOneTick();
 
         verify(quest, times(0)).expire();
-        assertEquals(us.eunoians.mcrpg.quest.impl.QuestState.IN_PROGRESS, quest.getQuestState());
+        assertEquals(QuestState.IN_PROGRESS, quest.getQuestState());
     }
 
     @DisplayName("Given tracked player with expired board quest during rescope, then board count decrements")
@@ -110,7 +112,7 @@ public class QuestManagerRescopeExpirySweepTest extends McRPGBaseTest {
     public void rescopePlayer_expiredBoardQuest_decrementsBoardCount(McRPGPlayer mcRPGPlayer) {
         HandlerList.unregisterAll(mcRPG);
         server.getPluginManager().clearEvents();
-        server.getPluginManager().registerEvents(new QuestCancelListener(), mcRPG);
+        server.getPluginManager().registerEvents(new QuestCancelListener(new QuestBoardTerminator(mcRPG)), mcRPG);
 
         RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)
                 .manager(McRPGManagerKey.PLAYER)
@@ -135,7 +137,7 @@ public class QuestManagerRescopeExpirySweepTest extends McRPGBaseTest {
         questManager.rescopePlayer(mcRPGPlayer.getUUID(), provider);
         server.getScheduler().performOneTick();
 
-        assertEquals(us.eunoians.mcrpg.quest.impl.QuestState.CANCELLED, quest.getQuestState());
+        assertEquals(QuestState.CANCELLED, quest.getQuestState());
         assertEquals(0, mcRPGPlayer.asQuestHolder().getActiveBoardQuestCount());
     }
 }

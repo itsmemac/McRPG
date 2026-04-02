@@ -53,7 +53,7 @@ class TemplateConditionRegistryTest {
         TemplateCondition custom = new TemplateCondition() {
             @NotNull @Override public NamespacedKey getKey() { return key; }
             @Override public boolean evaluate(@NotNull ConditionContext context) { return true; }
-            @NotNull @Override public TemplateCondition fromConfig(@NotNull Section section) { return this; }
+            @NotNull @Override public TemplateCondition fromConfig(@NotNull Section section, @NotNull ConditionParser parser) { return this; }
             @NotNull @Override public Optional<NamespacedKey> getExpansionKey() { return Optional.empty(); }
         };
 

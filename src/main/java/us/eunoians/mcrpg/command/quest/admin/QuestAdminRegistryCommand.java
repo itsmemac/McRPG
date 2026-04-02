@@ -12,6 +12,9 @@ import us.eunoians.mcrpg.command.quest.QuestCommandBase;
 import us.eunoians.mcrpg.configuration.file.localization.LocalizationKey;
 import us.eunoians.mcrpg.localization.McRPGLocalizationManager;
 import us.eunoians.mcrpg.quest.QuestManager;
+import us.eunoians.mcrpg.quest.impl.scope.QuestScopeProviderRegistry;
+import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveTypeRegistry;
+import us.eunoians.mcrpg.quest.reward.QuestRewardTypeRegistry;
 import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 
@@ -45,21 +48,21 @@ public class QuestAdminRegistryCommand extends QuestCommandBase {
 
         commandManager.command(base.literal("objectives").handler(ctx -> {
             Set<NamespacedKey> keys = RegistryAccess.registryAccess()
-                    .<us.eunoians.mcrpg.quest.objective.type.QuestObjectiveTypeRegistry>registry(McRPGRegistryKey.QUEST_OBJECTIVE_TYPE)
+                    .<QuestObjectiveTypeRegistry>registry(McRPGRegistryKey.QUEST_OBJECTIVE_TYPE)
                     .getRegisteredKeys();
             sendKeyList(ctx.sender().getSender(), "Objective Types", keys);
         }));
 
         commandManager.command(base.literal("rewards").handler(ctx -> {
             Set<NamespacedKey> keys = RegistryAccess.registryAccess()
-                    .<us.eunoians.mcrpg.quest.reward.QuestRewardTypeRegistry>registry(McRPGRegistryKey.QUEST_REWARD_TYPE)
+                    .<QuestRewardTypeRegistry>registry(McRPGRegistryKey.QUEST_REWARD_TYPE)
                     .getRegisteredKeys();
             sendKeyList(ctx.sender().getSender(), "Reward Types", keys);
         }));
 
         commandManager.command(base.literal("scopes").handler(ctx -> {
             Set<NamespacedKey> keys = RegistryAccess.registryAccess()
-                    .<us.eunoians.mcrpg.quest.impl.scope.QuestScopeProviderRegistry>registry(McRPGRegistryKey.QUEST_SCOPE_PROVIDER)
+                    .<QuestScopeProviderRegistry>registry(McRPGRegistryKey.QUEST_SCOPE_PROVIDER)
                     .getRegisteredKeys();
             sendKeyList(ctx.sender().getSender(), "Scope Providers", keys);
         }));

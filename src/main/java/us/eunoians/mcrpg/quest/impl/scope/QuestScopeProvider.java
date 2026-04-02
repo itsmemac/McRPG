@@ -45,7 +45,24 @@ public abstract class QuestScopeProvider<P extends QuestScope> implements McRPGC
     public abstract P createNewScope(@NotNull UUID questUUID);
 
     /**
-     * Loads an existing scope instance from persistent storage.
+     * Loads an existing scope instance from persistent storage synchronously, reusing an
+     * already-open database connection. Intended for use on the DB executor thread where a
+     * connection is already available (e.g. during quest tree loading at startup or rescoping).
+     * <p>
+     * For callers that do not have an open connection, use {@link #loadScope(UUID, UUID)} instead.
+     *
+     * @param connection the open database connection to use
+     * @param questUUID  the UUID of the quest instance whose scope to load
+     * @return the fully populated scope instance
+     */
+    @NotNull
+    public abstract P loadScope(@NotNull Connection connection, @NotNull UUID questUUID);
+
+    /**
+     * Loads an existing scope instance from persistent storage asynchronously, opening its
+     * own connection on the DB executor thread. Use this from the main thread or any context
+     * without an existing connection. For DB-thread callers with an open connection, prefer
+     * {@link #loadScope(Connection, UUID)}.
      *
      * @param questUUID the UUID of the quest instance
      * @param scopeUUID the UUID of the scope record (if applicable)

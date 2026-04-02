@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * DAO for persisting and loading {@link PendingReward} data.
@@ -54,7 +55,7 @@ public class PendingRewardDAO {
             statement.executeUpdate();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.SEVERE, "[PendingRewardDAO] Failed to create table " + TABLE_NAME, e);
             return false;
         }
     }
@@ -78,7 +79,7 @@ public class PendingRewardDAO {
                 try (PreparedStatement ps = connection.prepareStatement(sql)) {
                     ps.executeUpdate();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    McRPG.getInstance().getLogger().log(Level.SEVERE, "[PendingRewardDAO] Failed to create index during migration", e);
                 }
             }
             TableVersionHistoryDAO.setTableVersion(connection, TABLE_NAME, 1);
@@ -111,7 +112,7 @@ public class PendingRewardDAO {
             statement.setLong(7, pendingReward.getExpiresAt());
             statements.add(statement);
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[PendingRewardDAO] Failed to prepare savePendingReward statement for reward " + pendingReward.getId(), e);
         }
         return statements;
     }
@@ -135,7 +136,7 @@ public class PendingRewardDAO {
             deleteExpired.setLong(2, now);
             deleteExpired.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[PendingRewardDAO] Failed to delete expired rewards for player " + playerUUID, e);
         }
 
         try (PreparedStatement select = connection.prepareStatement(
@@ -158,7 +159,7 @@ public class PendingRewardDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[PendingRewardDAO] Failed to load pending rewards for player " + playerUUID, e);
         }
         return rewards;
     }
@@ -193,7 +194,7 @@ public class PendingRewardDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[PendingRewardDAO] Failed to list pending rewards for player " + playerUUID, e);
         }
         return rewards;
     }
@@ -211,7 +212,7 @@ public class PendingRewardDAO {
             ps.setString(1, playerUUID.toString());
             return ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[PendingRewardDAO] Failed to delete all pending rewards for player " + playerUUID, e);
         }
         return 0;
     }
@@ -228,7 +229,7 @@ public class PendingRewardDAO {
             statement.setString(1, rewardId.toString());
             statement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[PendingRewardDAO] Failed to delete pending reward " + rewardId, e);
         }
     }
 }

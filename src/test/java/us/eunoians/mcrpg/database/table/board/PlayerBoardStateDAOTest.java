@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.List;
 import java.util.UUID;
 
@@ -59,8 +60,8 @@ public class PlayerBoardStateDAOTest extends McRPGBaseTest {
 
         PlayerBoardStateDAO.saveState(mockConnection, playerUUID, boardKey, offeringId, "VISIBLE", null, null);
 
-        verify(mockStatement).setNull(eq(5), eq(java.sql.Types.BIGINT));
-        verify(mockStatement).setNull(eq(6), eq(java.sql.Types.VARCHAR));
+        verify(mockStatement).setNull(eq(5), eq(Types.BIGINT));
+        verify(mockStatement).setNull(eq(6), eq(Types.VARCHAR));
     }
 
     @DisplayName("countActiveQuestsFromBoard returns zero when no results")

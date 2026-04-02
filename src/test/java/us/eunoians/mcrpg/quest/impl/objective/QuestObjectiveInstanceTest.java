@@ -9,6 +9,7 @@ import us.eunoians.mcrpg.event.quest.QuestObjectiveProgressEvent;
 import us.eunoians.mcrpg.quest.QuestTestHelper;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
+import us.eunoians.mcrpg.quest.impl.QuestState;
 import us.eunoians.mcrpg.quest.impl.stage.QuestStageInstance;
 
 import java.util.UUID;
@@ -104,7 +105,7 @@ public class QuestObjectiveInstanceTest extends McRPGBaseTest {
     public void progress_expiresQuest_whenQuestExpired() {
         quest.setExpirationTime(1L);
         objective.progress(1, UUID.randomUUID());
-        assertEquals(us.eunoians.mcrpg.quest.impl.QuestState.CANCELLED, quest.getQuestState());
+        assertEquals(QuestState.CANCELLED, quest.getQuestState());
     }
 
     @DisplayName("Given a valid objective, when setting requiredProgression to zero, then it throws IllegalArgumentException")

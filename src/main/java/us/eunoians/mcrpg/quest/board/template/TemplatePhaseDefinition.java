@@ -23,6 +23,7 @@ public record TemplatePhaseDefinition(
         @Nullable TemplateCondition condition
 ) {
 
+    /** Canonical constructor — makes {@code stages} immutable. */
     public TemplatePhaseDefinition {
         stages = List.copyOf(stages);
     }
@@ -35,13 +36,23 @@ public record TemplatePhaseDefinition(
         this(completionMode, stages, null);
     }
 
+    /**
+     * Returns the optional generation-time condition that must evaluate to {@code true}
+     * for this phase to be included in the generated quest.
+     *
+     * @return the condition, or empty if this phase is unconditional
+     */
     @NotNull
     public Optional<TemplateCondition> getCondition() {
         return Optional.ofNullable(condition);
     }
 
     /**
-     * Returns a copy of this phase with the given stages list.
+     * Returns a copy of this phase with the given stages list, preserving all
+     * other fields (completion mode, condition).
+     *
+     * @param newStages the replacement stages list
+     * @return a new {@link TemplatePhaseDefinition} with the updated stages
      */
     @NotNull
     public TemplatePhaseDefinition withStages(@NotNull List<TemplateStageDefinition> newStages) {

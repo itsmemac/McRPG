@@ -3,7 +3,6 @@ package us.eunoians.mcrpg.quest.board.configuration;
 import com.diamonddagger590.mccore.configuration.ReloadableContent;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
-import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.configuration.file.BoardConfigFile;
@@ -31,27 +30,8 @@ public class ReloadableRarityConfig extends ReloadableContent<Map<NamespacedKey,
                     NamespacedKey key = new NamespacedKey(McRPGMethods.getMcRPGNamespace(), rawKey.toLowerCase());
                     Section raritySection = section.getSection(rawKey);
 
-                    Integer customModelData = null;
-                    boolean glint = false;
-                    Material material = null;
-                    String nameColor = null;
-
                     Section displaySection = raritySection.getSection("display");
-                    if (displaySection != null) {
-                        glint = displaySection.getBoolean("glint", false);
-                        if (displaySection.contains("custom-model-data")) {
-                            customModelData = displaySection.getInt("custom-model-data");
-                        }
-                        if (displaySection.contains("material")) {
-                            try {
-                                material = Material.valueOf(displaySection.getString("material").toUpperCase());
-                            } catch (IllegalArgumentException ignored) {
-                            }
-                        }
-                        if (displaySection.contains("name-color")) {
-                            nameColor = displaySection.getString("name-color");
-                        }
-                    }
+                    String nameColor = displaySection != null ? displaySection.getString("name-color") : null;
 
                     map.put(key, new QuestRarity(
                             key,
@@ -59,9 +39,7 @@ public class ReloadableRarityConfig extends ReloadableContent<Map<NamespacedKey,
                             raritySection.getDouble("difficulty-multiplier"),
                             raritySection.getDouble("reward-multiplier"),
                             McRPGExpansion.EXPANSION_KEY,
-                            customModelData,
-                            glint,
-                            material,
+                            displaySection,
                             nameColor
                     ));
                 }

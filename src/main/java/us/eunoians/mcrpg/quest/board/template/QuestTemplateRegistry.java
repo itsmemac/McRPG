@@ -147,6 +147,13 @@ public class QuestTemplateRegistry implements Registry<QuestTemplate> {
         configLoadedKeys.clear();
     }
 
+    /**
+     * Returns {@code true} if a template with the same {@link QuestTemplate#getKey()} is
+     * currently present in this registry.
+     *
+     * @param template the template to check
+     * @return {@code true} if the template is registered
+     */
     @Override
     public boolean registered(@NotNull QuestTemplate template) {
         return templates.containsKey(template.getKey());

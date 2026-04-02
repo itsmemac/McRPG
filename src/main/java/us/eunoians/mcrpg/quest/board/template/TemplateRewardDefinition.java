@@ -13,13 +13,17 @@ import java.util.Map;
  * existing {@code Parser} system at generation time.
  *
  * @param typeKey the reward type key (e.g., {@code mcrpg:experience})
+ * @param label   the reward's YAML section key (e.g., {@code "champion_title"}); used to derive
+ *                the auto-generated localization route at generation time
  * @param config  raw config map, may contain expression strings with variable references
  */
 public record TemplateRewardDefinition(
         @NotNull NamespacedKey typeKey,
+        @NotNull String label,
         @NotNull Map<String, Object> config
 ) {
 
+    /** Canonical constructor — makes {@code config} immutable. */
     public TemplateRewardDefinition {
         config = Map.copyOf(config);
     }

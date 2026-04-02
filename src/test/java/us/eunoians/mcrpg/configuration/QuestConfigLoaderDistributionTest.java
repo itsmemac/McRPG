@@ -5,10 +5,13 @@ import org.bukkit.NamespacedKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
 import us.eunoians.mcrpg.McRPGBaseTest;
 import us.eunoians.mcrpg.quest.board.distribution.DistributionTierConfig;
 import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionConfig;
 import us.eunoians.mcrpg.quest.board.distribution.RewardSplitMode;
+import us.eunoians.mcrpg.quest.board.template.condition.ConditionParser;
+import us.eunoians.mcrpg.quest.board.template.condition.TemplateConditionRegistry;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
 import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveTypeRegistry;
 import us.eunoians.mcrpg.quest.objective.type.builtin.BlockBreakObjectiveType;
@@ -32,7 +35,9 @@ public class QuestConfigLoaderDistributionTest extends McRPGBaseTest {
 
     @BeforeEach
     public void setup() {
-        loader = new QuestConfigLoader();
+        TemplateConditionRegistry conditionRegistry = RegistryAccess.registryAccess()
+                .registry(McRPGRegistryKey.TEMPLATE_CONDITION);
+        loader = new QuestConfigLoader(new ConditionParser(conditionRegistry));
         QuestObjectiveTypeRegistry objReg = RegistryAccess.registryAccess()
                 .registry(McRPGRegistryKey.QUEST_OBJECTIVE_TYPE);
         if (objReg.get(BlockBreakObjectiveType.KEY).isEmpty()) {

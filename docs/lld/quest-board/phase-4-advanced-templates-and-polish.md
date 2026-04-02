@@ -4,7 +4,7 @@
 > **Phase 1 LLD:** [phase-1-core-board-infrastructure.md](phase-1-core-board-infrastructure.md)
 > **Phase 2 LLD:** [phase-2-per-player-slots-and-templates.md](phase-2-per-player-slots-and-templates.md)
 > **Phase 3 LLD:** [phase-3-land-quests-and-rewards.md](phase-3-land-quests-and-rewards.md)
-> **Status:** DESIGN
+> **Status:** COMPLETE — all implementation items finished
 
 ## Scope
 
@@ -406,13 +406,36 @@ public interface TemplateCondition extends McRPGContent {
     /**
      * Creates a configured instance of this condition type from the given YAML section.
      * Called during template parsing to construct condition instances from config.
+     * <p>
+     * When called during deserialization of a {@code RewardFallback} snapshot, the section
+     * is an in-memory {@link YamlDocument} populated from JSON; implementations must not
+     * rely on config file metadata (comments, ordering guarantees, etc.).
      *
      * @param section the YAML section containing condition-specific parameters
      * @return a configured condition instance
      */
     @NotNull TemplateCondition fromConfig(@NotNull Section section);
+
+    /**
+     * Serializes this condition's configuration state to a map that can be stored as JSON
+     * and later reconstructed via {@link #fromConfig(Section)} using the
+     * {@code GeneratedQuestDefinitionSerializer} bridge. Keys must match what
+     * {@code fromConfig} expects to read from its {@link Section}.
+     * <p>
+     * Implementations must <em>not</em> include a {@code "type"} key — the serializer
+     * injects the type discriminator automatically (e.g., inside a {@code CompoundCondition}).
+     * <p>
+     * Added alongside {@code RewardFallback} serialization support. Third-party
+     * implementations must override this method; the absence of a {@code default}
+     * is intentional — see the extensibility note in section 1.1.
+     *
+     * @return a serializable map of configuration key-value pairs
+     */
+    @NotNull Map<String, Object> serializeConfig();
 }
 ```
+
+> **Implementation note (added post-design):** `serializeConfig()` was added when `RewardFallback` serialization was implemented. It is an abstract method with no `default` — this is a binary-incompatible addition for existing third-party implementations. A future release should add `default Map<String, Object> serializeConfig() { return Map.of(); }` to restore backward compatibility for simple stateless conditions.
 
 **Why extensible (not sealed)?** The codebase's registry pattern is consistently used for all pluggable types (`QuestObjectiveType`, `QuestRewardType`, `RewardDistributionType`, `QuestSource`, `RefreshType`). A sealed interface would be the only exception. Third-party plugins have legitimate condition needs that cannot be composed from built-in types:
 
@@ -1591,7 +1614,7 @@ public final class QuestAcceptorDistributionType implements RewardDistributionTy
     @Override
     public Set<UUID> resolve(@NotNull ContributionSnapshot snapshot,
                              @NotNull DistributionTierConfig tier) {
-        UUID acceptor = snapshot.getQuestAcceptorUUID();
+        UUID acceptor = snapshot.questAcceptorUUID();
         if (acceptor == null) return Set.of();
         return Set.of(acceptor);
     }
@@ -1604,7 +1627,7 @@ public final class QuestAcceptorDistributionType implements RewardDistributionTy
 }
 ```
 
-**`ContributionSnapshot` modification:** Add `getQuestAcceptorUUID()` accessor. For scoped quests, this is the UUID of the player who clicked "Accept" on the offering. For non-scoped quests, returns `null`.
+**`ContributionSnapshot` modification:** The `questAcceptorUUID()` accessor (Java record accessor style) provides the UUID of the player who clicked "Accept" on the offering. For non-scoped quests, returns `null`.
 
 **Use cases:**
 
@@ -2318,72 +2341,87 @@ private static Optional<UUID> findTopContributor(
 
 ### 5.8 `QuestConfigLoader` -- Parse `DistributionRewardEntry` Fields
 
-Extend `parseRewardDistribution` to parse `pot-behavior`, `remainder-strategy`, and `min-scaled-amount` per reward within a distribution tier:
+> **Status:** Complete. All fields are parsed: `pot-behavior`, `remainder-strategy`, `min-scaled-amount`, `top-count`, and `fallback` (see section 5.8a for fallback parsing detail).
+
+The `parseDistributionRewardEntries` private helper parses all `DistributionRewardEntry` fields per reward within a distribution tier. The `"fallback"` key is explicitly excluded from the reward config map to avoid polluting `fromSerializedConfig`:
 
 ```java
-List<DistributionRewardEntry> rewardEntries = new ArrayList<>();
-Section rewardsSection = tierSection.getSection("rewards");
-for (String rewardKey : rewardsSection.getRoutesAsStrings(false)) {
-    Section rewardSection = rewardsSection.getSection(rewardKey);
-    QuestRewardType reward = parseReward(rewardSection, fileName, contextKey + "." + rewardKey);
-
-    PotBehavior potBehavior = rewardSection.contains("pot-behavior")
-            ? PotBehavior.valueOf(rewardSection.getString("pot-behavior"))
-            : PotBehavior.SCALE;
-    RemainderStrategy remainder = rewardSection.contains("remainder-strategy")
-            ? RemainderStrategy.valueOf(rewardSection.getString("remainder-strategy"))
-            : RemainderStrategy.DISCARD;
-    int minScaled = rewardSection.getInt("min-scaled-amount", 1);
-
-    rewardEntries.add(new DistributionRewardEntry(reward, potBehavior, remainder, minScaled));
+// Keys excluded from reward config forwarding (parsed separately):
+if ("type".equals(key) || "pot-behavior".equals(key)
+        || "remainder-strategy".equals(key) || "min-scaled-amount".equals(key)
+        || "top-count".equals(key) || "fallback".equals(key)) {
+    continue;
 }
+
+PotBehavior potBehavior = PotBehavior.SCALE;
+if (rewardSection.contains("pot-behavior")) { ... }  // with warning on invalid value
+
+RemainderStrategy remainder = RemainderStrategy.DISCARD;
+if (rewardSection.contains("remainder-strategy")) { ... }  // with warning on invalid value
+
+int minScaled = rewardSection.getInt("min-scaled-amount", 1);
+int topCount = rewardSection.getInt("top-count", 1);
+
+// fallback block parsed separately (section 5.8a)
+entries.add(new DistributionRewardEntry(reward, potBehavior, remainder, minScaled, topCount, fallback));
+```
+
+### 5.8a `QuestConfigLoader` -- Parse `fallback:` Block
+
+> **Status:** Complete. `parseSingleReward` private helper added for single-section reward parsing; fallback block parsed in `parseDistributionRewardEntries` via `ConditionParser.parseSingle` + `parseSingleReward`.
+
+The `fallback:` subsection under each distribution reward entry is parsed into a `RewardFallback`. Structure:
+
+```yaml
+rewards:
+  experience:
+    type: mcrpg:experience
+    amount: 500
+    fallback:
+      condition:
+        type: mcrpg:permission_check
+        permission: mcrpg.title.hero
+      reward:
+        type: mcrpg:experience
+        amount: 250
+```
+
+Parsing logic:
+
+```java
+RewardFallback fallback = null;
+if (rewardSection.contains("fallback")) {
+    Section fallbackSection = rewardSection.getSection("fallback");
+    TemplateCondition condition = ConditionParser.parseSingle(
+            fallbackSection.getSection("condition"));
+    Section fallbackRewardSection = fallbackSection.getSection("reward");
+    QuestRewardType fallbackReward = parseReward(
+            fallbackRewardSection, fileName, contextKey + ".fallback.reward");
+    fallback = new RewardFallback(condition, fallbackReward);
+}
+entries.add(new DistributionRewardEntry(reward, potBehavior, remainder, minScaled, topCount, fallback));
 ```
 
 ### 5.9 `QuestTemplateConfigLoader` -- Parse `DistributionRewardEntry` Fields
 
-Same parsing additions as `QuestConfigLoader` (section 5.8), applied within the template config loader's `parseRewardDistribution` call.
+> **Status:** Complete. `QuestTemplateConfigLoader` delegates to `QuestConfigLoader.parseRewardDistribution`, which now parses all `DistributionRewardEntry` fields including the `fallback:` block (via 5.8a). Template distribution tiers automatically inherit fallback parsing through this delegation.
 
-### 5.10 `GeneratedQuestDefinitionSerializer` -- Objective-Level Distribution
+### 5.10 `GeneratedQuestDefinitionSerializer` -- Objective-Level Distribution + Fallback Serialization
 
-Close the Phase 3 gap: add `reward_distribution` serialization/deserialization at the objective level.
+> **Status:** Implemented and extended beyond original scope.
 
-**In `serializeObjective()`:**
+**Original scope (Phase 3 gap closure):** objective-level `reward_distribution` serialization at the phase/stage/objective level — done. `serializeObjective()` calls `serializeDistribution()` when present; `deserializeObjective()` calls `deserializeDistribution()` when the `reward_distribution` field exists.
 
-```java
-// After existing objective fields
-objectiveDefinition.getRewardDistribution().ifPresent(dist ->
-        objectiveJson.add("reward_distribution", serializeDistribution(dist)));
-```
+**Extended scope (added with `RewardFallback`):** `serializeDistribution()` and `deserializeDistributionRewardEntries()` were also extended to handle the full `DistributionRewardEntry` including:
+- `pot_behavior`, `remainder_strategy`, `min_scaled_amount`, `top_count` JSON fields
+- A `fallback` JSON object per entry (when present), containing `condition_type`, `condition_config`, `fallback_reward_type`, `fallback_reward_config`
 
-**In `deserializeObjective()`:**
+**New helpers added:**
+- `deserializeFallback(JsonObject, TemplateConditionRegistry, QuestRewardTypeRegistry, String)` — reconstructs a `RewardFallback` from JSON, looking up types in registries
+- `createConfiguredCondition(TemplateCondition, Map, String)` — bridges from JSON config map to `YamlDocument` and calls `fromConfig(Section)` on the base condition
+- `populateDocument(YamlDocument, Map, String)` — recursively populates an in-memory `YamlDocument` from a possibly-nested config map, required for `CompoundCondition` round-trips
 
-```java
-// After existing objective fields
-RewardDistributionConfig objDistribution = null;
-if (objectiveJson.has("reward_distribution")) {
-    objDistribution = deserializeDistribution(
-            objectiveJson.getAsJsonObject("reward_distribution"), rewardTypeRegistry);
-}
-```
-
-**Extend `serializeDistribution()` and `deserializeDistribution()`** to include the new `DistributionRewardEntry` fields (`pot-behavior`, `remainder-strategy`, `min-scaled-amount`):
-
-```java
-// In serializeDistribution, per reward entry:
-rewardJson.addProperty("pot_behavior", entry.potBehavior().name());
-rewardJson.addProperty("remainder_strategy", entry.remainderStrategy().name());
-rewardJson.addProperty("min_scaled_amount", entry.minScaledAmount());
-
-// In deserializeDistribution, per reward entry:
-PotBehavior potBehavior = rewardObj.has("pot_behavior")
-        ? PotBehavior.valueOf(rewardObj.get("pot_behavior").getAsString())
-        : PotBehavior.SCALE;
-RemainderStrategy remainder = rewardObj.has("remainder_strategy")
-        ? RemainderStrategy.valueOf(rewardObj.get("remainder_strategy").getAsString())
-        : RemainderStrategy.DISCARD;
-int minScaled = rewardObj.has("min_scaled_amount")
-        ? rewardObj.get("min_scaled_amount").getAsInt() : 1;
-```
+**Signature change:** `deserialize()` now takes a `TemplateConditionRegistry` as a fourth parameter (threaded through to `deserializeFallback`). This is a binary-incompatible change for any external callers — see extensibility review notes.
 
 ### 5.11 `BoardOfferingSlot` -- Rich Lore and Rarity Effects
 
@@ -2459,21 +2497,47 @@ definition.getRewardDistribution().ifPresent(distConfig -> {
 });
 ```
 
-### 5.13 `QuestRarity` -- Add Visual Configuration Fields
+### 5.13 `QuestRarity` -- Visual Configuration Fields
+
+> **Status:** Implemented via a different approach than originally designed. Typed `getCustomModelData()` / `hasGlint()` Java fields were **not added**.
+
+Instead, `QuestRarity` carries an `@Nullable Section iconSection` (the raw YAML `display:` section from `board.yml`) and a `configureIcon(ItemBuilder)` method:
 
 ```java
-private final Integer customModelData; // nullable
-private final boolean glint;
-
 @NotNull
-public Optional<Integer> getCustomModelData() {
-    return Optional.ofNullable(customModelData);
+public ItemBuilder configureIcon(@NotNull ItemBuilder builder) {
+    if (iconSection != null) {
+        return ItemBuilder.from(iconSection, builder);
+    }
+    return builder;
 }
-
-public boolean hasGlint() { return glint; }
 ```
 
-Parsed from `board.yml` rarity entries.
+`ItemBuilder.from(Section, ItemBuilder)` handles any key that `ItemBuilderConfigurationKeys` recognises, including `material`, `custom-model-data`, and `settings.glowing`. This covers both the glint and custom-model-data cases generically, and lets server owners configure any additional visual properties without code changes.
+
+Both `BoardOfferingSlot` and `ScopedOfferingSlot` call `rarity.configureIcon(builder)` after building the base item, applying all rarity visual effects in one call. The `board.yml` syntax is therefore:
+
+```yaml
+rarities:
+  RARE:
+    weight: 10
+    difficulty-multiplier: 1.5
+    reward-multiplier: 2.0
+    display:
+      custom-model-data: 1001
+      settings:
+        glowing: true
+  LEGENDARY:
+    weight: 5
+    difficulty-multiplier: 2.0
+    reward-multiplier: 3.0
+    display:
+      custom-model-data: 1002
+      settings:
+        glowing: true
+```
+
+The weight-threshold-based glint approach described in section 5.11 was not implemented — per-rarity `settings.glowing` in the `display:` section is used instead, giving finer-grained control.
 
 ### 5.14 `ExperienceRewardType` -- Override `getNumericAmount`
 
@@ -2923,28 +2987,42 @@ gui:
 
 ### 6.5 `board.yml` Rarity Visual Configuration
 
+The `display:` section on each rarity uses the same `ItemBuilder.from(Section)` format used throughout the GUI localization system. Any item property can be driven from config without schema changes. The `settings:` sub-section passes through to `ItemMeta` setters (e.g., `glowing: true` maps to enchantment glint).
+
 ```yaml
 rarities:
   COMMON:
     weight: 60
     difficulty-multiplier: 1.0
     reward-multiplier: 1.0
+    display:
+      material: PAPER
+      name-color: "<white>"
   UNCOMMON:
     weight: 25
     difficulty-multiplier: 1.25
     reward-multiplier: 1.5
+    display:
+      material: WRITABLE_BOOK
+      name-color: "<green>"
   RARE:
     weight: 10
     difficulty-multiplier: 1.5
     reward-multiplier: 2.0
-    glint: true
-    custom-model-data: 1001
+    display:
+      material: ENCHANTED_BOOK
+      name-color: "<aqua>"
+      settings:
+        glowing: true
   LEGENDARY:
     weight: 5
     difficulty-multiplier: 2.0
     reward-multiplier: 3.0
-    glint: true
-    custom-model-data: 1002
+    display:
+      material: NETHER_STAR
+      name-color: "<gold>"
+      settings:
+        glowing: true
 ```
 
 ---
@@ -3118,11 +3196,13 @@ Existing template and quest YAML files work identically without modification.
 
 ## 9. Edge Case Hardening
 
+> **Status:** All three production hardening items (9.1–9.3) are implemented in `QuestBoardManager`. Tests covering the state-machine transitions, orphaned repair, and missed-rotation detection live in `QuestSystemBoundaryTest`.
+
 ### 9.1 Concurrent Acceptance Races
 
 When two players click the same shared offering simultaneously, both may pass the `canTransitionTo(ACCEPTED)` check before either writes to the database.
 
-**Solution:** `QuestBoardManager.acceptOffering()` uses a synchronized block on the offering UUID:
+**Solution:** `QuestBoardManager.acceptOffering()` uses a synchronized block on the offering UUID — **implemented:**
 
 ```java
 private final ConcurrentHashMap<UUID, Object> offeringLocks = new ConcurrentHashMap<>();
@@ -3145,7 +3225,7 @@ The lock map is cleaned up during rotation (stale entries removed for expired of
 
 If the server crashes or restarts between generating offerings and the next rotation trigger, the `QuestBoardRotationTask` must detect and handle the stale state.
 
-**Solution:** On startup, `QuestBoardManager.initialize()` checks the latest rotation timestamp from the database. If the current time has passed the next expected rotation time, an immediate rotation is triggered:
+**Solution:** On startup, `QuestBoardManager.initialize()` checks the latest rotation timestamp from the database. If the current time has passed the next expected rotation time, an immediate rotation is triggered — **implemented:**
 
 ```java
 public void initialize() {
@@ -3163,7 +3243,7 @@ public void initialize() {
 
 ### 9.3 Offering State Consistency Validation
 
-On board open, validate that offerings loaded from cache or database are in a consistent state. Detect and repair orphaned states (e.g., an offering marked `ACCEPTED` but with no corresponding `QuestInstance`):
+On board open, validate that offerings loaded from cache or database are in a consistent state. Detect and repair orphaned states (e.g., an offering marked `ACCEPTED` but with no corresponding `QuestInstance`) — **implemented:**
 
 ```java
 private void validateOfferingStates(@NotNull List<BoardOffering> offerings) {
@@ -3198,48 +3278,50 @@ If condition evaluation filters out enough objectives that a stage's `min-count`
 
 ## 10. Implementation Order
 
-1. **`TemplateCondition`** extensible interface + `TemplateConditionRegistry` + `TemplateConditionContentPack` + `McRPGRegistryKey.TEMPLATE_CONDITION`
-2. **`ConditionContext`** record with factory methods (`forTemplateGeneration`, `forPersonalGeneration`, `forPrerequisiteCheck`, `forRewardGrant`)
-3. **`QuestCompletionHistory`** interface + DAO-backed implementation
-4. **Built-in conditions:** `RarityCondition`, `ChanceCondition`, `VariableCondition`, `CompoundCondition`, `PermissionCondition`, `CompletionPrerequisiteCondition` (registered by `McRPGExpansion`)
-5. **`TemplateObjectiveDefinition`** -- add `condition` and `weight` fields
-6. **`TemplateStageDefinition`** -- add `condition` and `objectiveSelection` fields
-7. **`TemplatePhaseDefinition`** -- add `condition` field
-8. **`QuestTemplate`** -- add optional `prerequisite` field; **category config** -- add optional `prerequisite` field
-9. **`ObjectiveSelectionConfig`** record and `WeightedObjectiveSelector` utility
-10. **`QuestTemplateEngine`** -- condition evaluation, prerequisite filtering, and weighted selection in `generate()`
-11. **`QuestTemplateConfigLoader`** -- parse conditions (shorthand + explicit via named-key maps), weights, selection config, and prerequisites
-12. **Unit tests: template conditions** (all 6 condition types, compound logic, variable checks, permission checks, completion prerequisites, third-party conditions via registry)
-13. **Unit tests: weighted objective selection** (weighted random, min/max bounds, exhaustion)
-14. **Unit tests: template engine with conditions** (phase/stage/objective filtering, prerequisite gating, edge cases)
-15. **`RewardFallback`** record + **`QuestRewardEntry`** wrapper for standard rewards
-16. **`PotBehavior`** enum
-17. **`RemainderStrategy`** enum
-18. **`DistributionRewardEntry`** record (with `topCount`, optional `RewardFallback`)
-19. **`DistributionTierConfig`** -- upgrade to `DistributionRewardEntry` list
-20. **`QuestRewardType.getNumericAmount()`** default method + built-in overrides
-21. **`ScalableCommandRewardType`** reward type implementation
-22. **`QuestAcceptorDistributionType`** (`mcrpg:quest_acceptor`) + `ContributionSnapshot.getQuestAcceptorUUID()`
-23. **`McRPGExpansion`** -- register `ScalableCommandRewardType` + `QuestAcceptorDistributionType` + all 6 built-in condition types
-24. **`QuestRewardDistributionResolver`** -- advanced pot distribution (pot-behavior with TOP_N, remainder, min-scaled-amount) + fallback evaluation at grant time
-25. **`QuestConfigLoader`** -- parse `DistributionRewardEntry` fields (including `top-count`) + fallback blocks + validate `QUEST_ACCEPTOR` is scoped-only
-26. **`QuestTemplateConfigLoader`** -- parse `DistributionRewardEntry` fields + fallback blocks + `QuestRewardEntry` for standard rewards
-27. **`GeneratedQuestDefinitionSerializer`** -- objective-level distribution + new reward entry fields + fallback serialization
-28. **Unit tests: advanced pot distribution** (TOP_N with various counts, remainder strategies, min-scaled-amount, ScalableCommandRewardType)
-29. **Unit tests: reward fallback** (fallback condition evaluation, primary vs fallback resolution, standard + distribution contexts)
-30. **Unit tests: prerequisite conditions** (template-level, category-level, stacking, personal-only enforcement)
-31. **Unit tests: QUEST_ACCEPTOR distribution** (scoped quest resolution, offline handling, non-scoped validation error)
-32. **`QuestRarity`** -- add `glint` and `customModelData` fields
-33. **`OfferingLoreBuilder`** utility
-34. **`DistributionPreviewResolver`** utility + `DistributionPreviewEntry` record
-35. **`BoardOfferingSlot`** -- rich lore via `OfferingLoreBuilder`, rarity visual effects
-36. **`ScopedOfferingSlot`** -- rich lore, rarity effects, distribution preview
-37. **`LocalizationKey`** additions for GUI polish
-38. **`en_gui.yml`** localization entries
-39. **Edge case hardening** -- concurrent acceptance locks, restart recovery, state validation
-40. **Multi-level distribution integration tests** (deferred from Phase 3)
-41. **Completion listener distribution tests** (deferred from Phase 3)
-42. **Integration test suite** -- end-to-end board flows
+✅ = done | ⚠️ = partial | ❌ = not started
+
+1. ✅ **`TemplateCondition`** extensible interface + `TemplateConditionRegistry` + `TemplateConditionContentPack` + `McRPGRegistryKey.TEMPLATE_CONDITION`
+2. ✅ **`ConditionContext`** record with factory methods (`forTemplateGeneration`, `forPersonalGeneration`, `forPrerequisiteCheck`, `forRewardGrant`)
+3. ✅ **`QuestCompletionHistory`** interface + DAO-backed implementation
+4. ✅ **Built-in conditions:** `RarityCondition`, `ChanceCondition`, `VariableCondition`, `CompoundCondition`, `PermissionCondition`, `CompletionPrerequisiteCondition` (registered by `McRPGExpansion`)
+5. ✅ **`TemplateObjectiveDefinition`** -- add `condition` and `weight` fields
+6. ✅ **`TemplateStageDefinition`** -- add `condition` and `objectiveSelection` fields
+7. ✅ **`TemplatePhaseDefinition`** -- add `condition` field
+8. ✅ **`QuestTemplate`** -- add optional `prerequisite` field; **category config** -- add optional `prerequisite` field
+9. ✅ **`ObjectiveSelectionConfig`** record and `WeightedObjectiveSelector` utility
+10. ✅ **`QuestTemplateEngine`** -- condition evaluation, prerequisite filtering, and weighted selection in `generate()`
+11. ✅ **`QuestTemplateConfigLoader`** -- parse conditions (shorthand + explicit via named-key maps), weights, selection config, and prerequisites
+12. ✅ **Unit tests: template conditions** (all 6 condition types + `serializeConfig()`, compound logic, variable checks, permission checks, completion prerequisites, third-party conditions via registry)
+13. ✅ **Unit tests: weighted objective selection** (weighted random, min/max bounds, exhaustion)
+14. ✅ **Unit tests: template engine with conditions** (phase/stage/objective filtering, prerequisite gating, edge cases)
+15. ✅ **`RewardFallback`** record + **`QuestRewardEntry`** wrapper for standard rewards
+16. ✅ **`PotBehavior`** enum
+17. ✅ **`RemainderStrategy`** enum
+18. ✅ **`DistributionRewardEntry`** record (with `topCount`, optional `RewardFallback`)
+19. ✅ **`DistributionTierConfig`** -- upgrade to `DistributionRewardEntry` list
+20. ✅ **`QuestRewardType.getNumericAmount()`** default method + built-in overrides (`ExperienceRewardType`, `ScalableCommandRewardType`)
+21. ✅ **`ScalableCommandRewardType`** reward type implementation
+22. ✅ **`QuestAcceptorDistributionType`** (`mcrpg:quest_acceptor`) + `ContributionSnapshot.questAcceptorUUID()`
+23. ✅ **`McRPGExpansion`** -- register `ScalableCommandRewardType` + `QuestAcceptorDistributionType` + all 6 built-in condition types
+24. ✅ **`QuestRewardDistributionResolver`** -- advanced pot distribution (pot-behavior with TOP_N, remainder, min-scaled-amount) + fallback evaluation at grant time
+25. ✅ **`QuestConfigLoader`** -- parse `DistributionRewardEntry` fields (including `top-count`, fallback blocks) + validate `QUEST_ACCEPTOR` is scoped-only (sections 5.8, 5.8a)
+26. ✅ **`QuestTemplateConfigLoader`** -- parse `DistributionRewardEntry` fields + fallback blocks (via delegation) + `QuestRewardEntry` for standard rewards (section 5.9)
+27. ✅ **`GeneratedQuestDefinitionSerializer`** -- objective-level distribution + new reward entry fields + fallback serialization (extended beyond original scope; see section 5.10)
+28. ✅ **Unit tests: advanced pot distribution** (`PotBehaviorDistributionTest`, `RemainderStrategyDistributionTest`, `MinScaledAmountDistributionTest`, `QuestRewardTypeScalingTest`)
+29. ✅ **Unit tests: reward fallback** (`RewardFallbackTest`, `GeneratedQuestDefinitionSerializerTest` fallback round-trip tests)
+30. ✅ **Unit tests: prerequisite conditions** (`PrerequisiteGatingTest`)
+31. ✅ **Unit tests: QUEST_ACCEPTOR distribution** (`QuestAcceptorDistributionTypeTest`)
+32. ✅ **`QuestRarity`** -- visual configuration via `iconSection` + `configureIcon(ItemBuilder)` (different approach to typed fields; see section 5.13)
+33. ✅ **`OfferingLoreBuilder`** utility
+34. ✅ **`DistributionPreviewResolver`** utility + `DistributionPreviewEntry` record
+35. ✅ **`BoardOfferingSlot`** -- rich lore via `OfferingLoreBuilder`, rarity visual effects via `rarity.configureIcon(builder)`
+36. ✅ **`ScopedOfferingSlot`** -- rich lore, rarity effects, distribution preview
+37. ✅ **`LocalizationKey`** additions for GUI polish
+38. ✅ **`en_gui.yml`** localization entries
+39. ✅ **Edge case hardening** -- concurrent acceptance locks (`offeringLocks` in `QuestBoardManager`), restart recovery (missed rotation detection in `initialize()`), state validation (`validateOfferingStates()`)
+40. ✅ **Multi-level distribution integration tests** (`MultiLevelDistributionIntegrationTest`)
+41. ✅ **Completion listener distribution tests** (`CompletionListenerDistributionTest`)
+42. ✅ **Integration test suite** (`TemplateGenerationIntegrationTest`)
 
 ---
 
@@ -3414,7 +3496,7 @@ If condition evaluation filters out enough objectives that a stage's `min-count`
 - Config validation: `QUEST_ACCEPTOR` on non-scoped quest → `QuestConfigLoader` logs error and skips tier
 - Config validation: `QUEST_ACCEPTOR` on scoped quest → accepted normally
 - Split mode and pot-behavior are effectively no-ops (single recipient): reward granted in full regardless of settings
-- `ContributionSnapshot.getQuestAcceptorUUID()` returns correct UUID from scoped quest acceptance
+- `ContributionSnapshot.questAcceptorUUID()` returns correct UUID from scoped quest acceptance
 
 ### 11.18 `OfferingLoreBuilderTest`
 - Offering with single objective → lore contains objective summary

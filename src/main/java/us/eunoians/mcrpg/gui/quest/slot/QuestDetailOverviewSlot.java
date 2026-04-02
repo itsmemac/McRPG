@@ -18,9 +18,11 @@ import us.eunoians.mcrpg.quest.impl.QuestInstance;
 import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -31,7 +33,8 @@ import java.util.Set;
  */
 public class QuestDetailOverviewSlot implements McRPGSlot {
 
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy HH:mm");
+    private static final DateTimeFormatter DATE_FORMAT =
+            DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm", Locale.ROOT).withZone(ZoneOffset.UTC);
 
     private final NamespacedKey questKey;
     @Nullable
@@ -83,16 +86,23 @@ public class QuestDetailOverviewSlot implements McRPGSlot {
         if (questInstance != null) {
             placeholders.put("quest_state", questInstance.getQuestState().name());
             questInstance.getStartTime().ifPresent(t ->
-                    placeholders.put("start_time", DATE_FORMAT.format(new Date(t))));
+                    placeholders.put("start_time", DATE_FORMAT.format(Instant.ofEpochMilli(t))));
             questInstance.getEndTime().ifPresent(t ->
-                    placeholders.put("end_time", DATE_FORMAT.format(new Date(t))));
+                    placeholders.put("end_time", DATE_FORMAT.format(Instant.ofEpochMilli(t))));
             questInstance.getExpirationTime().ifPresent(t ->
-                    placeholders.put("expiration_time", DATE_FORMAT.format(new Date(t))));
+                    placeholders.put("expiration_time", DATE_FORMAT.format(Instant.ofEpochMilli(t))));
         } else if (completionRecord != null) {
-            placeholders.put("quest_state", "COMPLETED");
-            placeholders.put("completed_date", DATE_FORMAT.format(new Date(completionRecord.completedAt())));
+            placeholders.put("quest_state", RegistryAccess.registryAccess()
+                    .registry(RegistryKey.MANAGER)
+                    .manager(McRPGManagerKey.LOCALIZATION)
+                    .getLocalizedMessage(mcRPGPlayer, LocalizationKey.QUEST_DETAIL_GUI_STATE_COMPLETED));
+            placeholders.put("completed_date", DATE_FORMAT.format(Instant.ofEpochMilli(completionRecord.completedAt())));
         } else {
-            placeholders.put("quest_state", "PREVIEW");
+            String previewLabel = RegistryAccess.registryAccess()
+                    .registry(RegistryKey.MANAGER)
+                    .manager(McRPGManagerKey.LOCALIZATION)
+                    .getLocalizedMessage(mcRPGPlayer, LocalizationKey.QUEST_DETAIL_GUI_STATE_PREVIEW);
+            placeholders.put("quest_state", previewLabel);
         }
 
         int phaseCount = defOpt.map(QuestDefinition::getPhaseCount).orElse(0);

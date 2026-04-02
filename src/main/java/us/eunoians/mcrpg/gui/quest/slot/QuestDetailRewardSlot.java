@@ -9,6 +9,7 @@ import us.eunoians.mcrpg.configuration.file.localization.LocalizationKey;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.gui.quest.QuestDetailGui;
 import us.eunoians.mcrpg.gui.slot.McRPGSlot;
+import us.eunoians.mcrpg.localization.McRPGLocalizationManager;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
 import us.eunoians.mcrpg.quest.definition.QuestObjectiveDefinition;
 import us.eunoians.mcrpg.quest.definition.QuestPhaseDefinition;
@@ -44,6 +45,9 @@ public class QuestDetailRewardSlot implements McRPGSlot {
     @NotNull
     @Override
     public ItemBuilder getItem(@NotNull McRPGPlayer mcRPGPlayer) {
+        McRPGLocalizationManager localization = RegistryAccess.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(McRPGManagerKey.LOCALIZATION);
         Map<String, String> placeholders = new HashMap<>();
         List<String> rewardLines = new ArrayList<>();
         boolean hasAnyReward = false;
@@ -51,9 +55,12 @@ public class QuestDetailRewardSlot implements McRPGSlot {
         // Quest-level rewards
         List<QuestRewardType> questRewards = definition.getRewards();
         if (!questRewards.isEmpty()) {
-            rewardLines.add("<gold><bold>Completion Rewards:");
+            rewardLines.add(localization.getLocalizedMessage(mcRPGPlayer,
+                    LocalizationKey.QUEST_DETAIL_GUI_REWARD_COMPLETION_HEADER));
             for (QuestRewardType reward : questRewards) {
-                rewardLines.add("<gray>  - <white>" + reward.describeForDisplay());
+                rewardLines.add(localization.getLocalizedMessage(mcRPGPlayer,
+                        LocalizationKey.QUEST_DETAIL_GUI_REWARD_ENTRY_LINE,
+                        Map.of("reward", reward.describeForDisplay(mcRPGPlayer))));
             }
             hasAnyReward = true;
         }
@@ -71,9 +78,13 @@ public class QuestDetailRewardSlot implements McRPGSlot {
                         }
                         String objDesc = obj.getDescription(mcRPGPlayer, definition.getQuestKey());
                         String objLabel = truncate(objDesc, 40);
-                        rewardLines.add("<gold>Phase " + phaseNum + " - " + objLabel + ":");
+                        rewardLines.add(localization.getLocalizedMessage(mcRPGPlayer,
+                                LocalizationKey.QUEST_DETAIL_GUI_REWARD_PHASE_HEADER,
+                                Map.of("phase", String.valueOf(phaseNum), "objective", objLabel)));
                         for (QuestRewardType reward : objRewards) {
-                            rewardLines.add("<gray>  - <white>" + reward.describeForDisplay());
+                            rewardLines.add(localization.getLocalizedMessage(mcRPGPlayer,
+                                    LocalizationKey.QUEST_DETAIL_GUI_REWARD_ENTRY_LINE,
+                                    Map.of("reward", reward.describeForDisplay(mcRPGPlayer))));
                         }
                         hasAnyReward = true;
                     }
@@ -82,15 +93,14 @@ public class QuestDetailRewardSlot implements McRPGSlot {
         }
 
         if (!hasAnyReward) {
-            rewardLines.add("<gray>No rewards listed");
+            rewardLines.add(localization.getLocalizedMessage(mcRPGPlayer,
+                    LocalizationKey.QUEST_DETAIL_GUI_REWARD_SLOT_NO_REWARDS));
         }
 
         placeholders.put("quest_name", definition.getDisplayName(mcRPGPlayer));
 
-        ItemBuilder builder = ItemBuilder.from(RegistryAccess.registryAccess()
-                        .registry(RegistryKey.MANAGER)
-                        .manager(McRPGManagerKey.LOCALIZATION)
-                        .getLocalizedSection(mcRPGPlayer, LocalizationKey.QUEST_DETAIL_GUI_REWARD_SLOT_DISPLAY_ITEM))
+        ItemBuilder builder = ItemBuilder.from(localization.getLocalizedSection(mcRPGPlayer,
+                        LocalizationKey.QUEST_DETAIL_GUI_REWARD_SLOT_DISPLAY_ITEM))
                 .addPlaceholders(placeholders);
 
         for (String line : rewardLines) {

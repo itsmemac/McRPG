@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.List;
 import java.util.UUID;
 
@@ -66,7 +67,7 @@ public class ScopedBoardStateDAOTest extends McRPGBaseTest {
                 UUID.randomUUID(), "VISIBLE", null, null, null);
 
         assertFalse(result.isEmpty());
-        verify(mockPs).setNull(eq(6), eq(java.sql.Types.BIGINT));
+        verify(mockPs).setNull(eq(6), eq(Types.BIGINT));
         verify(mockPs).setString(7, null);
         verify(mockPs).setString(8, null);
     }

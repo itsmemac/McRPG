@@ -3,6 +3,7 @@ package us.eunoians.mcrpg.quest.objective.type;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
+import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveInstance;
 
 import java.util.Optional;
@@ -56,6 +57,13 @@ public class MockQuestObjectiveType implements QuestObjectiveType {
     @Override
     public NamespacedKey getKey() {
         return key;
+    }
+
+    @NotNull
+    @Override
+    public String describeObjective(@NotNull McRPGPlayer player, long requiredProgress) {
+        String typeName = key.getKey().replace('_', ' ');
+        return typeName.substring(0, 1).toUpperCase() + typeName.substring(1) + " x" + requiredProgress;
     }
 
     @NotNull

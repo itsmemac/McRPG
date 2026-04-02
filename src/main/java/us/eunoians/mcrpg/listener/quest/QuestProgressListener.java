@@ -8,8 +8,8 @@ import us.eunoians.mcrpg.quest.QuestManager;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveInstance;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveState;
-import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveProgressContext;
 import us.eunoians.mcrpg.quest.impl.stage.QuestStageInstance;
+import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveProgressContext;
 import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveType;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 
@@ -31,13 +31,16 @@ public interface QuestProgressListener extends Listener {
     /**
      * Iterates all active quests for the given player, finds objectives whose type can process the
      * provided context, and calls {@link QuestObjectiveInstance#progress} with the computed delta.
+     * Uses a pre-resolved {@link QuestManager} to avoid a registry lookup on every invocation.
+     * Prefer this overload in concrete listener implementations that store an injected manager.
      *
-     * @param playerUUID the UUID of the player whose action triggered this progress
-     * @param context    the objective-type-specific progress context derived from the Bukkit event
+     * @param questManager the resolved quest manager
+     * @param playerUUID   the UUID of the player whose action triggered this progress
+     * @param context      the objective-type-specific progress context derived from the Bukkit event
      */
-    default void progressQuests(@NotNull UUID playerUUID, @NotNull QuestObjectiveProgressContext context) {
-        QuestManager questManager = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).manager(McRPGManagerKey.QUEST);
-
+    default void progressQuests(@NotNull QuestManager questManager,
+                                @NotNull UUID playerUUID,
+                                @NotNull QuestObjectiveProgressContext context) {
         for (var questInstance : questManager.getActiveQuestsForPlayer(playerUUID)) {
             Optional<QuestDefinition> definition = questManager.getQuestDefinition(questInstance.getQuestKey());
             if (definition.isEmpty()) {
@@ -63,5 +66,21 @@ public interface QuestProgressListener extends Listener {
                 }
             }
         }
+    }
+
+    /**
+     * Convenience overload for external implementors that do not hold an injected
+     * {@link QuestManager}. Resolves the manager from the registry on each call and
+     * delegates to {@link #progressQuests(QuestManager, UUID, QuestObjectiveProgressContext)}.
+     * Built-in listeners should prefer the overload that accepts a pre-resolved manager.
+     *
+     * @param playerUUID the UUID of the player whose action triggered this progress
+     * @param context    the objective-type-specific progress context derived from the Bukkit event
+     */
+    default void progressQuests(@NotNull UUID playerUUID, @NotNull QuestObjectiveProgressContext context) {
+        QuestManager questManager = RegistryAccess.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(McRPGManagerKey.QUEST);
+        progressQuests(questManager, playerUUID, context);
     }
 }

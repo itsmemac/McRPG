@@ -14,11 +14,13 @@ import us.eunoians.mcrpg.quest.impl.scope.impl.SinglePlayerQuestScope;
 import us.eunoians.mcrpg.quest.source.builtin.ManualQuestSource;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.when;
 
 /**
  * Tests the three-tier memory model of QuestManager.
@@ -40,7 +42,7 @@ public class QuestManagerMemoryTest extends McRPGBaseTest {
     public void getActiveQuests_returnsEmpty_whenNoneTracked() {
         QuestManager manager = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)
                 .manager(McRPGManagerKey.QUEST);
-        org.mockito.Mockito.when(manager.getActiveQuests()).thenReturn(java.util.List.of());
+        when(manager.getActiveQuests()).thenReturn(List.of());
         assertTrue(manager.getActiveQuests().isEmpty());
     }
 

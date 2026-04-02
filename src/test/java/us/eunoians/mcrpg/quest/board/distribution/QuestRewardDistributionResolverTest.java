@@ -27,6 +27,7 @@ public class QuestRewardDistributionResolverTest extends McRPGBaseTest {
 
     private RewardDistributionTypeRegistry typeRegistry;
     private QuestRarityRegistry rarityRegistry;
+    private QuestRewardDistributionResolver resolver;
 
     @BeforeEach
     void setUp() {
@@ -34,6 +35,7 @@ public class QuestRewardDistributionResolverTest extends McRPGBaseTest {
         typeRegistry.register(new TopPlayersDistributionType());
         typeRegistry.register(new ParticipatedDistributionType());
         rarityRegistry = new QuestRarityRegistry();
+        resolver = new QuestRewardDistributionResolver();
     }
 
     /**
@@ -101,7 +103,7 @@ public class QuestRewardDistributionResolverTest extends McRPGBaseTest {
             var config = new RewardDistributionConfig(List.of(tier));
             var snapshot = new ContributionSnapshot(Map.of(p1, 60L, p2, 40L), 100, Set.of(p1, p2), null);
 
-            var result = QuestRewardDistributionResolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
+            var result = resolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
 
             assertEquals(2, result.size());
             assertTrue(result.containsKey(p1));
@@ -125,7 +127,7 @@ public class QuestRewardDistributionResolverTest extends McRPGBaseTest {
             var config = new RewardDistributionConfig(List.of(tier));
             var snapshot = new ContributionSnapshot(Map.of(p1, 60L, p2, 40L), 100, Set.of(p1, p2), null);
 
-            var result = QuestRewardDistributionResolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
+            var result = resolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
 
             assertEquals(2, result.size());
             assertEquals(500, ((TestRewardType) result.get(p1).get(0)).getAmount());
@@ -142,7 +144,7 @@ public class QuestRewardDistributionResolverTest extends McRPGBaseTest {
             var config = new RewardDistributionConfig(List.of(tier));
             var snapshot = new ContributionSnapshot(Map.of(p1, 100L), 100, Set.of(p1), null);
 
-            var result = QuestRewardDistributionResolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
+            var result = resolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
 
             assertEquals(1, result.size());
             assertEquals(1000, ((TestRewardType) result.get(p1).get(0)).getAmount());
@@ -163,7 +165,7 @@ public class QuestRewardDistributionResolverTest extends McRPGBaseTest {
             var config = new RewardDistributionConfig(List.of(tier));
             var snapshot = new ContributionSnapshot(Map.of(p1, 75L, p2, 25L), 100, Set.of(p1, p2), null);
 
-            var result = QuestRewardDistributionResolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
+            var result = resolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
 
             assertEquals(2, result.size());
             assertEquals(750, ((TestRewardType) result.get(p1).get(0)).getAmount());
@@ -181,7 +183,7 @@ public class QuestRewardDistributionResolverTest extends McRPGBaseTest {
             // Both players have contribution but 0 in snapshot among qualifying
             var snapshot = new ContributionSnapshot(Map.of(p1, 0L, p2, 0L), 0, Set.of(p1, p2), null);
 
-            var result = QuestRewardDistributionResolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
+            var result = resolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
 
             // Participated type requires > 0, so no players qualify
             assertTrue(result.isEmpty());
@@ -206,7 +208,7 @@ public class QuestRewardDistributionResolverTest extends McRPGBaseTest {
             var config = new RewardDistributionConfig(List.of(topTier, allTier));
             var snapshot = new ContributionSnapshot(Map.of(p1, 80L, p2, 20L), 100, Set.of(p1, p2), null);
 
-            var result = QuestRewardDistributionResolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
+            var result = resolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
 
             assertEquals(2, result.size());
             assertEquals(2, result.get(p1).size());
@@ -225,7 +227,7 @@ public class QuestRewardDistributionResolverTest extends McRPGBaseTest {
         var config = new RewardDistributionConfig(List.of(tier));
         var snapshot = new ContributionSnapshot(Map.of(p1, 100L), 100, Set.of(p1), null);
 
-        var result = QuestRewardDistributionResolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
+        var result = resolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
         assertTrue(result.isEmpty());
     }
 
@@ -236,7 +238,7 @@ public class QuestRewardDistributionResolverTest extends McRPGBaseTest {
         var config = new RewardDistributionConfig(List.of());
         var snapshot = new ContributionSnapshot(Map.of(p1, 100L), 100, Set.of(p1), null);
 
-        var result = QuestRewardDistributionResolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
+        var result = resolver.resolve(config, snapshot, null, rarityRegistry, typeRegistry);
         assertTrue(result.isEmpty());
     }
 }

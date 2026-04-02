@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * Paginated GUI displaying a player's completed quest history with sort toggling.
@@ -47,25 +48,43 @@ public class QuestHistoryGui extends McRPGPaginatedGui {
         super(mcRPGPlayer);
         this.player = mcRPGPlayer.getAsBukkitPlayer()
                 .orElseThrow(() -> new CorePlayerOfflineException(mcRPGPlayer));
+        this.completionRecords = new ArrayList<>();
         loadCompletionRecords();
     }
 
+    /**
+     * Submits a DB query on the database executor thread to load completion records for this player,
+     * then refreshes the GUI on the main thread when the query completes.
+     * <p>
+     * The {@code sortAscending} flag is captured at submission time so that a rapid
+     * toggle does not race with an in-flight query.
+     */
     private void loadCompletionRecords() {
+        boolean ascending = sortAscending;
         Database database = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)
                 .manager(McRPGManagerKey.DATABASE).getDatabase();
-        try (Connection connection = database.getConnection()) {
-            completionRecords = QuestCompletionLogDAO.getCompletionHistory(
-                    connection, getCreatingPlayer().getUUID(), sortAscending);
-        } catch (SQLException e) {
-            e.printStackTrace();
-            completionRecords = new ArrayList<>();
-        }
+        database.getDatabaseExecutorService().submit(() -> {
+            List<CompletionRecord> records;
+            try (Connection connection = database.getConnection()) {
+                records = QuestCompletionLogDAO.getCompletionHistory(
+                        connection, getCreatingPlayer().getUUID(), ascending);
+            } catch (SQLException e) {
+                McRPG.getInstance().getLogger().log(Level.SEVERE,
+                        "Failed to load quest completion history for player " + getCreatingPlayer().getUUID(), e);
+                records = new ArrayList<>();
+            }
+            List<CompletionRecord> finalRecords = records;
+            Bukkit.getScheduler().runTask(McRPG.getInstance(), () -> {
+                completionRecords = finalRecords;
+                refreshGUI();
+            });
+        });
     }
 
     public void toggleSort() {
         sortAscending = !sortAscending;
-        loadCompletionRecords();
         setPage(1);
+        loadCompletionRecords();
     }
 
     public boolean isSortAscending() {

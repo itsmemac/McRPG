@@ -1,0 +1,203 @@
+# Advanced templates demonstrating prerequisite gating, weighted objective
+# selection, and reward fallbacks (Phase 4 features).
+#
+# -----------------------------------------------------------------------
+# TEMPLATE AUTHORING GUIDE
+# -----------------------------------------------------------------------
+#
+# VARIABLE NAMES
+#   Declare variables under the 'variables' key. Variable names must use
+#   underscores (not hyphens) because the expression parser treats '-' as
+#   subtraction. Example: ore_count, not ore-count.
+#
+# EXPRESSION SYNTAX (required-progress and reward amount fields)
+#   Use bare variable names directly in expressions. Do NOT wrap them in
+#   curly braces or quotes — just write the variable name:
+#     required-progress: ore_count
+#     amount: ore_count * 8
+#   Supported operators: +  -  *  /  ^  %  ( )
+#   Results are rounded to the nearest whole number.
+#
+# VARIABLE SUBSTITUTION IN CONFIG BLOCKS
+#   To substitute a pool variable (e.g. a list of block/mob types) into an
+#   objective config, write the bare variable name as the value with no
+#   quotes and no braces:
+#     config:
+#       blocks: target_blocks     <- correct
+#       blocks: "{target_blocks}" <- WRONG — breaks substitution
+#
+# RANGE VARIABLE SCALING
+#   RANGE variables are scaled by: pool difficulty * rarity difficulty-multiplier.
+#   Higher rarity = larger difficulty multiplier = higher counts.
+#
+# VALID SKILL VALUES (for mcrpg:experience rewards)
+#   MINING, SWORDS, WOODCUTTING, HERBALISM
+#   (Plus any skills registered by third-party expansions.)
+#
+# -----------------------------------------------------------------------
+
+quest-templates:
+  # -------------------------------------------------------------------
+  # Prerequisite-gated template: requires 5+ completed quests to appear
+  # -------------------------------------------------------------------
+  mcrpg:template_veteran_miner:
+    display:
+      name: "Veteran Miner"
+      description: "A challenging mining quest for experienced players"
+    display-name-route: quest-templates.veteran-miner
+    board-eligible: true
+    scope: mcrpg:single_player
+    supported-rarities:
+      - mcrpg:rare
+      - mcrpg:legendary
+    prerequisite:
+      min-completions: 5
+    variables:
+      ore_count:
+        type: RANGE
+        base:
+          min: 48
+          max: 128
+    phases:
+      main:
+        completion-mode: ALL
+        stages:
+          deep_mine:
+            objectives:
+              mine_deepslate:
+                type: mcrpg:block_break
+                required-progress: ore_count
+                config:
+                  blocks:
+                    - DEEPSLATE_DIAMOND_ORE
+                    - DEEPSLATE_EMERALD_ORE
+                    - ANCIENT_DEBRIS
+    rewards:
+      mining_xp:
+        type: mcrpg:experience
+        skill: MINING
+        amount: ore_count * 8
+
+  # -------------------------------------------------------------------
+  # Weighted objective selection: randomly selects 2 of 4 possible tasks
+  # -------------------------------------------------------------------
+  mcrpg:template_daily_variety:
+    display:
+      name: "Daily Variety"
+      description: "Complete two randomly chosen tasks"
+    display-name-route: quest-templates.daily-variety
+    board-eligible: true
+    scope: mcrpg:single_player
+    supported-rarities:
+      - mcrpg:common
+      - mcrpg:uncommon
+      - mcrpg:rare
+    variables:
+      amount:
+        type: RANGE
+        base:
+          min: 10
+          max: 30
+    phases:
+      tasks:
+        completion-mode: ALL
+        stages:
+          random_tasks:
+            objective-selection:
+              mode: WEIGHTED_RANDOM
+              count: 2
+            objectives:
+              mine_stone:
+                type: mcrpg:block_break
+                weight: 30
+                required-progress: amount
+                config:
+                  blocks:
+                    - STONE
+                    - DEEPSLATE
+              mine_ores:
+                type: mcrpg:block_break
+                weight: 20
+                required-progress: amount / 2
+                config:
+                  blocks:
+                    - IRON_ORE
+                    - COPPER_ORE
+              kill_undead:
+                type: mcrpg:mob_kill
+                weight: 25
+                required-progress: amount
+                config:
+                  mobs:
+                    - ZOMBIE
+                    - SKELETON
+              kill_spiders:
+                type: mcrpg:mob_kill
+                weight: 25
+                required-progress: amount
+                config:
+                  mobs:
+                    - SPIDER
+                    - CAVE_SPIDER
+    rewards:
+      variety_xp:
+        type: mcrpg:experience
+        skill: MINING
+        amount: amount * 5
+
+  # -------------------------------------------------------------------
+  # Reward fallback: title command with XP fallback if already owned
+  # -------------------------------------------------------------------
+  mcrpg:template_champion_challenge:
+    display:
+      name: "Champion Challenge"
+      description: "Prove your worth to earn the Champion title"
+    display-name-route: quest-templates.champion-challenge
+    board-eligible: true
+    scope: mcrpg:single_player
+    supported-rarities:
+      - mcrpg:rare
+      - mcrpg:legendary
+    variables:
+      kill_count:
+        type: RANGE
+        base:
+          min: 30
+          max: 60
+    phases:
+      trial:
+        completion-mode: ALL
+        stages:
+          combat_trial:
+            objectives:
+              slay_monsters:
+                type: mcrpg:mob_kill
+                required-progress: kill_count
+                config:
+                  mobs:
+                    - ZOMBIE
+                    - SKELETON
+                    - CREEPER
+                    - SPIDER
+                    - ENDERMAN
+    rewards:
+      champion_title:
+        # Commands run as console. Use {player} for the accepting player's name.
+        # The fallback reward is granted instead if the condition evaluates to true at grant time.
+        type: mcrpg:command
+        display: "Champion Title"
+        commands:
+          - "title grant {player} champion"
+        fallback:
+          # If the condition evaluates to true at grant time, the fallback reward is granted instead.
+          # Here: if the player already has the champion permission, grant XP instead of the title.
+          condition:
+            permission: "mcrpg.title.champion"
+          reward:
+            type: mcrpg:experience
+            skill: SWORDS
+            amount: 2000
+      combat_xp:
+        type: mcrpg:experience
+        skill: SWORDS
+        amount: kill_count * 10

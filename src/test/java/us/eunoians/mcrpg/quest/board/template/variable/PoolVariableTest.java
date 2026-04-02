@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import us.eunoians.mcrpg.quest.board.template.variable.Pool;
 import us.eunoians.mcrpg.quest.board.template.variable.ResolvedPool;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -63,7 +64,7 @@ class PoolVariableTest {
         PoolVariable variable = new PoolVariable("blocks", 1, 3,
                 List.of(stonePool(), orePool(), preciousPool()));
 
-        Set<Integer> selectionCounts = new java.util.HashSet<>();
+        Set<Integer> selectionCounts = new HashSet<>();
         for (int seed = 0; seed < 200; seed++) {
             Random random = new Random(seed);
             ResolvedPool resolved = variable.resolve(RARE, random);

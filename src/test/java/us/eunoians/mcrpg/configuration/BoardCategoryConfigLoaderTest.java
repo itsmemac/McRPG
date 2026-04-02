@@ -11,6 +11,7 @@ import us.eunoians.mcrpg.quest.board.category.BoardSlotCategory;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.nio.file.Files;
 import java.util.Map;
 import java.util.OptionalInt;
@@ -63,8 +64,8 @@ public class BoardCategoryConfigLoaderTest extends McRPGBaseTest {
         assertEquals(key, cat.getKey());
         assertEquals(BoardSlotCategory.Visibility.PERSONAL, cat.getVisibility());
         assertEquals(new NamespacedKey("mcrpg", "daily"), cat.getRefreshTypeKey());
-        assertEquals(java.time.Duration.ofHours(24), cat.getRefreshInterval());
-        assertEquals(java.time.Duration.ofHours(48), cat.getCompletionTime());
+        assertEquals(Duration.ofHours(24), cat.getRefreshInterval());
+        assertEquals(Duration.ofHours(48), cat.getCompletionTime());
         assertEquals(new NamespacedKey("mcrpg", "single_player"), cat.getScopeProviderKey());
         assertEquals(1, cat.getMin());
         assertEquals(3, cat.getMax());

@@ -20,13 +20,13 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Stateless utility that computes a live preview of which distribution tiers a player
- * currently qualifies for and what rewards they would receive at their current contribution
- * level. All text is resolved through {@link McRPGLocalizationManager}.
+ * Computes a live preview of which distribution tiers a player currently qualifies for
+ * and what rewards they would receive at their current contribution level.
+ * All text is resolved through {@link McRPGLocalizationManager}.
+ * <p>
+ * Stateless — a new instance can be created whenever needed.
  */
 public final class DistributionPreviewResolver {
-
-    private DistributionPreviewResolver() {}
 
     /**
      * Builds a preview of distribution tiers for the given player based on
@@ -37,13 +37,14 @@ public final class DistributionPreviewResolver {
      * @param playerUUID     the player UUID to preview for
      * @param contributions  per-player contribution amounts
      * @param rarityKey      the quest's rarity key (nullable for non-board quests)
-     * @param rarityRegistry rarity registry for gate comparisons
-     * @param typeRegistry   distribution type registry
-     * @param groupMembers   current group members for MEMBERSHIP evaluation
+     * @param rarityRegistry    rarity registry for gate comparisons
+     * @param typeRegistry      distribution type registry
+     * @param groupMembers      current group members for MEMBERSHIP evaluation
+     * @param questAcceptorUUID the UUID of the player who accepted the quest, or {@code null} if unknown
      * @return ordered list of preview entries, one per configured tier
      */
     @NotNull
-    public static List<DistributionPreviewEntry> buildPreview(
+    public List<DistributionPreviewEntry> buildPreview(
             @NotNull McRPGPlayer player,
             @NotNull RewardDistributionConfig config,
             @NotNull UUID playerUUID,
@@ -51,7 +52,8 @@ public final class DistributionPreviewResolver {
             @Nullable NamespacedKey rarityKey,
             @NotNull QuestRarityRegistry rarityRegistry,
             @NotNull RewardDistributionTypeRegistry typeRegistry,
-            @NotNull Set<UUID> groupMembers) {
+            @NotNull Set<UUID> groupMembers,
+            @Nullable UUID questAcceptorUUID) {
 
         McRPGLocalizationManager localization = RegistryAccess.registryAccess()
                 .registry(RegistryKey.MANAGER)
@@ -60,7 +62,7 @@ public final class DistributionPreviewResolver {
         long totalProgress = contributions.values().stream().mapToLong(Long::longValue).sum();
         long playerContribution = contributions.getOrDefault(playerUUID, 0L);
         double playerPercent = totalProgress > 0 ? (double) playerContribution / totalProgress * 100 : 0;
-        ContributionSnapshot snapshot = new ContributionSnapshot(contributions, totalProgress, groupMembers, null);
+        ContributionSnapshot snapshot = new ContributionSnapshot(contributions, totalProgress, groupMembers, questAcceptorUUID);
 
         List<DistributionPreviewEntry> entries = new ArrayList<>();
         for (DistributionTierConfig tier : config.getTiers()) {
@@ -85,7 +87,7 @@ public final class DistributionPreviewResolver {
     }
 
     @NotNull
-    private static List<Component> buildRewardPreviewComponents(
+    private List<Component> buildRewardPreviewComponents(
             @NotNull McRPGPlayer player,
             @NotNull DistributionTierConfig tier,
             @NotNull McRPGLocalizationManager localization) {

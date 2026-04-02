@@ -3,6 +3,7 @@ package us.eunoians.mcrpg.database.table.quest.scope;
 import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.table.impl.TableVersionHistoryDAO;
 import org.jetbrains.annotations.NotNull;
+import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.quest.impl.scope.impl.LandQuestScope;
 
 import java.sql.Connection;
@@ -14,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * DAO for persisting {@link LandQuestScope} data.
@@ -43,7 +45,7 @@ public class LandQuestScopeDAO {
             statement.executeUpdate();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.SEVERE, "[LandQuestScopeDAO] Failed to create table " + TABLE_NAME, e);
             return false;
         }
     }
@@ -111,7 +113,7 @@ public class LandQuestScopeDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[LandQuestScopeDAO] Failed to find all active land quests", e);
         }
         return results;
     }
@@ -134,7 +136,7 @@ public class LandQuestScopeDAO {
             statement.setString(2, scope.getLandName().orElseThrow());
             statements.add(statement);
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[LandQuestScopeDAO] Failed to prepare saveScope statement for quest " + scope.getQuestUUID(), e);
         }
         return statements;
     }

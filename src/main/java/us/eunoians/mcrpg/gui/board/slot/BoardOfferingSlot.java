@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.gui.Gui;
 import com.diamonddagger590.mccore.gui.PaginatedGui;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
+import net.kyori.adventure.text.Component;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
@@ -15,6 +16,7 @@ import us.eunoians.mcrpg.gui.McRPGGuiManager;
 import us.eunoians.mcrpg.gui.board.QuestBoardGui;
 import us.eunoians.mcrpg.gui.quest.QuestDetailGui;
 import us.eunoians.mcrpg.gui.slot.McRPGSlot;
+import us.eunoians.mcrpg.localization.McRPGLocalizationManager;
 import us.eunoians.mcrpg.quest.board.BoardOffering;
 import us.eunoians.mcrpg.quest.board.OfferingAcceptResult;
 import us.eunoians.mcrpg.quest.board.QuestBoard;
@@ -26,7 +28,8 @@ import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 import us.eunoians.mcrpg.util.McRPGMethods;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -60,6 +63,7 @@ public class BoardOfferingSlot implements McRPGSlot {
                 .manager(McRPGManagerKey.QUEST_BOARD);
         OfferingAcceptResult result = boardManager.acceptOffering(player, offering.getOfferingId());
         if (result.isAccepted()) {
+            player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.5f, 1.5f);
             McRPGGuiManager guiManager = RegistryAccess.registryAccess()
                     .registry(RegistryKey.MANAGER)
                     .manager(McRPGManagerKey.GUI);
@@ -82,8 +86,9 @@ public class BoardOfferingSlot implements McRPGSlot {
         QuestBoardManager boardManager = RegistryAccess.registryAccess()
                 .registry(RegistryKey.MANAGER)
                 .manager(McRPGManagerKey.QUEST_BOARD);
-        QuestDefinition definition = boardManager.resolveDefinitionForOffering(offering);
-        if (definition == null) return;
+        Optional<QuestDefinition> definitionOpt = boardManager.resolveDefinitionForOffering(offering);
+        if (definitionOpt.isEmpty()) return;
+        QuestDefinition definition = definitionOpt.get();
 
         QuestDetailGui detailGui = QuestDetailGui.forBoardPreview(mcRPGPlayer, definition, offering);
         McRPGGuiManager guiManager = RegistryAccess.registryAccess()
@@ -100,50 +105,58 @@ public class BoardOfferingSlot implements McRPGSlot {
                 .registry(RegistryKey.MANAGER)
                 .manager(McRPGManagerKey.QUEST_BOARD);
         QuestBoard board = boardManager.getDefaultBoard();
+        McRPGLocalizationManager localization = RegistryAccess.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(McRPGManagerKey.LOCALIZATION);
 
-        Map<String, String> placeholders = new HashMap<>();
-        placeholders.put("quest_name", boardManager.getOfferingDisplayName(mcRPGPlayer, offering));
-        placeholders.put("rarity", offering.getRarityKey().getKey().replace('_', ' '));
-        placeholders.put("category", offering.getCategoryKey().getKey().replace('_', ' '));
-
+        String rarityDisplay = offering.getRarityKey().getKey().replace('_', ' ');
+        String categoryDisplay = offering.getCategoryKey().getKey().replace('_', ' ');
         QuestRarityRegistry rarityRegistry = RegistryAccess.registryAccess()
                 .registry(McRPGRegistryKey.QUEST_RARITY);
         Optional<QuestRarity> rarityOpt = rarityRegistry.get(offering.getRarityKey());
         String nameColor = rarityOpt.flatMap(QuestRarity::getNameColor).orElse("<white>");
-        placeholders.put("rarity_color", nameColor);
 
-        QuestDefinition definition = boardManager.resolveDefinitionForOffering(offering);
-        String questDuration = definition != null
-                ? definition.getExpiration()
-                .map(expiration -> McRPGMethods.formatDuration(expiration.toMillis()))
-                .orElse(RegistryAccess.registryAccess()
-                        .registry(RegistryKey.MANAGER)
-                        .manager(McRPGManagerKey.LOCALIZATION)
-                        .getLocalizedMessage(mcRPGPlayer, LocalizationKey.ACTIVE_QUEST_GUI_EXPIRES_NONE))
-                : RegistryAccess.registryAccess()
-                .registry(RegistryKey.MANAGER)
-                .manager(McRPGManagerKey.LOCALIZATION)
-                .getLocalizedMessage(mcRPGPlayer, LocalizationKey.ACTIVE_QUEST_GUI_EXPIRES_NONE);
-        placeholders.put("quest_duration", questDuration);
+        // Build base item (material + name) from localized section
+        ItemBuilder builder = ItemBuilder.from(localization.getLocalizedSection(mcRPGPlayer,
+                LocalizationKey.QUEST_BOARD_OFFERING_SLOT_DISPLAY_ITEM));
+        rarityOpt.ifPresent(rarity -> rarity.configureIcon(builder));
+        // Re-set name after configureIcon() since it unconditionally overwrites the display name
+        builder.setDisplayName(nameColor + boardManager.getOfferingDisplayName(mcRPGPlayer, offering));
+
+        Optional<QuestDefinition> definitionOpt = boardManager.resolveDefinitionForOffering(offering);
+        List<Component> lore = new ArrayList<>();
+
+        lore.add(localization.getLocalizedMessageAsComponent(mcRPGPlayer,
+                LocalizationKey.QUEST_BOARD_RARITY_LINE,
+                Map.of("rarity_color", nameColor, "rarity", rarityDisplay)));
+        lore.add(localization.getLocalizedMessageAsComponent(mcRPGPlayer,
+                LocalizationKey.QUEST_BOARD_OFFERING_CATEGORY,
+                Map.of("category", categoryDisplay)));
+
+        lore.add(Component.empty());
+        String durationText = definitionOpt
+                .flatMap(def -> def.getExpiration().map(d -> McRPGMethods.formatDuration(d.toMillis())))
+                .orElse(localization.getLocalizedMessage(mcRPGPlayer, LocalizationKey.ACTIVE_QUEST_GUI_EXPIRES_NONE));
+        lore.add(localization.getLocalizedMessageAsComponent(mcRPGPlayer,
+                LocalizationKey.QUEST_BOARD_DURATION_LINE,
+                Map.of("duration", durationText)));
 
         mcRPGPlayer.getAsBukkitPlayer().ifPresent(player -> {
             int active = boardManager.getActiveBoardQuestCount(mcRPGPlayer.getUUID());
             int max = boardManager.getEffectiveMaxQuests(player, board);
             int remaining = max - active;
-            placeholders.put("board_quests", String.valueOf(active));
-            placeholders.put("max_quests", String.valueOf(max));
-            placeholders.put("count_color", remaining > 0 ? "<green>" : "<red>");
+            lore.add(localization.getLocalizedMessageAsComponent(mcRPGPlayer,
+                    LocalizationKey.QUEST_BOARD_BOARD_QUESTS_LINE,
+                    Map.of("count_color", remaining > 0 ? "<green>" : "<red>",
+                            "board_quests", String.valueOf(active),
+                            "max_quests", String.valueOf(max))));
         });
 
-        ItemBuilder builder = ItemBuilder.from(RegistryAccess.registryAccess()
-                        .registry(RegistryKey.MANAGER)
-                        .manager(McRPGManagerKey.LOCALIZATION)
-                        .getLocalizedSection(mcRPGPlayer, LocalizationKey.QUEST_BOARD_OFFERING_SLOT_DISPLAY_ITEM))
-                .addPlaceholders(placeholders);
-        if (rarityOpt.isPresent() && rarityOpt.get().hasGlint()) {
-            builder.setEnchantGlint(true);
-        }
+        lore.add(Component.empty());
+        lore.add(localization.getLocalizedMessageAsComponent(mcRPGPlayer, LocalizationKey.QUEST_BOARD_CLICK_TO_ACCEPT));
+        lore.add(localization.getLocalizedMessageAsComponent(mcRPGPlayer, LocalizationKey.QUEST_BOARD_RIGHT_CLICK_PREVIEW));
 
+        builder.addDisplayLoreComponent(lore);
         return builder;
     }
 

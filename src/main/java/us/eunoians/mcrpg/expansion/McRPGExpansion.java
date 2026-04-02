@@ -304,12 +304,12 @@ public final class McRPGExpansion extends ContentExpansion {
     @NotNull
     private TemplateConditionContentPack getTemplateConditionContent() {
         TemplateConditionContentPack pack = new TemplateConditionContentPack(this);
-        pack.addContent(new RarityCondition(new NamespacedKey(McRPGMethods.getMcRPGNamespace(), "common")));
-        pack.addContent(new ChanceCondition(0.5));
-        pack.addContent(new VariableCondition("_prototype", new us.eunoians.mcrpg.quest.board.template.condition.VariableCheck.ContainsAny(java.util.List.of())));
-        pack.addContent(new CompoundCondition(java.util.Map.of("_prototype", new ChanceCondition(1.0)), CompoundCondition.LogicMode.ALL));
-        pack.addContent(new PermissionCondition("_prototype"));
-        pack.addContent(new CompletionPrerequisiteCondition(1, null, null));
+        pack.addContent(new RarityCondition());
+        pack.addContent(new ChanceCondition());
+        pack.addContent(new VariableCondition());
+        pack.addContent(new CompoundCondition());
+        pack.addContent(new PermissionCondition());
+        pack.addContent(new CompletionPrerequisiteCondition());
         return pack;
     }
 }

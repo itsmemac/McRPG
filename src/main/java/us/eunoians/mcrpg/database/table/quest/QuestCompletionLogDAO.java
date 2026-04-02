@@ -3,6 +3,7 @@ package us.eunoians.mcrpg.database.table.quest;
 import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.table.impl.TableVersionHistoryDAO;
 import org.jetbrains.annotations.NotNull;
+import us.eunoians.mcrpg.McRPG;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * DAO for the {@code mcrpg_quest_completion_log} table, which records each player's
@@ -45,7 +47,7 @@ public class QuestCompletionLogDAO {
             statement.executeUpdate();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.SEVERE, "[QuestCompletionLogDAO] Failed to create table " + TABLE_NAME, e);
             return false;
         }
     }
@@ -69,7 +71,7 @@ public class QuestCompletionLogDAO {
                 try (PreparedStatement ps = connection.prepareStatement(sql)) {
                     ps.executeUpdate();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    McRPG.getInstance().getLogger().log(Level.SEVERE, "[QuestCompletionLogDAO] Failed to create index during migration", e);
                 }
             }
             TableVersionHistoryDAO.setTableVersion(connection, TABLE_NAME, 1);
@@ -102,7 +104,7 @@ public class QuestCompletionLogDAO {
             statement.setLong(5, completedAt);
             statement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestCompletionLogDAO] Failed to log completion for player " + playerUUID + ", quest " + questUUID, e);
         }
     }
 
@@ -128,7 +130,7 @@ public class QuestCompletionLogDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestCompletionLogDAO] Failed to get completion count for player " + playerUUID + ", definition " + definitionKey, e);
         }
         return 0;
     }
@@ -160,7 +162,7 @@ public class QuestCompletionLogDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestCompletionLogDAO] Failed to get last completion time for player " + playerUUID + ", definition " + definitionKey, e);
         }
         return OptionalLong.empty();
     }
@@ -192,7 +194,7 @@ public class QuestCompletionLogDAO {
             ps.setString(1, playerUUID.toString());
             return ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestCompletionLogDAO] Failed to delete completion log for player " + playerUUID, e);
         }
         return 0;
     }
@@ -225,7 +227,7 @@ public class QuestCompletionLogDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestCompletionLogDAO] Failed to get completion history for player " + playerUUID, e);
         }
         return records;
     }

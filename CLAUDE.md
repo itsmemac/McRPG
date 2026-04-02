@@ -56,53 +56,139 @@ Output jar: `build/libs/McRPG-<version>-<git-hash>.jar`
 
 ```
 src/main/java/us/eunoians/mcrpg/
-├── McRPG.java                      # Plugin main class (extends CorePlugin)
+├── McRPG.java                          # Plugin main class (extends CorePlugin)
 ├── ability/
-│   ├── Ability.java                # Core ability interface
-│   ├── BaseAbility.java            # Component registration logic
-│   ├── AbilityData.java            # Per-holder attribute container (DTO)
-│   ├── AbilityRegistry.java        # Registry of all registered abilities
-│   ├── attribute/                  # Typed ability attribute definitions
-│   ├── component/                  # Reusable activation/cancel/ready components
-│   │   ├── activatable/            # EventActivatableComponent implementations
-│   │   ├── cancel/                 # EventCancellingComponent implementations
-│   │   └── readyable/              # EventReadyableComponent implementations
-│   ├── impl/                       # Concrete ability implementations by skill
-│   │   ├── swords/                 # Bleed, DeeperWound, Vampire, etc.
-│   │   ├── mining/                 # ExtraOre, ItsATriple, OreScanner, etc.
-│   │   ├── herbalism/              # MassHarvest, InstantIrrigation, etc.
-│   │   └── woodcutting/            # ExtraLumber, HeavySwing, etc.
-│   └── impl/type/                  # Ability capability interfaces (ActiveAbility, PassiveAbility, etc.)
+│   ├── Ability.java                    # Core ability interface
+│   ├── BaseAbility.java                # Component registration logic
+│   ├── AbilityData.java                # Per-holder attribute container (DTO)
+│   ├── AbilityRegistry.java            # Registry of all registered abilities
+│   ├── attribute/                      # Typed ability attribute definitions
+│   ├── component/                      # Reusable activation/cancel/ready components
+│   │   ├── activatable/                # EventActivatableComponent implementations
+│   │   ├── cancel/                     # EventCancellingComponent implementations
+│   │   └── readyable/                  # EventReadyableComponent implementations
+│   ├── impl/                           # Concrete ability implementations by skill
+│   │   ├── swords/                     # Bleed, DeeperWound, Vampire, etc.
+│   │   ├── mining/                     # ExtraOre, ItsATriple, OreScanner, etc.
+│   │   ├── herbalism/                  # MassHarvest, InstantIrrigation, etc.
+│   │   └── woodcutting/                # ExtraLumber, HeavySwing, etc.
+│   └── impl/type/                      # Ability capability interfaces (ActiveAbility, PassiveAbility, etc.)
 ├── skill/
-│   ├── Skill.java                  # Core skill interface
-│   ├── impl/                       # Concrete skill implementations (Swords, Mining, etc.)
-│   └── impl/type/                  # Skill capability interfaces (ConfigurableSkill, HeldItemBonusSkill)
+│   ├── Skill.java                      # Core skill interface
+│   ├── impl/                           # Concrete skill implementations (Swords, Mining, etc.)
+│   └── impl/type/                      # Skill capability interfaces (ConfigurableSkill, HeldItemBonusSkill)
 ├── entity/
 │   ├── holder/
-│   │   ├── AbilityHolder.java      # Base: entity with abilities
-│   │   ├── LoadoutHolder.java      # Restricts to loadout abilities
-│   │   └── SkillHolder.java        # AbilityHolder with levelable skills
+│   │   ├── AbilityHolder.java          # Base: entity with abilities
+│   │   ├── LoadoutHolder.java          # Restricts to loadout abilities
+│   │   └── SkillHolder.java            # AbilityHolder with levelable skills
 │   └── player/
-│       └── McRPGPlayer.java        # Concrete player (extends CorePlayer)
+│       └── McRPGPlayer.java            # Concrete player (extends CorePlayer)
 ├── expansion/
-│   ├── ContentExpansion.java       # Base class for content modules
-│   └── McRPGExpansion.java         # Native content registration (all built-in abilities/skills)
-├── listener/ability/
-│   ├── AbilityListener.java        # Interface with activateAbilities() / readyAbilities() defaults
-│   └── <skill>/                    # Per-skill Bukkit event listeners
-├── event/ability/                  # Custom McRPG Bukkit events (one per ability activation)
-├── database/table/                 # DAO classes (static JDBC methods)
+│   ├── ContentExpansion.java           # Base class for content modules
+│   ├── McRPGExpansion.java             # Native content registration (all built-in content)
+│   └── content/                        # McRPGContentPack sub-types (AbilityContentPack, QuestContentPack, etc.)
+├── quest/
+│   ├── QuestManager.java               # Central manager: loading, starting, progressing, completing quests
+│   ├── definition/                     # Immutable quest blueprints (definition layer)
+│   │   ├── QuestDefinition.java        # Full quest blueprint: phases, scope, rewards, repeat mode
+│   │   ├── QuestDefinitionRegistry.java
+│   │   ├── QuestPhaseDefinition.java   # Ordered stage group; ALL or ANY completion mode
+│   │   ├── QuestStageDefinition.java   # Group of objectives; all must complete
+│   │   ├── QuestObjectiveDefinition.java
+│   │   └── QuestRepeatMode.java        # ONCE, LIMITED, COOLDOWN, COOLDOWN_LIMITED
+│   ├── impl/                           # Mutable runtime state
+│   │   ├── QuestInstance.java          # Runtime quest: state, scope, timestamps, stage instances
+│   │   ├── QuestState.java             # NOT_STARTED, IN_PROGRESS, COMPLETED, CANCELLED
+│   │   ├── stage/                      # QuestStageInstance, QuestStageState
+│   │   ├── objective/                  # QuestObjectiveInstance, QuestObjectiveState
+│   │   └── scope/                      # QuestScope, QuestScopeProvider, QuestScopeProviderRegistry
+│   │       └── impl/                   # SinglePlayer, Permission, Land scope types
+│   ├── objective/type/                 # Extensible objective type system
+│   │   ├── QuestObjectiveType.java     # Interface: behavior + progress-tracking for an objective category
+│   │   ├── QuestObjectiveTypeRegistry.java
+│   │   ├── QuestObjectiveProgressContext.java
+│   │   └── builtin/                    # BlockBreakObjectiveType, MobKillObjectiveType, etc.
+│   ├── reward/                         # Extensible reward type system
+│   │   ├── QuestRewardType.java        # Interface: how a reward is granted
+│   │   ├── QuestRewardTypeRegistry.java
+│   │   ├── PendingReward.java          # Serialized reward queued for offline player
+│   │   └── builtin/                    # Command, ScalableCommand, Experience, AbilityUpgrade, etc.
+│   ├── source/                         # How quests are obtained
+│   │   ├── QuestSource.java            # Extensible: board, ability upgrade, manual, etc.
+│   │   └── QuestSourceRegistry.java
+│   └── board/                          # Quest board system (see Quest Board System section)
+│       ├── QuestBoard.java
+│       ├── QuestBoardManager.java
+│       ├── QuestBoardTerminator.java
+│       ├── BoardOffering.java
+│       ├── BoardMetadata.java
+│       ├── category/                   # BoardSlotCategory config and registry
+│       ├── configuration/              # ReloadableRarityConfig, ReloadableTemplateConfig
+│       ├── distribution/               # RewardDistributionConfig, resolver, granter, built-in types
+│       ├── generation/                 # PersonalOfferingGenerator, QuestPool, SlotGenerationLogic
+│       ├── rarity/                     # QuestRarity, QuestRarityRegistry
+│       └── template/                   # QuestTemplate, QuestTemplateEngine, conditions, variables
+├── gui/
+│   ├── board/                          # Quest board GUI
+│   │   ├── QuestBoardGui.java          # Main board inventory GUI
+│   │   ├── OfferingLoreBuilder.java    # Builds offering item lore from quest definition
+│   │   ├── BoardGuiMode.java           # Enum: SHARED / PERSONAL view modes
+│   │   ├── ScopedEntitySelectorGui.java
+│   │   └── slot/                       # BoardOfferingSlot, ScopedOfferingSlot, ScopedTabSlot, etc.
+│   └── quest/                          # Active/history quest GUIs
+│       ├── ActiveQuestGui.java
+│       ├── QuestDetailGui.java
+│       ├── QuestHistoryGui.java
+│       ├── QuestAbandonConfirmGui.java
+│       └── slot/                       # Detail, overview, reward, phase, abandon, history slots
+├── listener/
+│   ├── ability/                        # Per-skill ability Bukkit event listeners
+│   │   ├── AbilityListener.java        # Interface with activateAbilities() / readyAbilities() defaults
+│   │   └── <skill>/
+│   └── quest/                          # Quest progress and lifecycle listeners
+│       ├── QuestProgressListener.java  # Base interface for progress event handling
+│       ├── BlockBreakQuestProgressListener.java
+│       ├── MobKillQuestProgressListener.java
+│       ├── QuestStartListener.java
+│       ├── QuestCompleteListener.java
+│       ├── QuestCancelListener.java
+│       ├── QuestFeedbackListener.java
+│       └── AbilityUpgradeQuestListener.java
+├── event/
+│   ├── ability/                        # Custom Bukkit events per ability activation
+│   └── quest/                          # QuestStartEvent, QuestCompleteEvent, QuestCancelEvent, etc.
+├── database/table/
+│   ├── SkillDAO.java                   # Skill data persistence
+│   ├── LoadoutAbilityDAO.java          # Loadout slot persistence
+│   ├── quest/                          # Quest instance, stage, objective, contribution, pending reward DAOs
+│   │   ├── QuestInstanceDAO.java
+│   │   ├── QuestStageInstanceDAO.java
+│   │   ├── QuestObjectiveInstanceDAO.java
+│   │   ├── QuestObjectiveContributionDAO.java
+│   │   ├── QuestCompletionLogDAO.java
+│   │   ├── PendingRewardDAO.java
+│   │   └── scope/                      # Per-scope-type DAOs (SinglePlayer, Permission, Land)
+│   └── board/                          # Board rotation, offering, cooldown, personal tracking DAOs
+│       ├── BoardRotationDAO.java
+│       ├── BoardOfferingDAO.java
+│       ├── BoardCooldownDAO.java
+│       ├── PlayerBoardStateDAO.java
+│       ├── PersonalOfferingTrackingDAO.java
+│       └── ScopedBoardStateDAO.java
 ├── configuration/
-│   ├── FileType.java               # Enum of all config file types
-│   └── file/                       # YAML config file wrappers (one per skill/system)
-├── registry/                       # McRPGRegistryKey, McRPGManagerKey, ability/skill registries
+│   ├── FileType.java                   # Enum of all config file types
+│   └── file/                           # YAML config file wrappers (one per skill/system)
+├── registry/                           # McRPGRegistryKey, McRPGManagerKey, ability/skill registries
 └── util/
-    └── McRPGMethods.java           # Namespace, MiniMessage, PAPI utilities
+    └── McRPGMethods.java               # Namespace, MiniMessage, PAPI utilities
 ```
 
 ---
 
 ## Domain Terminology
+
+### Ability & Skill System
 
 | Term | Meaning |
 |------|---------|
@@ -119,6 +205,23 @@ src/main/java/us/eunoians/mcrpg/
 | **Attribute** | A typed `AbilityAttribute<T>` stored in `AbilityData` — contains per-holder ability state (tier, cooldown, toggle, etc.). Created via factory (no reflection). |
 | **ContentExpansion** | A module that bundles skills, abilities, player settings, and localization into a single registration unit. |
 | **DAO** | Data Access Object — static JDBC methods for reading/writing ability and skill data. |
+
+### Quest System
+
+| Term | Meaning |
+|------|---------|
+| **QuestDefinition** | Immutable blueprint describing a complete quest: its phases, scope type, optional expiration, rewards, and repeat mode. Shared across all runtime instances. Registered in `QuestDefinitionRegistry`. |
+| **QuestPhaseDefinition** | Immutable definition of an ordered group of stages within a quest. Supports `ALL` (every stage must complete) or `ANY` (first stage to complete advances the quest) completion modes. Not persisted as an instance — phase state is computed from child stage states at runtime. |
+| **QuestStageDefinition** | Immutable definition of a single stage, containing one or more objectives. All objectives must complete for the stage to be considered done. May carry stage-level rewards. |
+| **QuestObjectiveDefinition** | Immutable definition of a single trackable objective (e.g., "break 50 stone blocks"). Carries the `QuestObjectiveType` key and configuration. |
+| **QuestInstance** | Mutable runtime object created from a `QuestDefinition`. Tracks `QuestState`, start/end/expiration timestamps, the active `QuestScope`, and child `QuestStageInstance` / `QuestObjectiveInstance` trees. Persisted to SQL. |
+| **QuestState** | Enum for a `QuestInstance`'s lifecycle: `NOT_STARTED`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`. |
+| **QuestScope** | The set of players participating in a specific `QuestInstance` (e.g., a single player, a permission group, a Lands territory). Each quest instance has exactly one scope. |
+| **QuestScopeProvider** | Abstract factory responsible for creating new and loading persisted `QuestScope` instances for a specific scope type. Registered in `QuestScopeProviderRegistry` by `NamespacedKey`. Extensible via `QuestScopeProviderContentPack`. |
+| **QuestSource** | Describes how a quest was obtained (board acceptance, ability upgrade trigger, manual grant, etc.). Registered in `QuestSourceRegistry`. Controls whether the quest is player-abandonable. Extensible via `QuestSourceContentPack`. |
+| **QuestObjectiveType** | Extensible interface defining the behavior and progress-tracking logic for a category of objectives (e.g., `BlockBreakObjectiveType`, `MobKillObjectiveType`). Registered in `QuestObjectiveTypeRegistry`. Extensible via `QuestObjectiveTypeContentPack`. |
+| **QuestRewardType** | Extensible interface defining how a specific reward is granted (e.g., `CommandRewardType`, `ExperienceRewardType`, `AbilityUpgradeRewardType`). Registered in `QuestRewardTypeRegistry`. Extensible via `QuestRewardTypeContentPack`. |
+| **PendingReward** | A serialized reward queued for a player who was offline at the time of grant. Stored in the DB and granted at next login; expires after a configurable duration. |
 
 ---
 
@@ -310,6 +413,12 @@ public static final NamespacedKey BLEED_KEY = new NamespacedKey(McRPGMethods.get
 - **No ability state stored on the ability object** — ability state is per-holder, stored in `AbilityData`/`AbilityAttribute`; ability objects are shared singletons
 - **Don't put McRPG-specific logic in McCore** — McCore changes affect all downstream plugins
 - **No fully-qualified type references in method bodies** — always declare a top-level `import` statement for the type; writing `org.bukkit.Location loc` inline is forbidden even when it compiles
+- **No `e.printStackTrace()`** — always use `Logger.log(Level.SEVERE, "context message", e)` so stack traces route through the server logger and are preserved in log aggregators
+- **No `Optional.get()` without a guard** — always use `orElse`, `orElseGet`, `orElseThrow`, or check `isPresent()` first; bare `.get()` is a guaranteed crash on the empty path
+- **No Bukkit API calls from async threads** — any world, entity, or inventory mutation must be scheduled on the main thread via `Bukkit.getScheduler().runTask(plugin, () -> { ... })`
+- **No blocking `.get()` on a `CompletableFuture` from the main thread** — this deadlocks if the future's completion path needs the main thread scheduler
+- **No entity or player object references in long-lived collections** — store `UUID` instead; holding `Entity`/`Player` objects prevents garbage collection of unloaded entities
+- **No unbounded `Map` or `Set` fields without a documented eviction strategy** — insert-only caches are memory leaks; document the cleanup lifecycle event in Javadoc
 
 ---
 
@@ -435,6 +544,85 @@ String serverMsg = plugin.registryAccess()
 
 ---
 
+## Quest Board System
+
+The quest board is a daily/weekly rotating board of quest offerings that players can accept from a GUI. It supports both hand-crafted quest definitions and procedurally generated quests via a template engine.
+
+### Key Concepts
+
+| Term | Meaning |
+|------|---------|
+| **QuestBoard** | Top-level container holding rotations, offerings, and board config. Default board key is `mcrpg:default`. |
+| **BoardOffering** | A single quest slot on the board (shared or personal). Tracks state: `AVAILABLE` → `ACCEPTED` → `COMPLETED`/`EXPIRED`. |
+| **BoardRotation** | A time-windowed rotation (daily or weekly). Offerings belong to a rotation and expire with it. |
+| **QuestRarity** | Rarity tier assigned to offerings (e.g., COMMON, RARE, LEGENDARY). Affects template scaling and visual display. |
+| **BoardSlotCategory** | Configurable category defining slot counts, visibility (SHARED/PERSONAL), and refresh type. |
+| **QuestTemplate** | Declarative YAML blueprint for procedurally generating quest definitions. |
+| **QuestTemplateEngine** | Stateless engine that resolves variables, evaluates conditions, and builds a `QuestDefinition` from a template. |
+| **TemplateCondition** | Extensible condition interface for gating template elements (phases/stages/objectives) during generation. |
+| **QuestRewardEntry** | Wrapper around `QuestRewardType` that optionally carries a `RewardFallback` for conditional reward substitution. |
+| **RewardDistributionConfig** | Configuration for splitting rewards among contributors in scoped quests. |
+| **ScopedBoardAdapter** | Plugin-provided adapter enabling group-based board offerings (e.g., Lands). |
+
+### Package Structure
+
+```
+quest/board/
+├── QuestBoardManager.java          # Central manager: rotations, offerings, generation
+├── QuestBoard.java                 # Board state container
+├── BoardOffering.java              # Offering record with state transitions
+├── BoardRotation.java              # Rotation window
+├── BoardMetadata.java              # Board-specific metadata on QuestDefinition
+├── category/                       # Slot category config and registry
+├── rarity/                         # QuestRarity, QuestRarityRegistry
+├── generation/                     # PersonalOfferingGenerator, QuestPool, SlotGenerationLogic
+├── template/                       # QuestTemplate, QuestTemplateEngine, serialization
+│   ├── condition/                  # TemplateCondition, ConditionContext, built-in conditions
+│   └── variable/                   # PoolVariable, RangeVariable, ResolvedVariableContext
+├── distribution/                   # RewardDistributionConfig, resolver, granter, types
+└── refresh/                        # DailyRefreshType, WeeklyRefreshType
+```
+
+### Template Generation Pipeline
+
+1. `QuestTemplateEngine.generate(template, rarityKey, random)` validates rarity support
+2. Variables resolved (pools first, then ranges scaled by difficulty)
+3. `ConditionContext` built (shared or personal depending on context)
+4. Phases/stages/objectives filtered by conditions; weighted selection applied
+5. `QuestDefinition` built with resolved objectives, rewards, and metadata
+6. Serialized to JSON via `GeneratedQuestDefinitionSerializer` for persistence
+7. Returns `GeneratedQuestResult` (definition + template key + JSON)
+
+### Extensibility Points
+
+- **Custom quest definitions**: Register via `QuestContentPack` in a `ContentExpansion`
+- **Custom objective types**: Register via `QuestObjectiveTypeContentPack`
+- **Custom reward types**: Register via `QuestRewardTypeContentPack`
+- **Custom scope providers**: Register via `QuestScopeProviderContentPack`
+- **Custom quest sources**: Register via `QuestSourceContentPack`
+- **Custom rarities**: Register via `QuestRarityContentPack`
+- **Custom distribution types**: Register via `RewardDistributionTypeContentPack`
+- **Custom conditions**: Register via `TemplateConditionContentPack`
+- **Custom scope adapters**: Register via `ScopedBoardAdapterContentPack`
+- **Custom templates**: Register via `QuestTemplateContentPack` or `QuestTemplateRegistry.registerTemplateDirectory()`
+- **Board events**: `BoardRotationEvent`, `BoardOfferingAcceptEvent`, `PersonalOfferingGenerateEvent`, `TemplateQuestGenerateEvent` (cancellable)
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `QuestBoardManager.java` | Rotation scheduling, offering generation, acceptance, state management |
+| `QuestTemplateEngine.java` | Template → QuestDefinition generation |
+| `GeneratedQuestDefinitionSerializer.java` | JSON round-trip for generated definitions |
+| `ConditionContext.java` | Unified context for all condition evaluation sites |
+| `QuestRewardEntry.java` | Reward wrapper with optional fallback |
+| `DistributionRewardEntry.java` | Distribution tier reward with pot behavior |
+| `QuestRewardDistributionResolver.java` | Pure stateless distribution math |
+| `BoardConfigFile.java` | Route constants for `board.yml` |
+| `quest/REWARDS.md` | Developer guide for reward types and configuration |
+
+---
+
 ## Keeping This File Current
 
 After any commit or PR that introduces one of the following, **update `CLAUDE.md` and the relevant `.cursor/rules/*.mdc` files** before or alongside the change:
@@ -456,6 +644,11 @@ After any commit or PR that introduces one of the following, **update `CLAUDE.md
 | New server owner config concern identified | `persona-server-owner.mdc` + `.claude/commands/review-server-owner.md` |
 | New public API pattern or breaking-change rule | `persona-extensibility.mdc` + `.claude/commands/review-extensibility.md` |
 | New test structural pattern or anti-pattern | `persona-testing.mdc` + `.claude/commands/review-testing.md` |
+| New structural design anti-pattern found (SRP, coupling, wrong layer) | `persona-architecture.mdc` + `.claude/commands/review-architecture.md` |
+| New error handling anti-pattern found (swallowed exception, bad logging) | `persona-error-handling.mdc` + `.claude/commands/review-error-handling.md` + `core.mdc` |
+| New performance anti-pattern found (hot path, unbounded collection, leak) | `persona-performance.mdc` + `.claude/commands/review-performance.md` |
+| New concurrency anti-pattern found (thread boundary, race, future handling) | `persona-concurrency.mdc` + `.claude/commands/review-concurrency.md` + `core.mdc` |
 | CI review file-pattern for a new domain | `.github/workflows/pr-review.yml` detect-changes step |
+| Quest board system changed (new condition, distribution type, template feature) | `CLAUDE.md` Quest Board System section + `quest-board-system.mdc` |
 
 These files are the project's living technical contract — stale steering files produce stale AI output.

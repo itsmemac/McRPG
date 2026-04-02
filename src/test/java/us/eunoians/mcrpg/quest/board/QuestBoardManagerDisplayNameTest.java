@@ -8,6 +8,7 @@ import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,7 +26,7 @@ class QuestBoardManagerDisplayNameTest extends McRPGBaseTest {
         BoardOffering offering = createOffering("gen_template_undead_purge_c92b0fa5");
         QuestBoardManager boardManager = mock(QuestBoardManager.class);
 
-        when(boardManager.resolveDefinitionForOffering(offering)).thenReturn(definition);
+        when(boardManager.resolveDefinitionForOffering(offering)).thenReturn(Optional.of(definition));
         when(boardManager.getOfferingDisplayName(mcRPGPlayer, offering)).thenCallRealMethod();
         when(definition.getDisplayName(mcRPGPlayer)).thenReturn("Undead Purge");
 
@@ -42,7 +43,7 @@ class QuestBoardManagerDisplayNameTest extends McRPGBaseTest {
         BoardOffering offering = createOffering("gen_template_undead_purge_c92b0fa5");
         QuestBoardManager boardManager = mock(QuestBoardManager.class);
 
-        when(boardManager.resolveDefinitionForOffering(offering)).thenReturn(null);
+        when(boardManager.resolveDefinitionForOffering(offering)).thenReturn(Optional.empty());
         when(boardManager.getOfferingDisplayName(mcRPGPlayer, offering)).thenCallRealMethod();
 
         String displayName = boardManager.getOfferingDisplayName(mcRPGPlayer, offering);

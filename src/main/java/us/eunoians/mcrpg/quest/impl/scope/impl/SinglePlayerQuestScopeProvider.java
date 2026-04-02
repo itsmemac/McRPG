@@ -52,6 +52,14 @@ public class SinglePlayerQuestScopeProvider extends QuestScopeProvider<SinglePla
 
     @NotNull
     @Override
+    public SinglePlayerQuestScope loadScope(@NotNull Connection connection, @NotNull UUID questUUID) {
+        SinglePlayerQuestScope scope = new SinglePlayerQuestScope(questUUID);
+        scope.setPlayerInScope(SinglePlayerQuestScopeDAO.getPlayerInScope(connection, questUUID));
+        return scope;
+    }
+
+    @NotNull
+    @Override
     public CompletableFuture<SinglePlayerQuestScope> loadScope(@NotNull UUID questUUID, @NotNull UUID scopeUUID) {
         CompletableFuture<SinglePlayerQuestScope> future = new CompletableFuture<>();
         Database database = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)

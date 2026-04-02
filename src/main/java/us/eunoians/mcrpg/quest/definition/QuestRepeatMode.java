@@ -25,5 +25,16 @@ public enum QuestRepeatMode {
      * The quest can be repeated up to a configured maximum number of times
      * per player.
      */
-    LIMITED
+    LIMITED,
+
+    /**
+     * The quest can be repeated up to a configured maximum number of times
+     * per player, and each repeat requires a configured cooldown to elapse
+     * since the player's last completion. Both constraints must be satisfied —
+     * the player must be within their total completion limit <em>and</em> the
+     * cooldown since the last completion must have passed.
+     * <p>
+     * Requires both {@code repeat-limit} and {@code repeat-cooldown} to be set.
+     */
+    COOLDOWN_LIMITED
 }

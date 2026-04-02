@@ -1,15 +1,21 @@
 package us.eunoians.mcrpg.quest.objective.type.builtin;
 
+import com.diamonddagger590.mccore.registry.RegistryAccess;
+import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.util.item.CustomEntityWrapper;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
+import us.eunoians.mcrpg.configuration.file.localization.LocalizationKey;
+import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.expansion.McRPGExpansion;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveInstance;
 import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveProgressContext;
 import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveType;
+import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 import us.eunoians.mcrpg.util.McRPGMethods;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -77,36 +83,31 @@ public class MobKillObjectiveType implements QuestObjectiveType {
         return validEntities.contains(mobContext.getEntityWrapper()) ? 1 : 0;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Resolves a localized description via the player's locale chain.
+     */
     @NotNull
     @Override
-    public String describeObjective(long requiredProgress) {
+    public String describeObjective(@NotNull McRPGPlayer player, long requiredProgress) {
+        var localization = RegistryAccess.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(McRPGManagerKey.LOCALIZATION);
+        String count = String.valueOf(requiredProgress);
         if (validEntities.isEmpty()) {
-            return "Kill " + requiredProgress + " mobs";
+            return localization.getLocalizedMessage(player, LocalizationKey.QUEST_OBJECTIVE_MOB_KILL_ANY,
+                    Map.of("count", count));
         }
         if (validEntities.size() == 1) {
-            return "Kill " + requiredProgress + " " + formatEntityName(validEntities.iterator().next());
+            return localization.getLocalizedMessage(player, LocalizationKey.QUEST_OBJECTIVE_MOB_KILL_SINGLE,
+                    Map.of("count", count, "entity", validEntities.iterator().next().entityName()));
         }
-        StringBuilder sb = new StringBuilder("Kill ").append(requiredProgress).append(" mobs:");
+        StringBuilder sb = new StringBuilder(localization.getLocalizedMessage(player,
+                LocalizationKey.QUEST_OBJECTIVE_MOB_KILL_MULTI_HEADER, Map.of("count", count)));
         for (CustomEntityWrapper entity : validEntities) {
-            sb.append("\n  - ").append(formatEntityName(entity));
-        }
-        return sb.toString();
-    }
-
-    private static String formatEntityName(@NotNull CustomEntityWrapper wrapper) {
-        return wrapper.customEntity()
-                .orElseGet(() -> wrapper.entityType()
-                        .map(t -> formatTypeName(t.name()))
-                        .orElse("Unknown Entity"));
-    }
-
-    private static String formatTypeName(@NotNull String raw) {
-        String[] parts = raw.toLowerCase().split("_");
-        StringBuilder sb = new StringBuilder();
-        for (String part : parts) {
-            if (part.isEmpty()) continue;
-            if (!sb.isEmpty()) sb.append(' ');
-            sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+            sb.append("\n").append(localization.getLocalizedMessage(player,
+                    LocalizationKey.QUEST_OBJECTIVE_MOB_KILL_MULTI_ITEM, Map.of("entity", entity.entityName())));
         }
         return sb.toString();
     }

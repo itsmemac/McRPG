@@ -4,6 +4,7 @@ import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.table.impl.TableVersionHistoryDAO;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
+import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveInstance;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveState;
 import us.eunoians.mcrpg.quest.impl.stage.QuestStageInstance;
@@ -12,11 +13,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * DAO for the {@code mcrpg_quest_objective_instances} table, storing objective-level quest state
@@ -53,7 +56,7 @@ public class QuestObjectiveInstanceDAO {
             statement.executeUpdate();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.SEVERE, "[QuestObjectiveInstanceDAO] Failed to create table " + TABLE_NAME, e);
             return false;
         }
     }
@@ -73,7 +76,7 @@ public class QuestObjectiveInstanceDAO {
                     "CREATE INDEX idx_objective_instances_stage ON " + TABLE_NAME + " (stage_uuid)")) {
                 ps.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                McRPG.getInstance().getLogger().log(Level.SEVERE, "[QuestObjectiveInstanceDAO] Failed to create index during migration", e);
             }
             TableVersionHistoryDAO.setTableVersion(connection, TABLE_NAME, 1);
         }
@@ -110,7 +113,7 @@ public class QuestObjectiveInstanceDAO {
             setNullableLong(ps, 8, objective.getEndTime().orElse(null));
             statements.add(ps);
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestObjectiveInstanceDAO] Failed to prepare saveObjectiveInstance statement for objective " + objective.getQuestObjectiveUUID(), e);
         }
         return statements;
     }
@@ -167,7 +170,7 @@ public class QuestObjectiveInstanceDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestObjectiveInstanceDAO] Failed to load objective instances for stage " + stageUUID, e);
         }
         return objectives;
     }
@@ -207,7 +210,7 @@ public class QuestObjectiveInstanceDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestObjectiveInstanceDAO] Failed to load objective instances with contributions for stage " + stageUUID, e);
         }
         return objectives;
     }
@@ -229,7 +232,7 @@ public class QuestObjectiveInstanceDAO {
             ps.setString(1, stageUUID.toString());
             statements.add(ps);
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestObjectiveInstanceDAO] Failed to prepare deleteObjectiveInstances statement for stage " + stageUUID, e);
         }
         return statements;
     }
@@ -238,7 +241,7 @@ public class QuestObjectiveInstanceDAO {
         if (value != null) {
             ps.setLong(index, value);
         } else {
-            ps.setNull(index, java.sql.Types.BIGINT);
+            ps.setNull(index, Types.BIGINT);
         }
     }
 

@@ -9,6 +9,7 @@ import us.eunoians.mcrpg.quest.impl.QuestInstance;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveInstance;
 import us.eunoians.mcrpg.quest.impl.stage.QuestStageInstance;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -42,7 +43,7 @@ public class QuestContributionAggregatorTest extends McRPGBaseTest {
         when(obj2.getPlayerContributions()).thenReturn(Map.of(p1, 20L, p2, 40L));
 
         var stage = mock(QuestStageInstance.class);
-        when(stage.getQuestObjectives()).thenReturn(java.util.List.of(obj1, obj2));
+        when(stage.getQuestObjectives()).thenReturn(List.of(obj1, obj2));
 
         Map<UUID, Long> result = QuestContributionAggregator.fromStage(stage);
         assertEquals(50L, result.get(p1));
@@ -60,12 +61,12 @@ public class QuestContributionAggregatorTest extends McRPGBaseTest {
         when(obj2.getPlayerContributions()).thenReturn(Map.of(p1, 200L));
 
         var stage1 = mock(QuestStageInstance.class);
-        when(stage1.getQuestObjectives()).thenReturn(java.util.List.of(obj1));
+        when(stage1.getQuestObjectives()).thenReturn(List.of(obj1));
         var stage2 = mock(QuestStageInstance.class);
-        when(stage2.getQuestObjectives()).thenReturn(java.util.List.of(obj2));
+        when(stage2.getQuestObjectives()).thenReturn(List.of(obj2));
 
         var quest = mock(QuestInstance.class);
-        when(quest.getStagesForPhase(0)).thenReturn(java.util.List.of(stage1, stage2));
+        when(quest.getStagesForPhase(0)).thenReturn(List.of(stage1, stage2));
 
         Map<UUID, Long> result = QuestContributionAggregator.fromPhase(quest, 0);
         assertEquals(300L, result.get(p1));
@@ -82,12 +83,12 @@ public class QuestContributionAggregatorTest extends McRPGBaseTest {
         when(obj2.getPlayerContributions()).thenReturn(Map.of(p1, 30L, p2, 70L));
 
         var stage1 = mock(QuestStageInstance.class);
-        when(stage1.getQuestObjectives()).thenReturn(java.util.List.of(obj1));
+        when(stage1.getQuestObjectives()).thenReturn(List.of(obj1));
         var stage2 = mock(QuestStageInstance.class);
-        when(stage2.getQuestObjectives()).thenReturn(java.util.List.of(obj2));
+        when(stage2.getQuestObjectives()).thenReturn(List.of(obj2));
 
         var quest = mock(QuestInstance.class);
-        when(quest.getQuestStageInstances()).thenReturn(java.util.List.of(stage1, stage2));
+        when(quest.getQuestStageInstances()).thenReturn(List.of(stage1, stage2));
 
         Map<UUID, Long> result = QuestContributionAggregator.fromQuest(quest);
         assertEquals(80L, result.get(p1));

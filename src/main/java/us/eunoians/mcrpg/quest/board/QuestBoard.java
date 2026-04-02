@@ -22,8 +22,11 @@ public class QuestBoard {
     private final ReloadableInteger maxAcceptedQuests;
     private final ReloadableInteger minimumTotalOfferings;
     private final ReloadableInteger maxScopedQuestsPerEntity;
-    private BoardRotation currentDailyRotation;
-    private BoardRotation currentWeeklyRotation;
+    // volatile: written from DB executor (initialize()) and main thread (triggerRotation() phase 2);
+    // read from DB executor (triggerRotation() phase 1) and main thread. Without volatile,
+    // writes on one thread may never be visible to the other.
+    private volatile BoardRotation currentDailyRotation;
+    private volatile BoardRotation currentWeeklyRotation;
 
     public QuestBoard(@NotNull NamespacedKey boardKey,
                       @NotNull YamlDocument boardConfig) {

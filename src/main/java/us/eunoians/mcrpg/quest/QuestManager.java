@@ -28,8 +28,8 @@ import us.eunoians.mcrpg.ability.impl.type.SkillAbility;
 import us.eunoians.mcrpg.ability.impl.type.TierableAbility;
 import us.eunoians.mcrpg.ability.impl.type.configurable.ConfigurableTierableAbility;
 import us.eunoians.mcrpg.database.table.board.BoardOfferingDAO;
-import us.eunoians.mcrpg.database.table.quest.QuestInstanceDAO;
 import us.eunoians.mcrpg.database.table.quest.QuestCompletionLogDAO;
+import us.eunoians.mcrpg.database.table.quest.QuestInstanceDAO;
 import us.eunoians.mcrpg.entity.holder.AbilityHolder;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.configuration.FileType;
@@ -38,11 +38,14 @@ import us.eunoians.mcrpg.configuration.file.MainConfigFile;
 import us.eunoians.mcrpg.database.table.board.PlayerBoardStateDAO;
 import us.eunoians.mcrpg.quest.board.BoardOffering;
 import us.eunoians.mcrpg.quest.board.template.GeneratedQuestDefinitionSerializer;
+import us.eunoians.mcrpg.quest.board.template.condition.ConditionParser;
+import us.eunoians.mcrpg.quest.board.template.condition.TemplateConditionRegistry;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
 import us.eunoians.mcrpg.quest.definition.QuestDefinitionRegistry;
 import us.eunoians.mcrpg.quest.definition.QuestRepeatMode;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
 import us.eunoians.mcrpg.quest.impl.QuestState;
+import us.eunoians.mcrpg.quest.impl.scope.QuestScope;
 import us.eunoians.mcrpg.quest.impl.scope.QuestScopeProvider;
 import us.eunoians.mcrpg.quest.source.QuestSource;
 import us.eunoians.mcrpg.quest.source.builtin.AbilityUpgradeQuestSource;
@@ -97,10 +100,10 @@ public class QuestManager extends Manager<McRPG> {
     private static final String DEFAULT_TIER_OVERRIDE_UPGRADE_QUEST_RESOURCE = "quests/upgrades/tier_override_ability_upgrades.yml";
 
     private final long finishedQuestKeepAliveNanos;
-    private final long finishedQuestOfflineTtlNanos;
 
     private final QuestObjectiveTypeRegistry objectiveTypeRegistry;
     private final QuestRewardTypeRegistry rewardTypeRegistry;
+    private final TemplateConditionRegistry conditionTypeRegistry;
     private final QuestScopeProviderRegistry scopeProviderRegistry;
     private final QuestConfigLoader configLoader;
     private final QuestDefinitionRegistry questDefinitionRegistry;
@@ -111,7 +114,11 @@ public class QuestManager extends Manager<McRPG> {
     /** Reverse index: playerUUID -> set of active quest UUIDs the player contributes to. */
     private final Map<UUID, Set<UUID>> playerToQuestIndex;
 
-    /** Tier 2: recently finished quests, evicted based on scope-aware TTL. */
+    /**
+     * Tier 2: recently finished quests, evicted after {@code finishedQuestKeepAliveNanos}.
+     * All finished quests use the same TTL regardless of online status to avoid calling
+     * Bukkit API ({@code Bukkit.getPlayer}) from the DB executor thread.
+     */
     private final Cache<UUID, QuestInstance> cachedFinishedQuests;
 
     /** In-flight async load requests keyed by quest UUID (deduplication). */
@@ -135,10 +142,11 @@ public class QuestManager extends Manager<McRPG> {
         RegistryAccess registryAccess = plugin.registryAccess();
         this.objectiveTypeRegistry = registryAccess.registry(McRPGRegistryKey.QUEST_OBJECTIVE_TYPE);
         this.rewardTypeRegistry = registryAccess.registry(McRPGRegistryKey.QUEST_REWARD_TYPE);
+        this.conditionTypeRegistry = registryAccess.registry(McRPGRegistryKey.TEMPLATE_CONDITION);
         this.scopeProviderRegistry = registryAccess.registry(McRPGRegistryKey.QUEST_SCOPE_PROVIDER);
         this.questDefinitionRegistry = registryAccess.registry(McRPGRegistryKey.QUEST_DEFINITION);
 
-        this.configLoader = new QuestConfigLoader();
+        this.configLoader = new QuestConfigLoader(new ConditionParser(this.conditionTypeRegistry));
 
         YamlDocument mainConfig = registryAccess
                 .registry(RegistryKey.MANAGER)
@@ -147,11 +155,8 @@ public class QuestManager extends Manager<McRPG> {
         if (mainConfig != null) {
             this.finishedQuestKeepAliveNanos = Duration.ofMinutes(
                     mainConfig.getInt(MainConfigFile.QUEST_CACHE_FINISHED_KEEP_ALIVE_MINUTES, 15)).toNanos();
-            this.finishedQuestOfflineTtlNanos = Duration.ofMinutes(
-                    mainConfig.getInt(MainConfigFile.QUEST_CACHE_FINISHED_OFFLINE_TTL_MINUTES, 5)).toNanos();
         } else {
             this.finishedQuestKeepAliveNanos = Duration.ofMinutes(15).toNanos();
-            this.finishedQuestOfflineTtlNanos = Duration.ofMinutes(5).toNanos();
         }
 
         extractDefaultQuestResources(plugin);
@@ -161,28 +166,19 @@ public class QuestManager extends Manager<McRPG> {
         this.cachedFinishedQuests = Caffeine.newBuilder().ticker(ticker).expireAfter(new Expiry<UUID, QuestInstance>() {
             @Override
             public long expireAfterCreate(UUID uuid, QuestInstance questInstance, long currentTime) {
-                return computeNextExpiryNanos(questInstance);
+                return finishedQuestKeepAliveNanos;
             }
 
             @Override
             public long expireAfterUpdate(UUID uuid, QuestInstance questInstance, long currentTime,
                                           @NonNegative long currentDuration) {
-                return computeNextExpiryNanos(questInstance);
+                return finishedQuestKeepAliveNanos;
             }
 
             @Override
             public long expireAfterRead(UUID uuid, QuestInstance questInstance, long currentTime,
                                         @NonNegative long currentDuration) {
                 return currentDuration;
-            }
-
-            private long computeNextExpiryNanos(@NotNull QuestInstance questInstance) {
-                int playersOnlineInScope = questInstance.getQuestScope()
-                        .map(scope -> (int) scope.getCurrentPlayersInScope().stream()
-                                .filter(uuid -> Bukkit.getPlayer(uuid) != null)
-                                .count())
-                        .orElse(0);
-                return playersOnlineInScope > 0 ? finishedQuestKeepAliveNanos : finishedQuestOfflineTtlNanos;
             }
         }).build();
         this.pendingRequests = new ConcurrentHashMap<>();
@@ -267,6 +263,17 @@ public class QuestManager extends Manager<McRPG> {
                 }
                 Duration cooldown = definition.getRepeatCooldown().orElse(Duration.ZERO);
                 return McRPG.getInstance().getTimeProvider().now().toEpochMilli() >= lastTime.getAsLong() + cooldown.toMillis();
+            case COOLDOWN_LIMITED:
+                int cooldownLimit = definition.getRepeatLimit().orElse(1);
+                if (QuestCompletionLogDAO.getCompletionCount(connection, playerUUID, defKey) >= cooldownLimit) {
+                    return false;
+                }
+                OptionalLong lastTimeCl = QuestCompletionLogDAO.getLastCompletionTime(connection, playerUUID, defKey);
+                if (lastTimeCl.isEmpty()) {
+                    return true;
+                }
+                Duration cooldownCl = definition.getRepeatCooldown().orElse(Duration.ZERO);
+                return McRPG.getInstance().getTimeProvider().now().toEpochMilli() >= lastTimeCl.getAsLong() + cooldownCl.toMillis();
             case REPEATABLE:
                 return true;
             default:
@@ -498,17 +505,21 @@ public class QuestManager extends Manager<McRPG> {
             return new GetItemRequest<>(immediate);
         }
 
-        // Deduplicate in-flight requests
-        GetItemRequest<QuestInstance> existing = pendingRequests.get(questUUID);
+        // Tier 3: deduplicate in-flight requests with an atomic putIfAbsent.
+        // The broken pattern (get + put) allowed two concurrent callers to both observe a null
+        // result and create independent futures; only one put would win and the other future
+        // would be orphaned and never resolved. putIfAbsent is atomic: exactly one caller's
+        // candidate gets inserted and only that caller submits the DB load.
+        CompletableFuture<QuestInstance> future = new CompletableFuture<>();
+        GetItemRequest<QuestInstance> candidate = new GetItemRequest<>(future);
+
+        GetItemRequest<QuestInstance> existing = pendingRequests.putIfAbsent(questUUID, candidate);
         if (existing != null) {
+            // Another thread already registered an in-flight load for this UUID — reuse it.
             return existing;
         }
 
-        // Tier 3: load from database
-        CompletableFuture<QuestInstance> future = new CompletableFuture<>();
-        GetItemRequest<QuestInstance> request = new GetItemRequest<>(future);
-        pendingRequests.put(questUUID, request);
-
+        // This thread won the insertion — submit the DB load.
         Database database = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)
                 .manager(McRPGManagerKey.DATABASE).getDatabase();
         database.getDatabaseExecutorService().submit(() -> {
@@ -516,6 +527,7 @@ public class QuestManager extends Manager<McRPG> {
                 Optional<QuestInstance> loaded = QuestInstanceDAO.loadFullQuestTree(connection, questUUID);
                 if (loaded.isPresent()) {
                     QuestInstance quest = loaded.get();
+                    attachLoadedQuestScope(connection, quest);
                     placeInCorrectTier(quest);
                     future.complete(quest);
                 } else {
@@ -529,7 +541,7 @@ public class QuestManager extends Manager<McRPG> {
             }
         });
 
-        return request;
+        return candidate;
     }
 
     /**
@@ -542,6 +554,51 @@ public class QuestManager extends Manager<McRPG> {
     public void trackActiveQuest(@NotNull QuestInstance quest) {
         activeQuests.put(quest.getQuestUUID(), quest);
         indexQuestForAllScopePlayers(quest);
+    }
+
+    /**
+     * Attaches a {@link QuestScope} to a DB-loaded quest instance by delegating to the
+     * quest's registered {@link QuestScopeProvider#loadScope(Connection, UUID)} implementation.
+     * This is the single call site that generalizes scope hydration for all provider types.
+     * <p>
+     * The method is a no-op if the quest already has a scope. If no provider is registered for
+     * the quest's scope type (including alias resolution), a warning is logged and the quest
+     * is left without a scope.
+     *
+     * @param connection the open database connection to use for scope lookup
+     * @param quest      the quest instance whose scope needs to be hydrated
+     * {@link QuestInstanceDAO#loadFullQuestTree}, which intentionally omits scope.
+     * Without this, {@link us.eunoians.mcrpg.listener.quest.QuestFeedbackListener} cannot
+     * resolve in-scope players for chat notifications (e.g. abandon).
+     *
+     * @param connection open DB connection
+     * @param quest      quest instance with {@code null} scope
+     */
+    private void attachLoadedQuestScope(@NotNull Connection connection, @NotNull QuestInstance quest) {
+        if (quest.getQuestScope().isPresent()) {
+            return;
+        }
+        Optional<QuestScopeProvider<?>> providerOpt = scopeProviderRegistry.get(quest.getScopeType());
+        if (providerOpt.isEmpty()) {
+            NamespacedKey alias = resolveScopeProviderAlias(quest.getScopeType());
+            if (alias != null) {
+                providerOpt = scopeProviderRegistry.get(alias);
+            }
+        }
+        if (providerOpt.isEmpty()) {
+            plugin().getLogger().warning(
+                    "Active quest " + quest.getQuestUUID() + " has no registered scope provider for type "
+                            + quest.getScopeType() + "; quest notifications may not reach players.");
+            return;
+        }
+        try {
+            QuestScope scope = providerOpt.get().loadScope(connection, quest.getQuestUUID());
+            quest.setQuestScope(scope);
+        } catch (Exception e) {
+            plugin().getLogger().warning(
+                    "Failed to load scope for quest " + quest.getQuestUUID() + " (provider: "
+                            + providerOpt.get().getKey() + "): " + e.getMessage());
+        }
     }
 
     /**
@@ -591,9 +648,11 @@ public class QuestManager extends Manager<McRPG> {
         Set<UUID> quests = playerToQuestIndex.get(playerUUID);
         if (quests != null) {
             quests.remove(questUUID);
-            if (quests.isEmpty()) {
-                playerToQuestIndex.remove(playerUUID);
-            }
+            // Empty-set cleanup is intentionally omitted here. Attempting to remove the outer
+            // map entry when the set is empty creates a TOCTOU race with concurrent
+            // indexQuestForPlayer() calls: a new quest can be added between isEmpty() returning
+            // true and playerToQuestIndex.remove(), silently losing the newly-indexed quest.
+            // Full cleanup happens in deindexPlayer() on player disconnect.
         }
     }
 
@@ -612,17 +671,20 @@ public class QuestManager extends Manager<McRPG> {
     }
 
     /**
-     * Removes a quest from every player's index entry. Used when a quest leaves
-     * Tier 1 (retirement, cancellation, etc.).
+     * Removes a quest from every in-scope player's index entry. Uses the quest's scope
+     * to target only the players who were indexed for this quest, avoiding an O(n) scan
+     * over the entire {@code playerToQuestIndex} map.
+     * <p>
+     * If the quest has no scope attached (e.g. it was never started), this is a no-op.
      *
      * @param quest the quest instance to deindex
      */
     private void deindexQuest(@NotNull QuestInstance quest) {
-        UUID questUUID = quest.getQuestUUID();
-        for (Map.Entry<UUID, Set<UUID>> entry : playerToQuestIndex.entrySet()) {
-            entry.getValue().remove(questUUID);
-        }
-        playerToQuestIndex.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+        quest.getQuestScope().ifPresent(scope -> {
+            for (UUID playerUUID : scope.getCurrentPlayersInScope()) {
+                deindexQuestForPlayer(quest.getQuestUUID(), playerUUID);
+            }
+        });
     }
 
     /**
@@ -690,6 +752,7 @@ public class QuestManager extends Manager<McRPG> {
                     } else {
                         Optional<QuestInstance> loaded = QuestInstanceDAO.loadFullQuestTree(connection, questUUID);
                         loaded.ifPresent(quest -> {
+                            attachLoadedQuestScope(connection, quest);
                             trackActiveQuest(quest);
                             indexQuestForPlayer(questUUID, playerUUID);
                             if (quest.isExpired()) {
@@ -800,7 +863,10 @@ public class QuestManager extends Manager<McRPG> {
                         recoveredEphemeral++;
                     }
                     Optional<QuestInstance> fullTree = QuestInstanceDAO.loadFullQuestTree(connection, shell.getQuestUUID());
-                    fullTree.ifPresent(this::trackActiveQuest);
+                    fullTree.ifPresent(quest -> {
+                        attachLoadedQuestScope(connection, quest);
+                        trackActiveQuest(quest);
+                    });
                 }
                 plugin().getLogger().info("Loaded " + activeQuests.size() + " active quests from database"
                         + (expiredAtStartup > 0
@@ -849,7 +915,7 @@ public class QuestManager extends Manager<McRPG> {
             if (offering.isPresent() && offering.get().getGeneratedDefinition().isPresent()) {
                 String json = offering.get().getGeneratedDefinition().get();
                 QuestDefinition recovered = GeneratedQuestDefinitionSerializer.deserialize(
-                        json, objectiveTypeRegistry, rewardTypeRegistry);
+                        json, objectiveTypeRegistry, rewardTypeRegistry, conditionTypeRegistry);
                 definitionRegistry.register(recovered);
                 plugin().getLogger().fine("Recovered ephemeral definition " + defKey + " from offering");
                 return true;

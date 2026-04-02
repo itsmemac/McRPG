@@ -3,6 +3,7 @@ package us.eunoians.mcrpg.quest.objective.type;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
+import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.expansion.content.McRPGContent;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveInstance;
 
@@ -39,18 +40,16 @@ public interface QuestObjectiveType extends McRPGContent {
     NamespacedKey getKey();
 
     /**
-     * Produces a human-readable description of what this configured objective requires,
-     * used as a fallback when no localization entry exists (e.g. for template-generated quests).
+     * Produces a localized, human-readable description of what this configured objective requires,
+     * used as a fallback when no localization entry exists for the specific quest
+     * (e.g. for template-generated quests whose descriptions live in locale files).
      *
+     * @param player           the player whose locale chain determines the language
      * @param requiredProgress the amount of progress needed to complete the objective
      * @return a descriptive string such as "Break 43 Coal Ore, Deepslate Coal Ore"
      */
     @NotNull
-    default String describeObjective(long requiredProgress) {
-        String typeName = getKey().getKey().replace('_', ' ');
-        String capitalized = typeName.substring(0, 1).toUpperCase() + typeName.substring(1);
-        return capitalized + " x" + requiredProgress;
-    }
+    String describeObjective(@NotNull McRPGPlayer player, long requiredProgress);
 
     /**
      * Parses type-specific configuration from a YAML section and returns a new configured

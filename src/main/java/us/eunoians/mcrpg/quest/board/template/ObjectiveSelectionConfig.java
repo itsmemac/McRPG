@@ -17,6 +17,12 @@ public record ObjectiveSelectionConfig(
         int maxCount
 ) {
 
+    /**
+     * Canonical constructor — validates that {@code minCount >= 1} and
+     * {@code maxCount >= minCount}.
+     *
+     * @throws IllegalArgumentException if either constraint is violated
+     */
     public ObjectiveSelectionConfig {
         if (minCount < 1) {
             throw new IllegalArgumentException("minCount must be >= 1, got: " + minCount);
@@ -27,6 +33,14 @@ public record ObjectiveSelectionConfig(
         }
     }
 
+    /**
+     * Controls how objectives within a template stage are selected during generation.
+     * <ul>
+     *   <li>{@link #ALL} — include every objective; preserves behaviour before weighted selection.</li>
+     *   <li>{@link #WEIGHTED_RANDOM} — select a random subset by weight, without replacement,
+     *       using the count bounds from the enclosing {@link ObjectiveSelectionConfig}.</li>
+     * </ul>
+     */
     public enum ObjectiveSelectionMode {
         ALL,
         WEIGHTED_RANDOM

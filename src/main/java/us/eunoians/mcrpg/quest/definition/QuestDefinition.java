@@ -10,6 +10,7 @@ import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.expansion.content.McRPGContent;
 import us.eunoians.mcrpg.quest.board.BoardMetadata;
 import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionConfig;
+import us.eunoians.mcrpg.quest.board.template.condition.QuestRewardEntry;
 import us.eunoians.mcrpg.quest.reward.QuestRewardType;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 
@@ -40,7 +41,7 @@ public class QuestDefinition implements McRPGContent {
     private final NamespacedKey scopeType;
     private final Duration expiration;
     private final List<QuestPhaseDefinition> phases;
-    private final List<QuestRewardType> rewards;
+    private final List<QuestRewardEntry> rewardEntries;
     private final QuestRepeatMode repeatMode;
     private final Duration repeatCooldown;
     private final int repeatLimit;
@@ -58,8 +59,8 @@ public class QuestDefinition implements McRPGContent {
      * @param phases         the ordered list of phase definitions (must contain at least one)
      * @param rewards        the quest-level rewards granted on completion
      * @param repeatMode     how this quest may be repeated (defaults to {@link QuestRepeatMode#ONCE})
-     * @param repeatCooldown the cooldown between completions (only used with {@link QuestRepeatMode#COOLDOWN}), or {@code null}
-     * @param repeatLimit    the maximum number of completions per player (only used with {@link QuestRepeatMode#LIMITED}), or {@code -1} for no limit
+     * @param repeatCooldown the cooldown between completions (used with {@link QuestRepeatMode#COOLDOWN} and {@link QuestRepeatMode#COOLDOWN_LIMITED}), or {@code null}
+     * @param repeatLimit    the maximum number of completions per player (used with {@link QuestRepeatMode#LIMITED} and {@link QuestRepeatMode#COOLDOWN_LIMITED}), or {@code -1} for no limit
      * @param expansionKey   the key of the {@link us.eunoians.mcrpg.expansion.ContentExpansion} that provides this definition, or {@code null} for config-loaded definitions
      * @throws IllegalArgumentException if {@code phases} is empty
      */
@@ -84,8 +85,8 @@ public class QuestDefinition implements McRPGContent {
      * @param phases         the ordered list of phase definitions (must contain at least one)
      * @param rewards        the quest-level rewards granted on completion
      * @param repeatMode     how this quest may be repeated (defaults to {@link QuestRepeatMode#ONCE})
-     * @param repeatCooldown the cooldown between completions (only used with {@link QuestRepeatMode#COOLDOWN}), or {@code null}
-     * @param repeatLimit    the maximum number of completions per player (only used with {@link QuestRepeatMode#LIMITED}), or {@code -1} for no limit
+     * @param repeatCooldown the cooldown between completions (used with {@link QuestRepeatMode#COOLDOWN} and {@link QuestRepeatMode#COOLDOWN_LIMITED}), or {@code null}
+     * @param repeatLimit    the maximum number of completions per player (used with {@link QuestRepeatMode#LIMITED} and {@link QuestRepeatMode#COOLDOWN_LIMITED}), or {@code -1} for no limit
      * @param expansionKey        the key of the {@link us.eunoians.mcrpg.expansion.ContentExpansion} that provides this definition, or {@code null} for config-loaded definitions
      * @param metadata            extensible metadata map, or {@code null} for none
      * @param rewardDistribution  the distribution configuration for quest-level rewards, or {@code null} if none
@@ -133,6 +134,41 @@ public class QuestDefinition implements McRPGContent {
                            @Nullable Map<NamespacedKey, QuestDefinitionMetadata> metadata,
                            @Nullable RewardDistributionConfig rewardDistribution,
                            @Nullable Map<String, String> inlineDisplay) {
+        this(questKey, scopeType, expiration, phases,
+                rewards.stream().map(QuestRewardEntry::new).toList(),
+                repeatMode, repeatCooldown, repeatLimit, expansionKey, metadata, rewardDistribution, inlineDisplay, true);
+    }
+
+    /**
+     * Creates a new quest definition with reward entries that may carry fallback conditions.
+     *
+     * @param questKey            the unique key identifying this quest
+     * @param scopeType           the key identifying the scope provider for instances of this quest
+     * @param expiration          the expiration duration, or {@code null} if instances do not expire
+     * @param phases              the ordered list of phase definitions (must contain at least one)
+     * @param rewardEntries       the quest-level reward entries (may include fallback conditions)
+     * @param repeatMode          how this quest may be repeated
+     * @param repeatCooldown      the cooldown between completions, or {@code null}
+     * @param repeatLimit         the maximum completions per player, or {@code -1} for no limit
+     * @param expansionKey        the expansion key, or {@code null}
+     * @param metadata            extensible metadata map, or {@code null} for none
+     * @param rewardDistribution  the distribution config, or {@code null} if none
+     * @param inlineDisplay       inline fallback display strings from quest/template YAML, or {@code null}
+     * @param ignored             disambiguating flag (not used)
+     */
+    private QuestDefinition(@NotNull NamespacedKey questKey,
+                            @NotNull NamespacedKey scopeType,
+                            @Nullable Duration expiration,
+                            @NotNull List<QuestPhaseDefinition> phases,
+                            @NotNull List<QuestRewardEntry> rewardEntries,
+                            @NotNull QuestRepeatMode repeatMode,
+                            @Nullable Duration repeatCooldown,
+                            int repeatLimit,
+                            @Nullable NamespacedKey expansionKey,
+                            @Nullable Map<NamespacedKey, QuestDefinitionMetadata> metadata,
+                            @Nullable RewardDistributionConfig rewardDistribution,
+                            @Nullable Map<String, String> inlineDisplay,
+                            boolean ignored) {
         if (phases.isEmpty()) {
             throw new IllegalArgumentException("A quest must have at least one phase");
         }
@@ -140,7 +176,7 @@ public class QuestDefinition implements McRPGContent {
         this.scopeType = scopeType;
         this.expiration = expiration;
         this.phases = List.copyOf(phases);
-        this.rewards = List.copyOf(rewards);
+        this.rewardEntries = List.copyOf(rewardEntries);
         this.repeatMode = repeatMode;
         this.repeatCooldown = repeatCooldown;
         this.repeatLimit = repeatLimit;
@@ -148,6 +184,40 @@ public class QuestDefinition implements McRPGContent {
         this.metadata = metadata != null ? Map.copyOf(metadata) : Collections.emptyMap();
         this.rewardDistribution = rewardDistribution;
         this.inlineDisplay = inlineDisplay != null ? Map.copyOf(inlineDisplay) : Collections.emptyMap();
+    }
+
+    /**
+     * Creates a new quest definition with reward entries that may carry fallback conditions.
+     *
+     * @param questKey            the unique key identifying this quest
+     * @param scopeType           the key identifying the scope provider
+     * @param expiration          the expiration duration, or {@code null}
+     * @param phases              the ordered list of phase definitions
+     * @param rewardEntries       the quest-level reward entries
+     * @param repeatMode          how this quest may be repeated
+     * @param repeatCooldown      the cooldown between completions, or {@code null}
+     * @param repeatLimit         the maximum completions per player, or {@code -1}
+     * @param expansionKey        the expansion key, or {@code null}
+     * @param metadata            extensible metadata map, or {@code null}
+     * @param rewardDistribution  the distribution config, or {@code null}
+     * @param inlineDisplay       inline display strings, or {@code null}
+     * @return a new quest definition
+     */
+    @NotNull
+    public static QuestDefinition withEntries(@NotNull NamespacedKey questKey,
+                                              @NotNull NamespacedKey scopeType,
+                                              @Nullable Duration expiration,
+                                              @NotNull List<QuestPhaseDefinition> phases,
+                                              @NotNull List<QuestRewardEntry> rewardEntries,
+                                              @NotNull QuestRepeatMode repeatMode,
+                                              @Nullable Duration repeatCooldown,
+                                              int repeatLimit,
+                                              @Nullable NamespacedKey expansionKey,
+                                              @Nullable Map<NamespacedKey, QuestDefinitionMetadata> metadata,
+                                              @Nullable RewardDistributionConfig rewardDistribution,
+                                              @Nullable Map<String, String> inlineDisplay) {
+        return new QuestDefinition(questKey, scopeType, expiration, phases, rewardEntries,
+                repeatMode, repeatCooldown, repeatLimit, expansionKey, metadata, rewardDistribution, inlineDisplay, true);
     }
 
     /**
@@ -198,9 +268,18 @@ public class QuestDefinition implements McRPGContent {
     /**
      * Produces a readable fallback name from a raw key, stripping generated prefixes
      * and UUID suffixes (e.g. {@code gen_template_choose_path_1f97a1b5} becomes {@code Choose Path}).
+     * This is shared by systems that need a safe display fallback when no definition
+     * localization can be resolved at runtime.
+     * <p>
+     * This method is {@code public} rather than {@code private} so it can be directly exercised
+     * by unit tests without needing to construct a full {@link QuestDefinition}. Callers outside
+     * this class should treat it as an implementation detail subject to change.
+     *
+     * @param rawKey the raw namespaced key string to convert
+     * @return a human-readable title-cased string
      */
     @NotNull
-    private static String formatFallbackDisplayName(@NotNull String rawKey) {
+    public static String formatFallbackDisplayName(@NotNull String rawKey) {
         String cleaned = rawKey;
         if (cleaned.startsWith("gen_template_")) {
             cleaned = cleaned.substring("gen_template_".length());
@@ -253,13 +332,28 @@ public class QuestDefinition implements McRPGContent {
     }
 
     /**
-     * Gets the rewards granted upon completing the entire quest.
+     * Gets the reward entries granted upon completing the entire quest.
+     * Entries may carry optional {@link RewardFallback} conditions for
+     * per-player reward substitution at grant time.
+     *
+     * @return an immutable list of quest-level reward entries
+     */
+    @NotNull
+    public List<QuestRewardEntry> getRewardEntries() {
+        return rewardEntries;
+    }
+
+    /**
+     * Convenience accessor returning the raw reward types without entry metadata.
+     * Preserves backward compatibility with callers that don't need fallback info.
      *
      * @return an immutable list of configured quest-level reward types
      */
     @NotNull
     public List<QuestRewardType> getRewards() {
-        return rewards;
+        return rewardEntries.stream()
+                .map(QuestRewardEntry::reward)
+                .toList();
     }
 
     /**
@@ -320,8 +414,8 @@ public class QuestDefinition implements McRPGContent {
     }
 
     /**
-     * Gets the cooldown duration between completions. Only meaningful when the repeat
-     * mode is {@link QuestRepeatMode#COOLDOWN}.
+     * Gets the cooldown duration between completions. Used by {@link QuestRepeatMode#COOLDOWN}
+     * and {@link QuestRepeatMode#COOLDOWN_LIMITED}.
      *
      * @return an {@link Optional} containing the cooldown duration, or empty if not set
      */
@@ -331,8 +425,8 @@ public class QuestDefinition implements McRPGContent {
     }
 
     /**
-     * Gets the maximum number of completions per player. Only meaningful when the repeat
-     * mode is {@link QuestRepeatMode#LIMITED}.
+     * Gets the maximum number of completions per player. Used by {@link QuestRepeatMode#LIMITED}
+     * and {@link QuestRepeatMode#COOLDOWN_LIMITED}.
      *
      * @return an {@link OptionalInt} containing the limit, or empty if not set
      */

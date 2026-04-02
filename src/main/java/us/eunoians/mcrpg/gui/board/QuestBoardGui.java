@@ -136,10 +136,10 @@ public class QuestBoardGui extends McRPGPaginatedGui {
         int navRowStart = 45;
         setSlot(navRowStart, new BoardBackSlot());
         if (zeroPage > 0) {
-            setSlot(navRowStart + 3, getPreviousPageSlot());
+            setSlot(navRowStart + 2, getPreviousPageSlot());
         }
         if (endIndex < visible.size()) {
-            setSlot(navRowStart + 5, getNextPageSlot());
+            setSlot(navRowStart + 6, getNextPageSlot());
         }
 
         if (hasScopedEntities) {
@@ -170,10 +170,10 @@ public class QuestBoardGui extends McRPGPaginatedGui {
         int navRowStart = 45;
         setSlot(navRowStart, new ScopedBackSlot());
         if (zeroPage > 0) {
-            setSlot(navRowStart + 3, getPreviousPageSlot());
+            setSlot(navRowStart + 2, getPreviousPageSlot());
         }
         if (!scopedOfferings.isEmpty() && (zeroPage + 1) * SLOTS_PER_PAGE < scopedOfferings.size()) {
-            setSlot(navRowStart + 5, getNextPageSlot());
+            setSlot(navRowStart + 6, getNextPageSlot());
         }
     }
 
@@ -237,7 +237,7 @@ public class QuestBoardGui extends McRPGPaginatedGui {
             for (String entityId : memberEntities) {
                 List<BoardOffering> entityOfferings = offeringsMap.getOrDefault(entityId, List.of());
                 boolean canManage = adapter.canManageQuests(playerUUID, entityId);
-                String displayName = adapter.getEntityDisplayName(entityId).orElse(entityId);
+                String displayName = McRPG.getInstance().getMiniMessage().escapeTags(adapter.getEntityDisplayName(entityId).orElse(entityId));
 
                 for (BoardOffering offering : entityOfferings) {
                     entries.add(new ScopedOfferingEntry(offering, entityId, scopeKey, displayName, canManage));

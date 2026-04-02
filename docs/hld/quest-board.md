@@ -401,7 +401,7 @@ New `RewardDistribution` config applicable at **quest, phase, stage, and objecti
 ```yaml
 reward-distribution:
   top-contributor:
-    type: TOP_PLAYERS
+    type: mcrpg:top_players
     top-player-count: 1
     rewards:
       bonus-xp:
@@ -409,7 +409,7 @@ reward-distribution:
         skill: MINING
         amount: 1000
   legendary-top-contributor:
-    type: TOP_PLAYERS
+    type: mcrpg:top_players
     top-player-count: 1
     min-rarity: LEGENDARY
     rewards:
@@ -418,14 +418,21 @@ reward-distribution:
         item: DIAMOND_BLOCK
         amount: 5
   top-three:
-    type: TOP_PLAYERS
+    type: mcrpg:top_players
     top-player-count: 3
     rewards:
       silver-reward:
         type: mcrpg:command
         command: "give %player% gold_ingot 5"
+  quest-starter:
+    type: mcrpg:quest_acceptor
+    rewards:
+      starter-bonus:
+        type: mcrpg:experience
+        skill: MINING
+        amount: 300
   major-contributor:
-    type: CONTRIBUTION_THRESHOLD
+    type: mcrpg:contribution_threshold
     min-contribution-percent: 20
     rewards:
       threshold-reward:
@@ -433,7 +440,7 @@ reward-distribution:
         skill: MINING
         amount: 500
   contributor:
-    type: CONTRIBUTION_THRESHOLD
+    type: mcrpg:contribution_threshold
     min-contribution-percent: 5
     rewards:
       participation-reward:
@@ -441,7 +448,7 @@ reward-distribution:
         skill: MINING
         amount: 100
   rare-participant:
-    type: PARTICIPATED
+    type: mcrpg:participated
     min-rarity: RARE
     rewards:
       rare-bonus:
@@ -449,13 +456,13 @@ reward-distribution:
         skill: MINING
         amount: 200
   active-participant:
-    type: PARTICIPATED
+    type: mcrpg:participated
     rewards:
       participation:
         type: mcrpg:money
         amount: 50
   land-member:
-    type: MEMBERSHIP
+    type: mcrpg:membership
     rewards:
       membership-bonus:
         type: mcrpg:money
@@ -464,10 +471,11 @@ reward-distribution:
 
 **Reward distribution types:**
 
-- `TOP_PLAYERS` -- rewards the top `top-player-count` contributors by total contribution
-- `CONTRIBUTION_THRESHOLD` -- rewards any player whose contribution is >= `min-contribution-percent` of the total
-- `PARTICIPATED` -- rewards any player who made **at least one contribution** to the quest (even minimal)
-- `MEMBERSHIP` -- rewards any player who was a **member of the group** (e.g., land member) when the quest completed, regardless of whether they contributed at all. This is the "you were along for the ride" tier.
+- `mcrpg:top_players` -- rewards the top `top-player-count` contributors by total contribution
+- `mcrpg:contribution_threshold` -- rewards any player whose contribution is >= `min-contribution-percent` of the total
+- `mcrpg:participated` -- rewards any player who made **at least one contribution** to the quest (even minimal)
+- `mcrpg:membership` -- rewards any player who was a **member of the group** (e.g., land member) when the quest completed, regardless of whether they contributed at all. This is the "you were along for the ride" tier.
+- `mcrpg:quest_acceptor` -- rewards the player who accepted the scoped quest (the "quest owner"). Restricted to scoped quests.
 
 **Rarity-conditional tiers**: Any distribution tier can include an optional `min-rarity` field. When present, the tier only applies if the quest instance was generated at that rarity or higher. This enables rewards like "the top contributor gets a bonus item, but only on LEGENDARY quests." The `min-rarity` approach is more flexible than exact match -- `min-rarity: RARE` automatically includes LEGENDARY too. For exact match, use `required-rarity` instead.
 
@@ -1095,7 +1103,7 @@ Each phase includes unit tests alongside implementation. Key areas to test:
 - `min-scaled-amount` per-reward config to prevent minimum-1 clamping from exceeding pot totals (`0` disables minimum and prevents pot overrun)
 - `QuestRewardType.getNumericAmount()` default method for remainder calculation
 - `QuestAcceptorDistributionType` (`mcrpg:quest_acceptor`) -- distribution type that resolves exclusively to the player who accepted a scoped quest; restricted to scoped quests at config load time
-- Rarity visual effects: `glint` and `custom-model-data` fields on `QuestRarity` config in `board.yml` (configured per rarity tier, not derived from weight thresholds)
+- Rarity visual effects: per-rarity `icon:` section on `QuestRarity` config in `board.yml` (same `ItemBuilder.from(Section)` format used throughout GUI localization); `QuestRarity` stores the section and exposes `configureIcon(ItemBuilder)` rather than typed `glint`/`custom-model-data` fields — any item property can be driven from config without schema changes
 - Board GUI polish: `OfferingLoreBuilder` utility (objective summary, reward preview, timer countdown lines); centralized to ensure consistency between `BoardOfferingSlot` and `ScopedOfferingSlot`
 - `DistributionPreviewResolver` utility + `DistributionPreviewEntry` record -- live contribution preview embedded as lore lines on the active scoped quest display
 - Objective-level `reward-distribution` serialization in `GeneratedQuestDefinitionSerializer` (gap from Phase 3)
@@ -1105,6 +1113,17 @@ Each phase includes unit tests alongside implementation. Key areas to test:
 - Multi-level distribution integration tests (deferred from Phase 3)
 - Completion listener distribution tests (deferred from Phase 3)
 - Integration test suite for end-to-end board flows
+
+**Implementation notes (completed):**
+
+- `TemplateCondition` gained a `serializeConfig()` abstract method returning `Map<String, Object>` — required so `GeneratedQuestDefinitionSerializer` can round-trip condition state through JSON without reflection; all six built-in condition types implement it. This is a binary-incompatible addition to the public interface; third-party implementors must add the method when upgrading.
+- `GeneratedQuestDefinitionSerializer` extended with three new helpers: `deserializeFallback` (reconstructs `RewardFallback` from JSON using `TemplateConditionRegistry` + `QuestRewardTypeRegistry`), `createConfiguredCondition` (bridges from a JSON config map into a BoostedYAML in-memory `Section` and calls `fromConfig`), and `populateDocument` (recursively populates a `YamlDocument` from a possibly-nested map, required for `CompoundCondition` round-trips). The `deserialize()` method signature now takes a `TemplateConditionRegistry` as a fourth parameter (threaded through from `QuestManager` and `QuestBoardManager`).
+- `QuestConfigLoader` — `parseSingleReward` private helper added (reusable single-section reward parser); `parseDistributionRewardEntries` extended to parse the `fallback:` YAML block via `ConditionParser.parseSingle` + `parseSingleReward`. `QuestTemplateConfigLoader` inherits fallback parsing automatically through its `parseRewardDistribution` delegation.
+- `QuestRarity` visual config implemented as a generic `iconSection` field (BoostedYAML `Section`) with a `configureIcon(ItemBuilder)` method — allows any item property (material, display name, glint, custom model data, lore) to be set from config without per-field schema changes. `ScopedOfferingSlot` updated to use `ItemBuilder.from(Section)` via `LocalizationKey.QUEST_BOARD_SCOPED_OFFERING_SLOT_DISPLAY_ITEM`, matching the pattern already used by `BoardOfferingSlot`.
+- Concurrent acceptance race hardening: per-offering `synchronized` locks via `ConcurrentHashMap<UUID, Object>` in `QuestBoardManager` prevent double-acceptance under simultaneous clicks.
+- Server restart mid-rotation recovery: `QuestBoardManager.initialize()` detects missed rotation windows by comparing the last persisted rotation epoch against the current time and triggers a catch-up rotation automatically.
+- Offering state consistency validation on board open: orphaned `ACCEPTED` offerings (those with no corresponding active `QuestInstance`) are detected and repaired to `EXPIRED` before the board is rendered.
+- All tests passing; multi-level distribution integration tests and completion listener distribution tests (deferred from Phase 3) completed in this phase.
 
 **Out of scope (deferred to future / community-driven):**
 - Factions/Towny scope adapter implementations -- the generic `ScopedBoardAdapter` framework from Phase 3 documents the integration pattern; actual third-party adapters are community-driven via `ScopedBoardAdapterContentPack`

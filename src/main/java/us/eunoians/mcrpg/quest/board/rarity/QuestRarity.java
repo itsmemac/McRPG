@@ -1,6 +1,7 @@
 package us.eunoians.mcrpg.quest.board.rarity;
 
-import org.bukkit.Material;
+import com.diamonddagger590.mccore.builder.item.impl.ItemBuilder;
+import dev.dejvokep.boostedyaml.block.implementation.Section;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,6 +14,13 @@ import java.util.Optional;
  * <p>
  * Loaded from {@code board.yml} config (auto-namespaced under {@code mcrpg:}) or
  * registered programmatically by third-party plugins via content packs.
+ * <p>
+ * Icon configuration is driven by the {@code display:} section of the rarity's config
+ * entry. The section is applied to an {@link ItemBuilder} via
+ * {@link ItemBuilder#from(Section, ItemBuilder)}, so any key supported by
+ * {@link com.diamonddagger590.mccore.builder.item.ItemBuilderConfigurationKeys} (such as
+ * {@code material}, {@code custom-model-data}, {@code settings.glowing}) can be used.
+ * The {@code name-color} key is a McRPG extension and is extracted separately.
  */
 public final class QuestRarity implements McRPGContent {
 
@@ -21,94 +29,114 @@ public final class QuestRarity implements McRPGContent {
     private final double difficultyMultiplier;
     private final double rewardMultiplier;
     private final NamespacedKey expansionKey;
-    private final Integer customModelData;
-    private final boolean glint;
-    private final Material material;
+    @Nullable
+    private final Section iconSection;
+    @Nullable
     private final String nameColor;
 
+    /**
+     * Minimal constructor for rarities without icon configuration (e.g. test fixtures,
+     * programmatically registered rarities without display metadata).
+     *
+     * @param key                  the unique key identifying this rarity
+     * @param weight               the selection weight (higher = more common)
+     * @param difficultyMultiplier the quest difficulty scaling factor
+     * @param rewardMultiplier     the reward scaling factor
+     * @param expansionKey         the key of the content expansion that owns this rarity
+     */
     public QuestRarity(@NotNull NamespacedKey key,
                        int weight,
                        double difficultyMultiplier,
                        double rewardMultiplier,
                        @NotNull NamespacedKey expansionKey) {
-        this(key, weight, difficultyMultiplier, rewardMultiplier, expansionKey, null, false, null, null);
+        this(key, weight, difficultyMultiplier, rewardMultiplier, expansionKey, null, null);
     }
 
+    /**
+     * Full constructor for rarities with an icon section and name color.
+     *
+     * @param key                  the unique key identifying this rarity
+     * @param weight               the selection weight (higher = more common)
+     * @param difficultyMultiplier the quest difficulty scaling factor
+     * @param rewardMultiplier     the reward scaling factor
+     * @param expansionKey         the key of the content expansion that owns this rarity
+     * @param iconSection          the YAML {@code display:} section used to configure offering
+     *                             icon appearance via {@link ItemBuilder#from(Section, ItemBuilder)};
+     *                             may be {@code null} for rarities without custom icons
+     * @param nameColor            a MiniMessage color tag (e.g. {@code "<gold>"}) prepended to
+     *                             offering item names; may be {@code null} to use the default
+     */
     public QuestRarity(@NotNull NamespacedKey key,
                        int weight,
                        double difficultyMultiplier,
                        double rewardMultiplier,
                        @NotNull NamespacedKey expansionKey,
-                       @Nullable Integer customModelData,
-                       boolean glint) {
-        this(key, weight, difficultyMultiplier, rewardMultiplier, expansionKey, customModelData, glint, null, null);
-    }
-
-    public QuestRarity(@NotNull NamespacedKey key,
-                       int weight,
-                       double difficultyMultiplier,
-                       double rewardMultiplier,
-                       @NotNull NamespacedKey expansionKey,
-                       @Nullable Integer customModelData,
-                       boolean glint,
-                       @Nullable Material material,
+                       @Nullable Section iconSection,
                        @Nullable String nameColor) {
         this.key = key;
         this.weight = weight;
         this.difficultyMultiplier = difficultyMultiplier;
         this.rewardMultiplier = rewardMultiplier;
         this.expansionKey = expansionKey;
-        this.customModelData = customModelData;
-        this.glint = glint;
-        this.material = material;
+        this.iconSection = iconSection;
         this.nameColor = nameColor;
     }
 
+    /**
+     * Returns the unique key identifying this rarity.
+     *
+     * @return the rarity key
+     */
     @NotNull
     public NamespacedKey getKey() {
         return key;
     }
 
+    /**
+     * Returns the selection weight for this rarity. Higher weight means more common.
+     *
+     * @return the weight value
+     */
     public int getWeight() {
         return weight;
     }
 
+    /**
+     * Returns the difficulty multiplier applied to quests of this rarity.
+     *
+     * @return the difficulty multiplier
+     */
     public double getDifficultyMultiplier() {
         return difficultyMultiplier;
     }
 
+    /**
+     * Returns the reward multiplier applied to rewards of quests with this rarity.
+     *
+     * @return the reward multiplier
+     */
     public double getRewardMultiplier() {
         return rewardMultiplier;
     }
 
     /**
-     * Returns the optional custom model data value for resource pack integration.
+     * Applies this rarity's icon configuration to the given {@link ItemBuilder}.
+     * If no icon section is configured, the builder is returned unchanged.
+     * <p>
+     * Uses {@link ItemBuilder#from(Section, ItemBuilder)} so any key from
+     * {@link com.diamonddagger590.mccore.builder.item.ItemBuilderConfigurationKeys}
+     * present in the display section (e.g. {@code material}, {@code custom-model-data},
+     * {@code settings.glowing}) will be applied.
      *
-     * @return the custom model data, or empty if not configured
+     * @param builder the builder to configure
+     * @return the same builder, possibly with icon settings applied
      */
     @NotNull
-    public Optional<Integer> getCustomModelData() {
-        return Optional.ofNullable(customModelData);
-    }
-
-    /**
-     * Returns whether this rarity should display an enchantment glint on offering items.
-     *
-     * @return true if glint is enabled
-     */
-    public boolean hasGlint() {
-        return glint;
-    }
-
-    /**
-     * Returns the display material for offering items of this rarity.
-     * When present, overrides the material from the localization section.
-     *
-     * @return the material, or empty to use the localization default
-     */
-    @NotNull
-    public Optional<Material> getMaterial() {
-        return Optional.ofNullable(material);
+    public ItemBuilder configureIcon(@NotNull ItemBuilder builder) {
+        if (iconSection != null) {
+            return ItemBuilder.from(iconSection, builder);
+        }
+        return builder;
     }
 
     /**

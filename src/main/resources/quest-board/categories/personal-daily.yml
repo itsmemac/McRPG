@@ -1,11 +1,25 @@
-# Shared daily quests visible to all players on the board.
+# Daily quests visible to all players on the board.
+# Each player sees the same pool of offerings; accepting one does not remove it for others.
 personal-daily:
+  # SHARED: all players see the same offerings from this category.
+  # SCOPED: offerings are generated per scope entity (e.g., one set per land).
   visibility: SHARED
+  # How this category's offerings rotate. Must match a registered refresh type: DAILY or WEEKLY.
   refresh-type: DAILY
+  # Duration between refreshes. Supported formats: 1d, 24h, 1d12h, 3600 (seconds).
   refresh-interval: 1d
+  # How long a player has to complete the quest after accepting it.
   completion-time: 1d
+  # The scope provider that determines who the quest tracks progress for.
+  # mcrpg:single_player tracks each player individually.
   scope-provider: mcrpg:single_player
+  # Minimum number of slots this category contributes per rotation.
   min: 3
+  # Maximum number of slots this category contributes per rotation.
   max: 5
+  # Probability (0.0-1.0) that each potential slot actually generates an offering.
+  # 1.0 = always generate the slot. 0.5 = 50% chance per slot.
   chance-per-slot: 1.0
+  # Priority relative to other categories. Higher priority categories fill slots first
+  # when the board has a limited total offering count.
   priority: 10

@@ -6,14 +6,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import us.eunoians.mcrpg.McRPGBaseTest;
 
-import java.sql.Connection;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class QuestScopeProviderRegistryTest extends McRPGBaseTest {
 
@@ -68,28 +65,10 @@ public class QuestScopeProviderRegistryTest extends McRPGBaseTest {
                 () -> registry.getOrThrow(new NamespacedKey("mcrpg", "missing")));
     }
 
+    @SuppressWarnings("unchecked")
     private QuestScopeProvider<?> createTestProvider(String key) {
-        NamespacedKey nsKey = new NamespacedKey("mcrpg", key);
-        return new QuestScopeProvider<QuestScope>() {
-            @Override
-            public NamespacedKey getKey() {
-                return nsKey;
-            }
-
-            @Override
-            public QuestScope createNewScope(UUID questUUID) {
-                return null;
-            }
-
-            @Override
-            public CompletableFuture<QuestScope> loadScope(UUID questUUID, UUID scopeUUID) {
-                return CompletableFuture.completedFuture(null);
-            }
-
-            @Override
-            public List<UUID> resolveActiveQuestUUIDs(UUID playerUUID, Connection connection) {
-                return List.of();
-            }
-        };
+        QuestScopeProvider<?> provider = mock(QuestScopeProvider.class);
+        when(provider.getKey()).thenReturn(new NamespacedKey("mcrpg", key));
+        return provider;
     }
 }

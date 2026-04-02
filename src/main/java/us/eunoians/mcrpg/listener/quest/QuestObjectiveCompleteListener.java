@@ -8,6 +8,7 @@ import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.event.quest.QuestObjectiveCompleteEvent;
 import us.eunoians.mcrpg.quest.QuestManager;
+import us.eunoians.mcrpg.quest.board.distribution.DistributionCompletionService;
 import us.eunoians.mcrpg.quest.board.distribution.QuestContributionAggregator;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
@@ -28,6 +29,12 @@ import java.util.UUID;
  * Runs at {@link EventPriority#MONITOR} so external listeners can react first.
  */
 public class QuestObjectiveCompleteListener implements Listener {
+
+    private final DistributionCompletionService distributionService;
+
+    public QuestObjectiveCompleteListener(@NotNull DistributionCompletionService distributionService) {
+        this.distributionService = distributionService;
+    }
 
     /**
      * Handles objective completion: checks if the parent stage is now complete,
@@ -53,7 +60,7 @@ public class QuestObjectiveCompleteListener implements Listener {
                         Set<UUID> groupMembers = quest.getQuestScope()
                                 .map(scope -> scope.getCurrentPlayersInScope())
                                 .orElse(Set.of());
-                        QuestCompleteListener.resolveAndGrantDistribution(config, contributions, groupMembers, quest);
+                        distributionService.resolveAndGrant(config, contributions, groupMembers, quest);
                     });
                 });
 

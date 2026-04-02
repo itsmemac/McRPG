@@ -10,8 +10,12 @@ import us.eunoians.mcrpg.quest.board.category.BoardSlotCategory;
 import us.eunoians.mcrpg.McRPGBaseTest;
 import us.eunoians.mcrpg.quest.board.rarity.QuestRarity;
 import us.eunoians.mcrpg.quest.board.rarity.QuestRarityRegistry;
+import com.diamonddagger590.mccore.registry.RegistryAccess;
 import us.eunoians.mcrpg.quest.board.template.QuestTemplateEngine;
+import us.eunoians.mcrpg.quest.board.template.QuestTemplateRegistry;
+import us.eunoians.mcrpg.quest.board.template.condition.QuestCompletionHistory;
 import us.eunoians.mcrpg.quest.definition.QuestDefinitionRegistry;
+import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 
 import us.eunoians.mcrpg.quest.board.template.GeneratedQuestResult;
 import us.eunoians.mcrpg.quest.QuestTestHelper;
@@ -25,6 +29,7 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +39,8 @@ class PersonalOfferingGeneratorTest extends McRPGBaseTest {
     private static final NamespacedKey REFRESH_KEY = NamespacedKey.fromString("mcrpg:daily");
     private static final NamespacedKey BOARD_KEY = NamespacedKey.fromString("mcrpg:default_board");
     private static final NamespacedKey SCOPE_KEY = NamespacedKey.fromString("mcrpg:single_player");
+
+    private PersonalOfferingGenerator generator;
 
     private QuestRarityRegistry rarityRegistry;
     private QuestTemplateEngine templateEngine;
@@ -46,10 +53,13 @@ class PersonalOfferingGeneratorTest extends McRPGBaseTest {
         rarityRegistry.register(new QuestRarity(COMMON, 100, 1.0, 1.0, NamespacedKey.fromString("mcrpg:mcrpg")));
 
         QuestDefinitionRegistry defRegistry = new QuestDefinitionRegistry();
+        QuestTemplateRegistry templateRegistry = RegistryAccess.registryAccess()
+                .registry(McRPGRegistryKey.QUEST_TEMPLATE);
         templateEngine = mock(QuestTemplateEngine.class);
-        questPool = new QuestPool(defRegistry);
+        questPool = new QuestPool(defRegistry, templateRegistry, mcRPG.getLogger());
 
         rotation = new BoardRotation(UUID.randomUUID(), BOARD_KEY, REFRESH_KEY, 12345L, 0L, 86400000L);
+        generator = new PersonalOfferingGenerator();
     }
 
     @Test
@@ -93,7 +103,7 @@ class PersonalOfferingGeneratorTest extends McRPGBaseTest {
     @DisplayName("Empty categories produces no offerings")
     void generatePersonalOfferings_emptyCategories_noOfferings() {
         UUID player = UUID.randomUUID();
-        List<BoardOffering> offerings = PersonalOfferingGenerator.generatePersonalOfferings(
+        List<BoardOffering> offerings = generator.generatePersonalOfferings(
                 player, rotation, List.of(), 0, questPool, rarityRegistry, templateEngine, 50, 50);
         assertTrue(offerings.isEmpty());
     }
@@ -108,9 +118,9 @@ class PersonalOfferingGeneratorTest extends McRPGBaseTest {
                 Duration.ofDays(1), Duration.ofHours(24), SCOPE_KEY,
                 2, 2, 1.0, 10, null, null, null);
 
-        List<BoardOffering> run1 = PersonalOfferingGenerator.generatePersonalOfferings(
+        List<BoardOffering> run1 = generator.generatePersonalOfferings(
                 player, rotation, List.of(category), 0, questPool, rarityRegistry, templateEngine, 50, 50);
-        List<BoardOffering> run2 = PersonalOfferingGenerator.generatePersonalOfferings(
+        List<BoardOffering> run2 = generator.generatePersonalOfferings(
                 player, rotation, List.of(category), 0, questPool, rarityRegistry, templateEngine, 50, 50);
 
         assertEquals(run1.size(), run2.size());
@@ -132,10 +142,10 @@ class PersonalOfferingGeneratorTest extends McRPGBaseTest {
                 generatedDef,
                 NamespacedKey.fromString("mcrpg:daily_template"),
                 "{\"key\":\"mcrpg:gen_tmpl_only_abcd1234\"}");
-        when(mockedPool.selectForSlot(any(), any(), any(), eq(0), eq(100)))
+        when(mockedPool.selectForSlot(any(), any(), any(), eq(0), eq(100), nullable(UUID.class), nullable(QuestCompletionHistory.class)))
                 .thenReturn(Optional.of(new SlotSelection.TemplateGenerated(genResult, COMMON)));
 
-        List<BoardOffering> offerings = PersonalOfferingGenerator.generatePersonalOfferings(
+        List<BoardOffering> offerings = generator.generatePersonalOfferings(
                 player, rotation, List.of(category), 0, mockedPool, rarityRegistry, templateEngine, 0, 100);
 
         assertEquals(1, offerings.size());
@@ -148,7 +158,7 @@ class PersonalOfferingGeneratorTest extends McRPGBaseTest {
         BoardOffering offering1 = createTemplateOffering("tmpl_a", "gen_tmpl_a_abc123");
         BoardOffering offering2 = createTemplateOffering("tmpl_a", "gen_tmpl_a_abc123");
 
-        assertTrue(PersonalOfferingGenerator.isDuplicateTemplateOffering(offering2, List.of(offering1)));
+        assertTrue(generator.isDuplicateTemplateOffering(offering2, List.of(offering1)));
     }
 
     @Test
@@ -157,7 +167,7 @@ class PersonalOfferingGeneratorTest extends McRPGBaseTest {
         BoardOffering offering1 = createTemplateOffering("tmpl_a", "gen_tmpl_a_abc123");
         BoardOffering offering2 = createTemplateOffering("tmpl_a", "gen_tmpl_a_def456");
 
-        assertFalse(PersonalOfferingGenerator.isDuplicateTemplateOffering(offering2, List.of(offering1)));
+        assertFalse(generator.isDuplicateTemplateOffering(offering2, List.of(offering1)));
     }
 
     @Test
@@ -166,7 +176,7 @@ class PersonalOfferingGeneratorTest extends McRPGBaseTest {
         BoardOffering offering1 = createTemplateOffering("tmpl_a", "gen_shared_def_abc123");
         BoardOffering offering2 = createTemplateOfferingWithTemplate("tmpl_b", "gen_shared_def_abc123");
 
-        assertFalse(PersonalOfferingGenerator.isDuplicateTemplateOffering(offering2, List.of(offering1)));
+        assertFalse(generator.isDuplicateTemplateOffering(offering2, List.of(offering1)));
     }
 
     @Test
@@ -178,7 +188,7 @@ class PersonalOfferingGeneratorTest extends McRPGBaseTest {
                 NamespacedKey.fromString("mcrpg:quest_a"), COMMON,
                 null, Duration.ofHours(24));
 
-        assertFalse(PersonalOfferingGenerator.isDuplicateTemplateOffering(handcrafted, List.of(handcrafted)));
+        assertFalse(generator.isDuplicateTemplateOffering(handcrafted, List.of(handcrafted)));
     }
 
     private BoardOffering createTemplateOffering(String templateKey, String defKey) {

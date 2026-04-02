@@ -17,19 +17,15 @@ import java.util.OptionalLong;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
-import java.util.logging.Logger;
+import us.eunoians.mcrpg.McRPG;
 
 /**
- * Stateless utility that performs distribution resolution. Handles {@link RewardSplitMode}
- * scaling with per-reward {@link PotBehavior}, {@link RemainderStrategy}, and
- * {@code minScaledAmount} controls.
+ * Performs distribution resolution. Handles {@link RewardSplitMode} scaling with
+ * per-reward {@link PotBehavior}, {@link RemainderStrategy}, and {@code minScaledAmount} controls.
+ * <p>
+ * Stateless — a new instance can be created whenever needed.
  */
 public final class QuestRewardDistributionResolver {
-
-    private static final Logger LOGGER = Logger.getLogger(QuestRewardDistributionResolver.class.getName());
-
-    private QuestRewardDistributionResolver() {
-    }
 
     /**
      * Evaluates all tiers in the distribution config against the contribution
@@ -44,7 +40,7 @@ public final class QuestRewardDistributionResolver {
      * @return map of player UUID to the list of rewards earned across all matched tiers
      */
     @NotNull
-    public static Map<UUID, List<QuestRewardType>> resolve(
+    public Map<UUID, List<QuestRewardType>> resolve(
             @NotNull RewardDistributionConfig config,
             @NotNull ContributionSnapshot snapshot,
             @Nullable NamespacedKey questRarity,
@@ -55,9 +51,17 @@ public final class QuestRewardDistributionResolver {
 
     /**
      * Evaluates all tiers with a provided random instance for deterministic remainder distribution.
+     *
+     * @param config         the reward distribution configuration
+     * @param snapshot       the contribution snapshot for the relevant scope
+     * @param questRarity    the rarity key of the quest instance (nullable for non-board quests)
+     * @param rarityRegistry the rarity registry for ordering comparisons
+     * @param typeRegistry   the distribution type registry
+     * @param random         the random instance to use for remainder distribution
+     * @return map of player UUID to the list of rewards earned across all matched tiers
      */
     @NotNull
-    public static Map<UUID, List<QuestRewardType>> resolve(
+    public Map<UUID, List<QuestRewardType>> resolve(
             @NotNull RewardDistributionConfig config,
             @NotNull ContributionSnapshot snapshot,
             @Nullable NamespacedKey questRarity,
@@ -73,7 +77,7 @@ public final class QuestRewardDistributionResolver {
             }
             Optional<RewardDistributionType> type = typeRegistry.get(tier.getTypeKey());
             if (type.isEmpty()) {
-                LOGGER.warning("Unrecognized distribution type key: " + tier.getTypeKey()
+                McRPG.getInstance().getLogger().warning("Unrecognized distribution type key: " + tier.getTypeKey()
                         + " in tier '" + tier.getTierKey() + "' — skipping");
                 continue;
             }
@@ -154,7 +158,7 @@ public final class QuestRewardDistributionResolver {
                 boolean isScalable = scaled != entry.reward();
 
                 if (!isScalable) {
-                    LOGGER.warning("Non-scalable reward '" + entry.reward().getKey()
+                    McRPG.getInstance().getLogger().warning("Non-scalable reward '" + entry.reward().getKey()
                             + "' used with SCALE pot-behavior; granting unscaled to all qualifying players");
                     for (UUID playerUUID : qualifyingPlayers) {
                         result.computeIfAbsent(playerUUID, k -> new ArrayList<>())
@@ -210,7 +214,7 @@ public final class QuestRewardDistributionResolver {
                     boolean isScalable = scaled != entry.reward();
 
                     if (!isScalable) {
-                        LOGGER.warning("Non-scalable reward '" + entry.reward().getKey()
+                        McRPG.getInstance().getLogger().warning("Non-scalable reward '" + entry.reward().getKey()
                                 + "' used with SCALE pot-behavior; granting unscaled to all");
                         for (UUID uuid : qualifyingPlayers) {
                             result.computeIfAbsent(uuid, k -> new ArrayList<>())

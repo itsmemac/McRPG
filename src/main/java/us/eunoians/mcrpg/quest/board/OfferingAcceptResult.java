@@ -32,7 +32,15 @@ public enum OfferingAcceptResult {
      * The quest definition associated with the offering could not be resolved.
      * This is an internal error state and should not normally be presented to players.
      */
-    DEFINITION_NOT_FOUND;
+    DEFINITION_NOT_FOUND,
+
+    /**
+     * The quest definition was resolved but {@link us.eunoians.mcrpg.quest.QuestManager#startQuest}
+     * returned empty, meaning the quest could not be instantiated (e.g., a duplicate-guard or
+     * scope-validation failure inside the manager).
+     * This is an internal error state and should not normally be presented to players.
+     */
+    QUEST_START_FAILED;
 
     /**
      * Returns {@code true} if this result represents a successful acceptance.

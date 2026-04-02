@@ -32,7 +32,7 @@ public class BlockBreakQuestProgressListenerTest extends McRPGBaseTest {
         server.getPluginManager().clearEvents();
         mockQuestManager = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).manager(McRPGManagerKey.QUEST);
         when(mockQuestManager.getActiveQuestsForPlayer(any(UUID.class))).thenReturn(List.of());
-        server.getPluginManager().registerEvents(new BlockBreakQuestProgressListener(), mcRPG);
+        server.getPluginManager().registerEvents(new BlockBreakQuestProgressListener(mockQuestManager), mcRPG);
         world = server.addSimpleWorld("block_break_test");
     }
 

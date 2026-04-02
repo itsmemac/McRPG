@@ -9,6 +9,8 @@ import us.eunoians.mcrpg.configuration.file.localization.LocalizationKey;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.gui.quest.QuestDetailGui;
 import us.eunoians.mcrpg.gui.slot.McRPGSlot;
+import us.eunoians.mcrpg.localization.McRPGLocalizationManager;
+import us.eunoians.mcrpg.quest.definition.PhaseCompletionMode;
 import us.eunoians.mcrpg.quest.definition.QuestPhaseDefinition;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 
@@ -37,16 +39,26 @@ public class QuestDetailPhaseSlot implements McRPGSlot {
     @NotNull
     @Override
     public ItemBuilder getItem(@NotNull McRPGPlayer mcRPGPlayer) {
+        McRPGLocalizationManager localization = RegistryAccess.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(McRPGManagerKey.LOCALIZATION);
+
         Map<String, String> placeholders = new HashMap<>();
         placeholders.put("phase_number", String.valueOf(phaseDef.getPhaseIndex() + 1));
         placeholders.put("phase_total", String.valueOf(totalPhases));
-        placeholders.put("completion_mode", phaseDef.getCompletionMode().name());
+        placeholders.put("completion_mode", resolveCompletionModeLabel(localization, mcRPGPlayer));
 
-        return ItemBuilder.from(RegistryAccess.registryAccess()
-                        .registry(RegistryKey.MANAGER)
-                        .manager(McRPGManagerKey.LOCALIZATION)
-                        .getLocalizedSection(mcRPGPlayer, LocalizationKey.QUEST_DETAIL_GUI_PHASE_HEADER_DISPLAY_ITEM))
+        return ItemBuilder.from(localization.getLocalizedSection(mcRPGPlayer, LocalizationKey.QUEST_DETAIL_GUI_PHASE_HEADER_DISPLAY_ITEM))
                 .addPlaceholders(placeholders);
+    }
+
+    @NotNull
+    private String resolveCompletionModeLabel(@NotNull McRPGLocalizationManager localization,
+                                              @NotNull McRPGPlayer mcRPGPlayer) {
+        var route = phaseDef.getCompletionMode() == PhaseCompletionMode.ANY
+                ? LocalizationKey.QUEST_DETAIL_GUI_COMPLETION_MODE_ANY
+                : LocalizationKey.QUEST_DETAIL_GUI_COMPLETION_MODE_ALL;
+        return localization.getLocalizedMessage(mcRPGPlayer, route);
     }
 
     @NotNull

@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -126,7 +127,7 @@ public class ScopedBoardStateDAO {
             if (acceptedAt != null) {
                 ps.setLong(6, acceptedAt);
             } else {
-                ps.setNull(6, java.sql.Types.BIGINT);
+                ps.setNull(6, Types.BIGINT);
             }
             ps.setString(7, acceptedBy != null ? acceptedBy.toString() : null);
             ps.setString(8, questInstanceUUID != null ? questInstanceUUID.toString() : null);

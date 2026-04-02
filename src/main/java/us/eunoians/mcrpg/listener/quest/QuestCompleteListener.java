@@ -1,36 +1,24 @@
 package us.eunoians.mcrpg.listener.quest;
 
 import com.diamonddagger590.mccore.database.Database;
-import us.eunoians.mcrpg.McRPG;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
-import org.bukkit.NamespacedKey;
+import us.eunoians.mcrpg.McRPG;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
-import us.eunoians.mcrpg.database.table.board.PlayerBoardStateDAO;
 import us.eunoians.mcrpg.database.table.quest.QuestCompletionLogDAO;
-import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.event.quest.QuestCompleteEvent;
 import us.eunoians.mcrpg.quest.QuestManager;
-import us.eunoians.mcrpg.quest.board.distribution.ContributionSnapshot;
+import us.eunoians.mcrpg.quest.board.QuestBoardTerminator;
+import us.eunoians.mcrpg.quest.board.distribution.DistributionCompletionService;
 import us.eunoians.mcrpg.quest.board.distribution.QuestContributionAggregator;
-import us.eunoians.mcrpg.quest.board.distribution.QuestRewardDistributionResolver;
-import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionConfig;
-import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionGranter;
-import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionTypeRegistry;
-import us.eunoians.mcrpg.quest.board.rarity.QuestRarityRegistry;
-import us.eunoians.mcrpg.quest.definition.QuestDefinitionRegistry;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
-import us.eunoians.mcrpg.quest.reward.QuestRewardType;
-import us.eunoians.mcrpg.quest.source.builtin.BoardPersonalQuestSource;
-import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -44,6 +32,15 @@ import java.util.logging.Level;
  * Runs at {@link EventPriority#MONITOR} so external listeners can react first.
  */
 public class QuestCompleteListener implements Listener {
+
+    private final QuestBoardTerminator terminator;
+    private final DistributionCompletionService distributionService;
+
+    public QuestCompleteListener(@NotNull QuestBoardTerminator terminator,
+                                 @NotNull DistributionCompletionService distributionService) {
+        this.terminator = terminator;
+        this.distributionService = distributionService;
+    }
 
     /**
      * Handles quest completion: grants the quest-level rewards defined in the quest
@@ -60,89 +57,18 @@ public class QuestCompleteListener implements Listener {
             Set<UUID> groupMembers = questInstance.getQuestScope()
                     .map(scope -> scope.getCurrentPlayersInScope())
                     .orElse(Set.of());
-            resolveAndGrantDistribution(config, contributions, groupMembers, questInstance);
+            distributionService.resolveAndGrant(config, contributions, groupMembers, questInstance);
         });
 
         logCompletionForAllScopePlayers(questInstance);
-        releaseBoardSlot(questInstance, "COMPLETED");
-        decrementBoardCount(questInstance);
+        terminator.releaseBoardSlot(questInstance, "COMPLETED");
+        terminator.decrementBoardCount(questInstance);
 
         QuestManager questManager = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)
                 .manager(McRPGManagerKey.QUEST);
         questManager.retireQuest(questInstance);
 
-        deregisterEphemeralDefinition(questInstance.getQuestKey());
-    }
-
-    private void decrementBoardCount(@NotNull QuestInstance questInstance) {
-        if (!questInstance.getQuestSource().getKey().equals(BoardPersonalQuestSource.KEY)) {
-            return;
-        }
-        questInstance.getQuestScope().ifPresent(scope -> {
-            for (UUID playerUUID : scope.getCurrentPlayersInScope()) {
-                RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)
-                        .manager(McRPGManagerKey.PLAYER)
-                        .<McRPGPlayer>getPlayer(playerUUID)
-                        .ifPresent(p -> p.asQuestHolder().decrementBoardQuestCount());
-            }
-        });
-    }
-
-    private void deregisterEphemeralDefinition(@NotNull NamespacedKey questKey) {
-        if (questKey.getKey().startsWith("gen_")) {
-            QuestDefinitionRegistry definitionRegistry = RegistryAccess.registryAccess()
-                    .registry(McRPGRegistryKey.QUEST_DEFINITION);
-            if (definitionRegistry.deregister(questKey)) {
-                McRPG.getInstance().getLogger().fine(
-                        "Deregistered ephemeral definition " + questKey);
-            }
-        }
-    }
-
-    /**
-     * Asynchronously logs a completion entry for every player currently in scope
-     * of the completed quest. This data is used to enforce repeat mode restrictions.
-     *
-     * @param questInstance the completed quest instance
-     */
-    /**
-     * Shared helper that builds a contribution snapshot, resolves distribution rewards,
-     * and grants them via the granter.
-     */
-    static void resolveAndGrantDistribution(@NotNull RewardDistributionConfig config,
-                                            @NotNull Map<UUID, Long> contributions,
-                                            @NotNull Set<UUID> groupMembers,
-                                            @NotNull QuestInstance quest) {
-        ContributionSnapshot snapshot = QuestContributionAggregator.toSnapshot(contributions, groupMembers);
-        QuestRarityRegistry rarityRegistry = RegistryAccess.registryAccess()
-                .registry(McRPGRegistryKey.QUEST_RARITY);
-        RewardDistributionTypeRegistry typeRegistry = RegistryAccess.registryAccess()
-                .registry(McRPGRegistryKey.REWARD_DISTRIBUTION_TYPE);
-        Map<UUID, List<QuestRewardType>> resolved = QuestRewardDistributionResolver.resolve(
-                config, snapshot, quest.getBoardRarityKey().orElse(null), rarityRegistry, typeRegistry);
-        RewardDistributionGranter.grant(resolved, quest.getQuestKey());
-    }
-
-    /**
-     * Updates the player board state from ACCEPTED to a terminal state so the
-     * board quest counter is freed up for new quests.
-     */
-    private void releaseBoardSlot(@NotNull QuestInstance questInstance, @NotNull String newState) {
-        var dbManager = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)
-                .manager(McRPGManagerKey.DATABASE);
-        if (dbManager == null) {
-            return;
-        }
-        Database database = dbManager.getDatabase();
-        UUID questUUID = questInstance.getQuestUUID();
-        database.getDatabaseExecutorService().submit(() -> {
-            try (Connection connection = database.getConnection()) {
-                PlayerBoardStateDAO.updateStateByQuestInstanceUUID(connection, questUUID, newState);
-            } catch (Exception e) {
-                McRPG.getInstance().getLogger().log(Level.WARNING,
-                        "Failed to release board slot for quest " + questUUID, e);
-            }
-        });
+        terminator.deregisterEphemeralDefinition(questInstance.getQuestKey());
     }
 
     private void logCompletionForAllScopePlayers(@NotNull QuestInstance questInstance) {

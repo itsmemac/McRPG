@@ -4,6 +4,7 @@ import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.table.impl.TableVersionHistoryDAO;
 import org.jetbrains.annotations.NotNull;
 // FK references mcrpg_quest_instances table directly by name
+import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.exception.quest.QuestScopeInvalidStateException;
 import us.eunoians.mcrpg.quest.impl.scope.impl.SinglePlayerQuestScope;
 
@@ -13,7 +14,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Level;
 
 public class SinglePlayerQuestScopeDAO {
 
@@ -58,7 +61,8 @@ public class SinglePlayerQuestScopeDAO {
             statement.executeUpdate();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.SEVERE,
+                    "Failed to create mcrpg_single_player_quest_scope table", e);
             return false;
         }
     }
@@ -84,21 +88,33 @@ public class SinglePlayerQuestScopeDAO {
         }
     }
 
+    /**
+     * Looks up the scoped player for a quest from {@code mcrpg_single_player_quest_scope}.
+     *
+     * @param connection the DB connection
+     * @param questUUID  the quest instance UUID
+     * @return the player UUID if a row exists
+     */
     @NotNull
-    public static UUID getPlayerInScope(@NotNull Connection connection, @NotNull UUID questUUID) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT player_uuid FROM " + TABLE_NAME + " where quest_uuid = ?")) {
+    public static Optional<UUID> findPlayerUuidForQuest(@NotNull Connection connection, @NotNull UUID questUUID) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement(
+                "SELECT player_uuid FROM " + TABLE_NAME + " WHERE quest_uuid = ?")) {
             preparedStatement.setString(1, questUUID.toString());
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    return UUID.fromString(resultSet.getString("player_uuid"));
+                    return Optional.of(UUID.fromString(resultSet.getString("player_uuid")));
                 }
-
             }
-        }
-        catch (SQLException e) {
+        } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        throw new IllegalStateException("No player found in scope for quest " + questUUID) ;
+        return Optional.empty();
+    }
+
+    @NotNull
+    public static UUID getPlayerInScope(@NotNull Connection connection, @NotNull UUID questUUID) {
+        return findPlayerUuidForQuest(connection, questUUID)
+                .orElseThrow(() -> new IllegalStateException("No player found in scope for quest " + questUUID));
     }
 
     /**
@@ -123,7 +139,7 @@ public class SinglePlayerQuestScopeDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[SinglePlayerQuestScopeDAO] Failed to find active quests for player " + playerUUID, e);
         }
         return questUUIDs;
     }
@@ -138,10 +154,13 @@ public class SinglePlayerQuestScopeDAO {
             PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO " + TABLE_NAME + " (quest_uuid, player_uuid) VALUES (?, ?)" +
                     " ON CONFLICT (quest_uuid) DO UPDATE SET player_uuid = excluded.player_uuid");
             preparedStatement.setString(1, singlePlayerQuestScope.getQuestUUID().toString());
-            preparedStatement.setString(2, singlePlayerQuestScope.getPlayerInScope().get().toString());
+            UUID playerUUID = singlePlayerQuestScope.getPlayerInScope()
+                    .orElseThrow(() -> new IllegalStateException(
+                            "saveScope called with absent player UUID for quest " + singlePlayerQuestScope.getQuestUUID()));
+            preparedStatement.setString(2, playerUUID.toString());
             preparedStatements.add(preparedStatement);
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[SinglePlayerQuestScopeDAO] Failed to prepare saveScope statement for quest " + singlePlayerQuestScope.getQuestUUID(), e);
         }
         return preparedStatements;
     }

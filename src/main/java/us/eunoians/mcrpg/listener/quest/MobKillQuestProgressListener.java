@@ -4,6 +4,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.jetbrains.annotations.NotNull;
+import us.eunoians.mcrpg.quest.QuestManager;
 import us.eunoians.mcrpg.quest.objective.type.builtin.MobKillQuestContext;
 
 /**
@@ -12,10 +14,16 @@ import us.eunoians.mcrpg.quest.objective.type.builtin.MobKillQuestContext;
  */
 public class MobKillQuestProgressListener implements QuestProgressListener {
 
+    private final QuestManager questManager;
+
+    public MobKillQuestProgressListener(@NotNull QuestManager questManager) {
+        this.questManager = questManager;
+    }
+
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     public void onEntityDeath(EntityDeathEvent event) {
         if (event.getEntity().getKiller() instanceof Player killer) {
-            progressQuests(killer.getUniqueId(), new MobKillQuestContext(event));
+            progressQuests(questManager, killer.getUniqueId(), new MobKillQuestContext(event));
         }
     }
 }

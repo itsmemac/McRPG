@@ -8,6 +8,7 @@ import com.diamonddagger590.mccore.registry.RegistryKey;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.event.quest.QuestPhaseCompleteEvent;
 import us.eunoians.mcrpg.quest.QuestManager;
+import us.eunoians.mcrpg.quest.board.distribution.DistributionCompletionService;
 import us.eunoians.mcrpg.quest.board.distribution.QuestContributionAggregator;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
 import us.eunoians.mcrpg.quest.impl.QuestState;
@@ -25,6 +26,12 @@ import java.util.UUID;
  * Runs at {@link EventPriority#MONITOR} so external listeners can react first.
  */
 public class QuestPhaseCompleteListener implements Listener {
+
+    private final DistributionCompletionService distributionService;
+
+    public QuestPhaseCompleteListener(@NotNull DistributionCompletionService distributionService) {
+        this.distributionService = distributionService;
+    }
 
     /**
      * Handles phase completion: looks up the definition, determines whether there is a
@@ -48,7 +55,7 @@ public class QuestPhaseCompleteListener implements Listener {
                         Set<UUID> groupMembers = quest.getQuestScope()
                                 .map(scope -> scope.getCurrentPlayersInScope())
                                 .orElse(Set.of());
-                        QuestCompleteListener.resolveAndGrantDistribution(config, contributions, groupMembers, quest);
+                        distributionService.resolveAndGrant(config, contributions, groupMembers, quest);
                     })
             );
 

@@ -223,7 +223,7 @@ public class QuestObjectiveDefinition {
             } catch (IllegalStateException ex) {
                 required = 0;
             }
-            return objectiveType.describeObjective(required);
+            return objectiveType.describeObjective(player, required);
         }
     }
 

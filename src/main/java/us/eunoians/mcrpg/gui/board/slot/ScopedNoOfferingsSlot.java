@@ -3,9 +3,7 @@ package us.eunoians.mcrpg.gui.board.slot;
 import com.diamonddagger590.mccore.builder.item.impl.ItemBuilder;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
-import org.bukkit.Material;
 import org.bukkit.event.inventory.ClickType;
-import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.configuration.file.localization.LocalizationKey;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
@@ -24,13 +22,10 @@ public class ScopedNoOfferingsSlot implements McRPGSlot {
     @NotNull
     @Override
     public ItemBuilder getItem(@NotNull McRPGPlayer mcRPGPlayer) {
-        String message = RegistryAccess.registryAccess()
+        return ItemBuilder.from(RegistryAccess.registryAccess()
                 .registry(RegistryKey.MANAGER)
                 .manager(McRPGManagerKey.LOCALIZATION)
-                .getLocalizedMessage(mcRPGPlayer, LocalizationKey.QUEST_BOARD_GROUP_NO_OFFERINGS);
-
-        return ItemBuilder.from(new ItemStack(Material.BARRIER))
-                .setDisplayName(message);
+                .getLocalizedSection(mcRPGPlayer, LocalizationKey.QUEST_BOARD_GROUP_NO_OFFERINGS_DISPLAY_ITEM));
     }
 
     @Override

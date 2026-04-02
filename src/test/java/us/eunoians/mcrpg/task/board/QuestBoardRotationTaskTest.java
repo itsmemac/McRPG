@@ -21,6 +21,7 @@ import us.eunoians.mcrpg.quest.board.refresh.builtin.WeeklyRefreshType;
 import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 
+import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -199,7 +200,7 @@ public class QuestBoardRotationTaskTest extends McRPGBaseTest {
     @Test
     void onIntervalComplete_doesNotRotate_whenCurrentEpochsAlreadyLoadedFromBoard() {
         DailyRefreshType daily = new DailyRefreshType();
-        WeeklyRefreshType weekly = new WeeklyRefreshType(java.time.DayOfWeek.MONDAY);
+        WeeklyRefreshType weekly = new WeeklyRefreshType(DayOfWeek.MONDAY);
         refreshTypeRegistry.register(daily);
         refreshTypeRegistry.register(weekly);
 

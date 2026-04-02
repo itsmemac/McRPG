@@ -111,6 +111,13 @@ public class PermissionQuestScopeProvider extends QuestScopeProvider<PermissionQ
 
     @NotNull
     @Override
+    public PermissionQuestScope loadScope(@NotNull Connection connection, @NotNull UUID questUUID) {
+        String storedNode = PermissionQuestScopeDAO.getPermissionNode(connection, questUUID);
+        return new PermissionQuestScope(questUUID, storedNode);
+    }
+
+    @NotNull
+    @Override
     public CompletableFuture<PermissionQuestScope> loadScope(@NotNull UUID questUUID, @NotNull UUID scopeUUID) {
         CompletableFuture<PermissionQuestScope> future = new CompletableFuture<>();
         Database database = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)

@@ -17,7 +17,9 @@ import us.eunoians.mcrpg.entity.player.McRPGPlayerExtension;
 import us.eunoians.mcrpg.event.quest.QuestCancelEvent;
 import us.eunoians.mcrpg.event.quest.QuestCompleteEvent;
 import us.eunoians.mcrpg.event.quest.QuestExpireEvent;
+import us.eunoians.mcrpg.event.quest.QuestPhaseCompleteEvent;
 import us.eunoians.mcrpg.event.quest.QuestStartEvent;
+import us.eunoians.mcrpg.quest.definition.QuestPhaseDefinition;
 import us.eunoians.mcrpg.localization.McRPGLocalizationManager;
 import us.eunoians.mcrpg.quest.QuestTestHelper;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
@@ -124,6 +126,20 @@ public class QuestFeedbackListenerTest extends McRPGBaseTest {
         server.getPluginManager().callEvent(new QuestCancelEvent(quest));
 
         assertNull(playerMock.nextMessage());
+    }
+
+    @DisplayName("Phase complete notification is sent to in-scope online player with correct phase number")
+    @Test
+    void onQuestPhaseComplete_scopePlayerOnline_receivesMessage(McRPGPlayer mcRPGPlayer) {
+        PlayerMock playerMock = addPlayerToServer(mcRPGPlayer);
+
+        QuestDefinition def = QuestTestHelper.singlePhaseQuest("feedback_phase_complete");
+        QuestInstance quest = QuestTestHelper.startedQuestWithPlayer(def, mcRPGPlayer.getUUID());
+        QuestPhaseDefinition phase = def.getPhases().getFirst();
+
+        server.getPluginManager().callEvent(new QuestPhaseCompleteEvent(quest, phase, 0));
+
+        assertNotNull(playerMock.nextMessage(), "Phase complete notification should be sent to in-scope player");
     }
 
     @DisplayName("Notifications are not sent for players not in scope")

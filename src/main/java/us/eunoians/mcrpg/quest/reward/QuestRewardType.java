@@ -1,9 +1,11 @@
 package us.eunoians.mcrpg.quest.reward;
 
 import dev.dejvokep.boostedyaml.block.implementation.Section;
+import dev.dejvokep.boostedyaml.route.Route;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.expansion.content.McRPGContent;
 
 import java.util.Map;
@@ -108,7 +110,8 @@ public interface QuestRewardType extends McRPGContent {
     /**
      * Returns a human-readable description of this configured reward for GUI display.
      * Implementations should include all relevant details (e.g., skill name for experience,
-     * display label for commands). Used as a fallback when no localization entry exists.
+     * display label for commands). Used as a fallback when no localization entry exists
+     * or when no player context is available.
      *
      * @return a display-ready description string
      */
@@ -120,5 +123,42 @@ public interface QuestRewardType extends McRPGContent {
                 .mapToObj(amount -> amount + " " + typeName)
                 .findFirst()
                 .orElse(typeName);
+    }
+
+    /**
+     * Returns a localized, human-readable description of this configured reward for GUI display,
+     * resolved through the player's locale chain. Implementations should attempt locale resolution
+     * (via any auto-derived route or explicit {@code display-key}) and fall back to
+     * {@link #describeForDisplay()} if no translation is found.
+     * <p>
+     * The default implementation delegates to the no-arg {@link #describeForDisplay()}.
+     *
+     * @param player the player whose locale chain determines the language
+     * @return a localized display-ready description string
+     */
+    @NotNull
+    default String describeForDisplay(@NotNull McRPGPlayer player) {
+        return describeForDisplay();
+    }
+
+    /**
+     * Returns a new configured instance of this reward type with the given localization route set.
+     * The route is auto-derived by the quest/template config loader and follows the pattern:
+     * <ul>
+     *     <li>Hand-crafted quest-level reward: {@code quests.<ns>.<questKey>.rewards.<label>}</li>
+     *     <li>Objective-level reward: {@code quests.<ns>.<questKey>.objectives.<objKey>.rewards.<label>}</li>
+     *     <li>Template reward: {@code templates.<ns>.<templateKey>.rewards.<label>}</li>
+     * </ul>
+     * <p>
+     * The default implementation returns {@code this} unchanged. Reward types that support
+     * localized display labels (e.g. {@code mcrpg:command}) should override this to store the
+     * route and attempt resolution in {@link #describeForDisplay(McRPGPlayer)}.
+     *
+     * @param route the auto-derived localization route for this reward's display label
+     * @return a new instance with the route set, or {@code this} if the type does not use it
+     */
+    @NotNull
+    default QuestRewardType withLocalizationRoute(@NotNull Route route) {
+        return this;
     }
 }

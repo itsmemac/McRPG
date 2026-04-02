@@ -1,11 +1,25 @@
-# Shared weekly quests — harder objectives, better rewards, slower rotation.
+# Weekly quests — harder objectives, better rewards, slower rotation.
+# Each player sees the same pool of offerings; accepting one does not remove it for others.
 personal-weekly:
+  # SHARED: all players see the same offerings from this category.
+  # SCOPED: offerings are generated per scope entity (e.g., one set per land).
   visibility: SHARED
+  # How this category's offerings rotate. Must match a registered refresh type: DAILY or WEEKLY.
   refresh-type: WEEKLY
+  # Duration between refreshes. Supported formats: 7d, 168h, 604800 (seconds).
   refresh-interval: 7d
+  # How long a player has to complete the quest after accepting it.
   completion-time: 7d
+  # The scope provider that determines who the quest tracks progress for.
+  # mcrpg:single_player tracks each player individually.
   scope-provider: mcrpg:single_player
+  # Minimum number of slots this category contributes per rotation.
   min: 1
+  # Maximum number of slots this category contributes per rotation.
   max: 3
+  # Probability (0.0-1.0) that each potential slot actually generates an offering.
+  # 0.8 = 80% chance per slot. With max: 3, expect an average of 2.4 offerings per week.
   chance-per-slot: 0.8
+  # Priority relative to other categories. Higher priority categories fill slots first
+  # when the board has a limited total offering count.
   priority: 5

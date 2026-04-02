@@ -1262,7 +1262,6 @@ public static final Route QUEST_BOARD_GUI_TITLE = Route.fromString("gui.quest-bo
 public static final Route QUEST_BOARD_OFFERING_LORE = Route.fromString("gui.quest-board.offering-lore");
 public static final Route QUEST_BOARD_ACCEPT_BUTTON = Route.fromString("gui.quest-board.accept");
 public static final Route QUEST_BOARD_SLOT_FULL = Route.fromString("gui.quest-board.slots-full");
-public static final Route QUEST_BOARD_ABANDONED = Route.fromString("gui.quest-board.abandoned");
 public static final Route QUEST_BOARD_COOLDOWN = Route.fromString("gui.quest-board.on-cooldown");
 ```
 

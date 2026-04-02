@@ -171,6 +171,7 @@ class QuestTemplateTest {
 
         TemplateRewardDefinition reward = new TemplateRewardDefinition(
                 NamespacedKey.fromString("mcrpg:experience"),
+                "mining_xp",
                 Map.of("amount", "block_count * 5"));
 
         Map<String, TemplateVariable> variables = Map.of("block_count", new RangeVariable("block_count", 10.0, 50.0));

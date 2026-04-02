@@ -1,5 +1,9 @@
+config-version: 1
+
 # Minimum number of quest offerings that must appear on the board each rotation.
-# If fewer slots are generated from categories, the board will pad to this minimum.
+# If fewer unique quests are available than this minimum, the board generates as many
+# as possible without duplication. No error is thrown, but the board may have fewer
+# offerings than expected.
 slot-layout:
   minimum-total-offerings: 3
 
@@ -42,7 +46,8 @@ rarities:
     display:
       material: ENCHANTED_BOOK
       name-color: "<aqua>"
-      glint: true
+      settings:
+        glowing: true
   LEGENDARY:
     weight: 5
     difficulty-multiplier: 2.0
@@ -50,24 +55,27 @@ rarities:
     display:
       material: NETHER_STAR
       name-color: "<gold>"
-      glint: true
+      settings:
+        glowing: true
 
 # Controls when the board rotates (replaces expired offerings with new ones).
+# NOTE: Changing any value in this section requires a server restart to take effect.
+#       These keys are NOT hot-reloadable via /mcrpg quest admin reload.
 rotation:
-  # Time of day (HH:mm) when daily rotations occur.
+  # Time of day (HH:mm, 24-hour clock) when daily rotations occur.
   time: "00:00"
-  # Timezone used for rotation scheduling.
+  # Timezone used for rotation scheduling. Use standard Java timezone IDs (e.g. "America/New_York").
   timezone: "UTC"
   # Day of the week when weekly rotations occur.
   weekly-reset-day: MONDAY
   # How often (in seconds) the rotation task checks whether a rotation is due.
+  # Lower values increase responsiveness but add minor overhead. Minimum recommended: 30.
   task-check-interval-seconds: 60
 
 # Controls player-facing notifications for quest events.
+# All keys in this section are reload-safe (/mcrpg quest admin reload).
 notifications:
-  # Minutes before a quest expires at which to send the player a near-expiry warning.
-  # Quests expiring within (near-expiry-threshold-minutes * 1.5) are grouped into a
-  # single batched message to reduce noise.
+  # Minutes before a quest expires at which the player receives a near-expiry warning.
   near-expiry-threshold-minutes: 60
   # Objective completion percentage milestones that trigger a progress notification.
   # Players can disable these notifications individually via the settings GUI.

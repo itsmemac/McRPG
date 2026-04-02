@@ -94,6 +94,13 @@ public class LandQuestScopeProvider extends QuestScopeProvider<LandQuestScope> {
 
     @NotNull
     @Override
+    public LandQuestScope loadScope(@NotNull Connection connection, @NotNull UUID questUUID) {
+        String storedLandName = LandQuestScopeDAO.getLandName(connection, questUUID);
+        return new LandQuestScope(questUUID, storedLandName);
+    }
+
+    @NotNull
+    @Override
     public CompletableFuture<LandQuestScope> loadScope(@NotNull UUID questUUID, @NotNull UUID scopeUUID) {
         CompletableFuture<LandQuestScope> future = new CompletableFuture<>();
         Database database = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER)

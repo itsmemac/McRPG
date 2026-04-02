@@ -22,6 +22,7 @@ import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Navigation bar slot that switches the quest board to scoped (group) mode.
@@ -70,7 +71,7 @@ public class ScopedTabSlot implements McRPGSlot {
     }
 
     @NotNull
-    private static List<ManageableEntity> collectManageableEntities(@NotNull java.util.UUID playerUUID) {
+    private static List<ManageableEntity> collectManageableEntities(@NotNull UUID playerUUID) {
         ScopedBoardAdapterRegistry registry = McRPG.getInstance().registryAccess()
                 .registry(McRPGRegistryKey.SCOPED_BOARD_ADAPTER);
 

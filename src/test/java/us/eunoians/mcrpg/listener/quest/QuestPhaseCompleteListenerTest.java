@@ -6,23 +6,37 @@ import org.bukkit.NamespacedKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockbukkit.mockbukkit.entity.PlayerMock;
 import us.eunoians.mcrpg.McRPGBaseTest;
 import us.eunoians.mcrpg.event.quest.QuestCompleteEvent;
 import us.eunoians.mcrpg.event.quest.QuestPhaseCompleteEvent;
 import us.eunoians.mcrpg.quest.QuestManager;
 import us.eunoians.mcrpg.quest.QuestTestHelper;
+import us.eunoians.mcrpg.quest.board.distribution.DistributionCompletionService;
+import us.eunoians.mcrpg.quest.board.distribution.DistributionTierConfig;
+import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionConfig;
+import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionGranter;
+import us.eunoians.mcrpg.quest.board.distribution.RewardSplitMode;
+import us.eunoians.mcrpg.quest.board.distribution.builtin.MembershipDistributionType;
+import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 import us.eunoians.mcrpg.quest.definition.PhaseCompletionMode;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
 import us.eunoians.mcrpg.quest.definition.QuestPhaseDefinition;
 import us.eunoians.mcrpg.quest.definition.QuestStageDefinition;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
 import us.eunoians.mcrpg.quest.impl.stage.QuestStageState;
+import us.eunoians.mcrpg.quest.reward.MockQuestRewardType;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
 import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockbukkit.mockbukkit.matcher.plugin.PluginManagerFiredEventClassMatcher.hasFiredEventInstance;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -34,7 +48,11 @@ public class QuestPhaseCompleteListenerTest extends McRPGBaseTest {
     @BeforeEach
     public void setup() {
         server.getPluginManager().clearEvents();
-        server.getPluginManager().registerEvents(new QuestPhaseCompleteListener(), mcRPG);
+        var rarityRegistry = RegistryAccess.registryAccess().registry(McRPGRegistryKey.QUEST_RARITY);
+        var distTypeRegistry = RegistryAccess.registryAccess().registry(McRPGRegistryKey.REWARD_DISTRIBUTION_TYPE);
+        var distributionService = new DistributionCompletionService(
+                rarityRegistry, distTypeRegistry, new RewardDistributionGranter(mcRPG));
+        server.getPluginManager().registerEvents(new QuestPhaseCompleteListener(distributionService), mcRPG);
 
         mockQuestManager = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).manager(McRPGManagerKey.QUEST);
     }
@@ -53,6 +71,31 @@ public class QuestPhaseCompleteListenerTest extends McRPGBaseTest {
 
         server.getPluginManager().callEvent(new QuestPhaseCompleteEvent(quest, phase0, 0));
         assertEquals(QuestStageState.IN_PROGRESS, quest.getStagesForPhase(1).get(0).getQuestStageState());
+    }
+
+    @DisplayName("Phase with reward-distribution config — distribution rewards are granted on phase complete")
+    @Test
+    public void onPhaseComplete_grantsDistributionReward_whenDistributionConfigPresent() {
+        PlayerMock playerMock = server.addPlayer();
+        UUID playerUUID = playerMock.getUniqueId();
+
+        MockQuestRewardType reward = QuestTestHelper.mockRewardType("phase_dist_reward");
+        DistributionTierConfig tier = new DistributionTierConfig("membership",
+                MembershipDistributionType.KEY, RewardSplitMode.INDIVIDUAL,
+                List.of(reward), Map.of(), null, null, true);
+        RewardDistributionConfig distConfig = new RewardDistributionConfig(List.of(tier));
+
+        QuestStageDefinition stage = QuestTestHelper.singleStageDef("phase_dist_s", "phase_dist_o");
+        QuestPhaseDefinition phase = new QuestPhaseDefinition(0, PhaseCompletionMode.ALL, List.of(stage), distConfig);
+        QuestDefinition def = QuestTestHelper.multiPhaseQuest("phase_dist_quest", phase);
+        when(mockQuestManager.getQuestDefinition(any(NamespacedKey.class))).thenReturn(Optional.of(def));
+
+        QuestInstance quest = QuestTestHelper.startedQuestWithPlayer(def, playerUUID);
+
+        server.getPluginManager().callEvent(new QuestPhaseCompleteEvent(quest, phase, 0));
+
+        assertTrue(reward.getGrantCount() >= 1,
+                "Distribution reward should be granted when phase has reward-distribution config");
     }
 
     @DisplayName("Given a single-phase quest, when the only phase completes, then quest complete fires")

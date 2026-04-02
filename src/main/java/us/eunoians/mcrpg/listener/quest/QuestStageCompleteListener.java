@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.event.quest.QuestPhaseCompleteEvent;
 import us.eunoians.mcrpg.event.quest.QuestStageCompleteEvent;
 import us.eunoians.mcrpg.quest.QuestManager;
+import us.eunoians.mcrpg.quest.board.distribution.DistributionCompletionService;
 import us.eunoians.mcrpg.quest.board.distribution.QuestContributionAggregator;
 import us.eunoians.mcrpg.quest.definition.PhaseCompletionMode;
 import us.eunoians.mcrpg.quest.definition.QuestPhaseDefinition;
@@ -32,6 +33,12 @@ import java.util.UUID;
  * Runs at {@link EventPriority#MONITOR} so external listeners can react first.
  */
 public class QuestStageCompleteListener implements Listener {
+
+    private final DistributionCompletionService distributionService;
+
+    public QuestStageCompleteListener(@NotNull DistributionCompletionService distributionService) {
+        this.distributionService = distributionService;
+    }
 
     /**
      * Handles stage completion: looks up the phase definition, checks if the phase
@@ -58,7 +65,7 @@ public class QuestStageCompleteListener implements Listener {
                         Set<UUID> groupMembers = quest.getQuestScope()
                                 .map(scope -> scope.getCurrentPlayersInScope())
                                 .orElse(Set.of());
-                        QuestCompleteListener.resolveAndGrantDistribution(config, contributions, groupMembers, quest);
+                        distributionService.resolveAndGrant(config, contributions, groupMembers, quest);
                     });
 
             definition.getPhase(phaseIndex).ifPresent(phaseDef -> {

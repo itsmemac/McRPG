@@ -3,6 +3,7 @@ package us.eunoians.mcrpg.database.table.quest;
 import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.table.impl.TableVersionHistoryDAO;
 import org.jetbrains.annotations.NotNull;
+import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveInstance;
 
 import java.sql.Connection;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * DAO for the {@code mcrpg_quest_objective_contributions} table, tracking per-player
@@ -46,7 +48,7 @@ public class QuestObjectiveContributionDAO {
             statement.executeUpdate();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.SEVERE, "[QuestObjectiveContributionDAO] Failed to create table " + TABLE_NAME, e);
             return false;
         }
     }
@@ -91,7 +93,7 @@ public class QuestObjectiveContributionDAO {
                 ps.setLong(3, entry.getValue());
                 statements.add(ps);
             } catch (SQLException e) {
-                e.printStackTrace();
+                McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestObjectiveContributionDAO] Failed to prepare saveContributions statement for objective " + objectiveUUID + ", player " + entry.getKey(), e);
             }
         }
         return statements;
@@ -118,7 +120,7 @@ public class QuestObjectiveContributionDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestObjectiveContributionDAO] Failed to load contributions for objective " + objectiveUUID, e);
         }
         return contributions;
     }
@@ -140,7 +142,7 @@ public class QuestObjectiveContributionDAO {
             ps.setString(1, objectiveUUID.toString());
             statements.add(ps);
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestObjectiveContributionDAO] Failed to prepare deleteContributions statement for objective " + objectiveUUID, e);
         }
         return statements;
     }

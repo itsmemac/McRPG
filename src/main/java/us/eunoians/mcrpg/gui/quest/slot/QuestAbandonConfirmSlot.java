@@ -20,7 +20,8 @@ import java.util.Set;
 
 /**
  * Confirm button in the {@link QuestAbandonConfirmGui}.
- * Calls {@link QuestManager#abandonQuest} and sends localized feedback.
+ * Calls {@link QuestManager#abandonQuest}; chat feedback is handled by
+ * {@link us.eunoians.mcrpg.listener.quest.QuestFeedbackListener}.
  */
 public class QuestAbandonConfirmSlot implements McRPGSlot {
 
@@ -39,14 +40,7 @@ public class QuestAbandonConfirmSlot implements McRPGSlot {
                     .registry(RegistryKey.MANAGER)
                     .manager(McRPGManagerKey.QUEST);
 
-            boolean success = questManager.abandonQuest(questInstance.getQuestUUID());
-            if (success) {
-                player.sendMessage(RegistryAccess.registryAccess()
-                        .registry(RegistryKey.MANAGER)
-                        .manager(McRPGManagerKey.LOCALIZATION)
-                        .getLocalizedMessageAsComponent(mcRPGPlayer, LocalizationKey.QUEST_BOARD_ABANDONED,
-                                Map.of("quest_name", questDisplayName)));
-            }
+            questManager.abandonQuest(questInstance.getQuestUUID());
             player.closeInventory();
         });
         return true;

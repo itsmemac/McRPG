@@ -1,11 +1,10 @@
 package us.eunoians.mcrpg.quest.board.generation;
 
-import com.diamonddagger590.mccore.registry.RegistryAccess;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import us.eunoians.mcrpg.McRPG;
+import us.eunoians.mcrpg.quest.board.template.condition.QuestCompletionHistory;
 import us.eunoians.mcrpg.event.board.TemplateQuestGenerateEvent;
 import us.eunoians.mcrpg.quest.board.BoardMetadata;
 import us.eunoians.mcrpg.quest.board.template.GeneratedQuestResult;
@@ -14,12 +13,12 @@ import us.eunoians.mcrpg.quest.board.template.QuestTemplateEngine;
 import us.eunoians.mcrpg.quest.board.template.QuestTemplateRegistry;
 import us.eunoians.mcrpg.quest.definition.QuestDefinition;
 import us.eunoians.mcrpg.quest.definition.QuestDefinitionRegistry;
-import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -28,19 +27,21 @@ import java.util.logging.Logger;
  * templates for board generation. Draws from both {@link QuestDefinitionRegistry}
  * (hand-crafted quests) and {@link QuestTemplateRegistry} (template-generated quests).
  * <p>
- * Registries and the template engine are resolved from {@link RegistryAccess} on demand
- * rather than being passed as constructor arguments.
+ * The definition registry, template registry, and logger are injected at construction
+ * time so this class carries no static dependencies.
  */
 public class QuestPool {
 
     private final QuestDefinitionRegistry definitionRegistry;
+    private final QuestTemplateRegistry templateRegistry;
+    private final Logger logger;
 
-    public QuestPool(@NotNull QuestDefinitionRegistry definitionRegistry) {
+    public QuestPool(@NotNull QuestDefinitionRegistry definitionRegistry,
+                     @NotNull QuestTemplateRegistry templateRegistry,
+                     @NotNull Logger logger) {
         this.definitionRegistry = definitionRegistry;
-    }
-
-    private Logger logger() {
-        return McRPG.getInstance().getLogger();
+        this.templateRegistry = templateRegistry;
+        this.logger = logger;
     }
 
     /**
@@ -104,8 +105,6 @@ public class QuestPool {
      */
     @NotNull
     public List<QuestTemplate> getEligibleTemplates(@NotNull NamespacedKey rolledRarity) {
-        QuestTemplateRegistry templateRegistry = RegistryAccess.registryAccess()
-                .registry(McRPGRegistryKey.QUEST_TEMPLATE);
         return templateRegistry.getEligibleTemplates(rolledRarity);
     }
 
@@ -129,18 +128,9 @@ public class QuestPool {
 
         QuestTemplate selected = eligible.get(random.nextInt(eligible.size()));
         try {
-            GeneratedQuestResult result = templateEngine.generate(selected, rolledRarity, random);
-
-            TemplateQuestGenerateEvent event = new TemplateQuestGenerateEvent(
-                    selected, rolledRarity, result.definition());
-            Bukkit.getPluginManager().callEvent(event);
-            if (event.isCancelled()) {
-                return Optional.empty();
-            }
-
-            return Optional.of(result);
+            return Optional.of(templateEngine.generate(selected, rolledRarity, random));
         } catch (Exception e) {
-            logger().log(Level.WARNING,
+            logger.log(Level.WARNING,
                     "Template generation failed for " + selected.getKey() + " with rarity " + rolledRarity, e);
             return Optional.empty();
         }
@@ -196,7 +186,7 @@ public class QuestPool {
             return Optional.of(new SlotSelection.HandCrafted(selected, rolledRarity));
         } else {
             Optional<GeneratedQuestResult> generated = generateFromTemplate(rolledRarity, random, templateEngine);
-            if (generated.isPresent()) {
+            if (generated.isPresent() && !fireTemplateEventCancelled(generated.get(), rolledRarity)) {
                 return Optional.of(new SlotSelection.TemplateGenerated(generated.get(), rolledRarity));
             }
             if (hasHc) {
@@ -218,6 +208,103 @@ public class QuestPool {
             int hcWeight,
             int templateWeight) {
         return selectForSlot(rolledRarity, random, templateEngine, hcWeight, templateWeight, null, Set.of());
+    }
+
+    /**
+     * Overload that includes player context for personal offering generation.
+     * Player-dependent conditions (permissions, completion prerequisites) are
+     * evaluated against the given player during template generation.
+     *
+     * @param rolledRarity       the rarity rolled for this slot
+     * @param random             the random source
+     * @param templateEngine     the template engine
+     * @param hcWeight           hand-crafted weight
+     * @param templateWeight     template weight
+     * @param playerUUID         the player UUID, or {@code null} for shared generation
+     * @param completionHistory  the completion history, or {@code null}
+     * @return the selection result, or empty
+     */
+    @NotNull
+    public Optional<SlotSelection> selectForSlot(
+            @NotNull NamespacedKey rolledRarity,
+            @NotNull Random random,
+            @NotNull QuestTemplateEngine templateEngine,
+            int hcWeight,
+            int templateWeight,
+            @Nullable UUID playerUUID,
+            @Nullable QuestCompletionHistory completionHistory) {
+
+        List<NamespacedKey> hcEligible = getEligibleDefinitions(rolledRarity, null, Set.of());
+        List<QuestTemplate> tmplEligible = getEligibleTemplates(rolledRarity);
+
+        boolean hasHc = !hcEligible.isEmpty();
+        boolean hasTmpl = !tmplEligible.isEmpty();
+
+        if (!hasHc && !hasTmpl) {
+            return backfillFromAnyRarity(rolledRarity, random, Set.of());
+        }
+
+        boolean chooseHandCrafted = resolveSourceChoice(hasHc, hasTmpl, hcWeight, templateWeight, random);
+
+        if (chooseHandCrafted) {
+            NamespacedKey selected = hcEligible.get(random.nextInt(hcEligible.size()));
+            return Optional.of(new SlotSelection.HandCrafted(selected, rolledRarity));
+        } else {
+            Optional<GeneratedQuestResult> generated = generateFromTemplate(
+                    rolledRarity, random, templateEngine, playerUUID, completionHistory);
+            if (generated.isPresent() && !fireTemplateEventCancelled(generated.get(), rolledRarity)) {
+                return Optional.of(new SlotSelection.TemplateGenerated(generated.get(), rolledRarity));
+            }
+            if (hasHc) {
+                NamespacedKey selected = hcEligible.get(random.nextInt(hcEligible.size()));
+                return Optional.of(new SlotSelection.HandCrafted(selected, rolledRarity));
+            }
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Overload of {@link #generateFromTemplate} that passes player context through
+     * to the template engine for player-dependent condition evaluation.
+     */
+    @NotNull
+    private Optional<GeneratedQuestResult> generateFromTemplate(
+            @NotNull NamespacedKey rolledRarity,
+            @NotNull Random random,
+            @NotNull QuestTemplateEngine templateEngine,
+            @Nullable UUID playerUUID,
+            @Nullable QuestCompletionHistory completionHistory) {
+        List<QuestTemplate> eligible = getEligibleTemplates(rolledRarity);
+        if (eligible.isEmpty()) return Optional.empty();
+
+        QuestTemplate selected = eligible.get(random.nextInt(eligible.size()));
+        try {
+            return Optional.of(templateEngine.generate(
+                    selected, rolledRarity, random, playerUUID, completionHistory));
+        } catch (Exception e) {
+            logger.log(Level.WARNING,
+                    "Template generation failed for " + selected.getKey() + " with rarity " + rolledRarity, e);
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Fires {@link TemplateQuestGenerateEvent} for a generated result and returns whether
+     * the event was cancelled. If the template is no longer registered, the event is not
+     * fired and {@code false} is returned so the result is still used.
+     *
+     * @param result       the generated quest result
+     * @param rolledRarity the rarity used during generation
+     * @return {@code true} if the event was fired and cancelled; {@code false} otherwise
+     */
+    private boolean fireTemplateEventCancelled(@NotNull GeneratedQuestResult result,
+                                               @NotNull NamespacedKey rolledRarity) {
+        Optional<QuestTemplate> template = templateRegistry.get(result.templateKey());
+        if (template.isEmpty()) return false;
+        TemplateQuestGenerateEvent event = new TemplateQuestGenerateEvent(
+                template.get(), rolledRarity, result.definition());
+        Bukkit.getPluginManager().callEvent(event);
+        return event.isCancelled();
     }
 
     /**

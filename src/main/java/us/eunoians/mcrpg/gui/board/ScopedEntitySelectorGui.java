@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.McRPG;
@@ -21,6 +22,7 @@ import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Paginated GUI that lists all scope entities the player can manage across
@@ -91,7 +93,7 @@ public class ScopedEntitySelectorGui extends McRPGPaginatedGui {
 
     @Override
     public void unregisterListeners() {
-        org.bukkit.event.inventory.InventoryClickEvent.getHandlerList().unregister(this);
+        InventoryClickEvent.getHandlerList().unregister(this);
     }
 
     /**
@@ -103,7 +105,7 @@ public class ScopedEntitySelectorGui extends McRPGPaginatedGui {
      * @return an immutable list of manageable entity entries across all scope types
      */
     @NotNull
-    private static List<ScopedEntityEntry> collectManageableEntities(@NotNull java.util.UUID playerUUID) {
+    private static List<ScopedEntityEntry> collectManageableEntities(@NotNull UUID playerUUID) {
         ScopedBoardAdapterRegistry registry = McRPG.getInstance().registryAccess()
                 .registry(McRPGRegistryKey.SCOPED_BOARD_ADAPTER);
 

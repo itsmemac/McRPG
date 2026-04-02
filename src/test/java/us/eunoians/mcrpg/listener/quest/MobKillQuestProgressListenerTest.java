@@ -34,7 +34,7 @@ public class MobKillQuestProgressListenerTest extends McRPGBaseTest {
         server.getPluginManager().clearEvents();
         mockQuestManager = RegistryAccess.registryAccess().registry(RegistryKey.MANAGER).manager(McRPGManagerKey.QUEST);
         when(mockQuestManager.getActiveQuestsForPlayer(any(UUID.class))).thenReturn(List.of());
-        server.getPluginManager().registerEvents(new MobKillQuestProgressListener(), mcRPG);
+        server.getPluginManager().registerEvents(new MobKillQuestProgressListener(mockQuestManager), mcRPG);
     }
 
     @DisplayName("Given an entity death with a player killer, when fired, then progressQuests queries active quests")

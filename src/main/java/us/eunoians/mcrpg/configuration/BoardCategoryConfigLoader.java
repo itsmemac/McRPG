@@ -122,7 +122,7 @@ public final class BoardCategoryConfigLoader {
     @NotNull
     private static NamespacedKey autoNamespace(@NotNull String rawKey) {
         if (rawKey.contains(":")) {
-            return NamespacedKey.fromString(rawKey.toLowerCase());
+            return McRPGMethods.parseNamespacedKey(rawKey);
         }
         return new NamespacedKey(McRPGMethods.getMcRPGNamespace(), rawKey.toLowerCase().replace('-', '_'));
     }

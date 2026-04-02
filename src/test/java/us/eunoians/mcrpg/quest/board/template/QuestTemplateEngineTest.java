@@ -5,6 +5,8 @@ import org.bukkit.NamespacedKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.quest.board.rarity.QuestRarity;
 import us.eunoians.mcrpg.quest.board.rarity.QuestRarityRegistry;
 import us.eunoians.mcrpg.quest.board.template.variable.Pool;
@@ -27,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -67,6 +70,7 @@ class QuestTemplateEngineTest {
             QuestRewardType configured = mock(QuestRewardType.class);
             when(configured.getKey()).thenReturn(REWARD_TYPE_KEY);
             when(configured.serializeConfig()).thenReturn(new LinkedHashMap<>(config));
+            when(configured.withLocalizationRoute(any())).thenReturn(configured);
             return configured;
         });
         when(rewardTypeRegistry.get(REWARD_TYPE_KEY)).thenReturn(Optional.of(mockRewardType));
@@ -76,7 +80,9 @@ class QuestTemplateEngineTest {
         when(rarityRegistry.get(RARE)).thenReturn(Optional.of(
                 new QuestRarity(RARE, 5, 1.5, 1.2, EXPANSION_KEY)));
 
-        engine = new QuestTemplateEngine(rarityRegistry, objectiveTypeRegistry, rewardTypeRegistry);
+        McRPG mockPlugin = mock(McRPG.class);
+        when(mockPlugin.getLogger()).thenReturn(Logger.getLogger("QuestTemplateEngineTest"));
+        engine = new QuestTemplateEngine(rarityRegistry, objectiveTypeRegistry, rewardTypeRegistry, mockPlugin);
     }
 
     @Test
@@ -313,7 +319,7 @@ class QuestTemplateEngineTest {
         TemplatePhaseDefinition phase = new TemplatePhaseDefinition(
                 PhaseCompletionMode.ALL, List.of(stage));
         TemplateRewardDefinition reward = new TemplateRewardDefinition(
-                rewardTypeKey, Map.of("amount", "block_count"));
+                rewardTypeKey, "test_reward", Map.of("amount", "block_count"));
 
         return new QuestTemplate(TEMPLATE_KEY,
                 Route.fromString("quests.templates.test.display-name"), true, SCOPE_KEY,
@@ -347,6 +353,7 @@ class QuestTemplateEngineTest {
 
         TemplateRewardDefinition reward = new TemplateRewardDefinition(
                 REWARD_TYPE_KEY,
+                "mining_xp",
                 Map.of("skill", "MINING", "amount", "block_count * 5 * difficulty"));
 
         return new QuestTemplate(

@@ -27,7 +27,7 @@ gui:
         name: "<red>Return to Previous GUI</red>"
         material: BARRIER
         lore:
-          - '<gray>Click to return to previous gui.</gold>'
+          - '<gray>Click to return to previous gui.</gray>'
     # Configure the item to be used as a filler for the gui
     filler-item:
       display-item:
@@ -111,20 +111,16 @@ gui:
       - '<gray>Category: <gold><category>'
       - ''
       - '<yellow>Click to accept'
-    # Board offering slot. Placeholders: <quest_name>, <rarity>, <rarity_color>, <category>, <quest_duration>, <board_quests>, <max_quests>, <count_color>
+    # Board offering slot. Placeholders: <quest_name>, <rarity_color>
     offering-slot:
       display-item:
         material: PAPER
         name: '<rarity_color><quest_name>'
-        lore:
-          - '<gray>Rarity: <rarity_color><rarity>'
-          - '<gray>Category: <aqua><category>'
-          - '<gray>Duration: <gold><quest_duration>'
-          - ''
-          - '<gray>Board Quests: <count_color><board_quests>/<max_quests>'
-          - ''
-          - '<green>Left-click to accept'
-          - '<yellow>Right-click to preview'
+    # Scoped (group) offering slot. Placeholders: <quest_name>, <rarity_color>
+    scoped-offering-slot:
+      display-item:
+        material: PAPER
+        name: '<rarity_color><quest_name>'
     no-offerings-slot:
       display-item:
         material: BARRIER
@@ -134,7 +130,6 @@ gui:
           - '<gray>Check back after the next rotation.'
     accept: '<green>Quest accepted!'
     slots-full: '<red>You have no available quest slots.'
-    abandoned: '<yellow>Quest abandoned.'
     on-cooldown: '<red>This quest is on cooldown.'
     # Scoped (group) quest entries
     group-tab:
@@ -165,6 +160,14 @@ gui:
     group-slots-full: '<red>This group has no available quest slots.'
     # Appended to each scoped offering item. Placeholder: <entity_name>
     group-entity-lore: '<gray>Group: <gold><entity_name>'
+    # Offering item lore lines (Phase 4) — built programmatically in BoardOfferingSlot / ScopedOfferingSlot.
+    # Placeholders: <rarity_color>, <rarity>
+    rarity-line: '<gray>Rarity: <rarity_color><rarity>'
+    # Placeholder: <duration> (formatted time, e.g. "2h 30m", or "None")
+    duration-line: '<gray>Duration: <gold><duration>'
+    # Placeholders: <count_color>, <board_quests>, <max_quests>
+    board-quests-line: '<gray>Board Quests: <count_color><board_quests>/<max_quests>'
+    right-click-preview: '<yellow>Right-click to preview'
     # Offering lore components (Phase 4). Placeholders: <category>, <type>, <amount>, <time>
     offering-category: '<gray>Category: <gold><category>'
     objectives-header: '<gray>Objectives:'
@@ -217,12 +220,6 @@ gui:
         name: "<gold>Quest History"
         lore:
           - '<gray>Click to view your completed quests.'
-    no-active-quests:
-      display-item:
-        material: BARRIER
-        name: "<gray>No Active Quests"
-        lore:
-          - '<gray>You have no active quests at the moment.'
   # This GUI shows the player's completed quest history.
   quest-history-gui:
     title: '<gold>Quest History'
@@ -293,12 +290,21 @@ gui:
         name: "<gold>Stage"
         lore: []
     # Objective slot. Placeholders: <objective_description>
-    # Detail lines (block/entity lists), progress, and state are appended dynamically.
+    # Progress and state lines are appended dynamically using the keys below.
     objective-slot:
       display-item:
         material: MAP
         name: "<gray><objective_description>"
         lore: []
+      # Progress lore line appended below the objective description.
+      # Placeholders: <progress> = current progress, <required> = goal
+      progress-line: "<gray>Progress: <gold><progress>/<required>"
+      # State lore line appended below the progress line.
+      # Placeholder: <state> = objective state display label (resolved from objective-state.* below)
+      state-line: "<gray>State: <gold><state>"
+      # Continuation line for multi-line objective descriptions (lines after the first).
+      # Placeholder: <line>
+      description-continuation-line: "<gray><line>"
     # Reward summary slot shown in board preview. Placeholders: <quest_name>
     # Reward lines are appended dynamically as individual lore entries.
     reward-slot:
@@ -308,6 +314,27 @@ gui:
         lore:
           - '<gray>Rewards for completing this quest:'
           - ''
+      # Shown as a lore line in the reward slot when the quest has no configured rewards.
+      no-rewards: '<gray>No rewards listed'
+      # Section header for quest-level completion rewards. No placeholders.
+      completion-header: "<gold><bold>Completion Rewards:"
+      # Section header for per-objective rewards.
+      # Placeholders: <phase> = phase number (1-based), <objective> = truncated objective description
+      phase-header: "<gold>Phase <phase> - <objective>:"
+      # Individual reward entry. Placeholder: <reward>
+      reward-entry-line: "<gray>  - <white><reward>"
+    # PhaseCompletionMode display labels used in the <completion_mode> placeholder.
+    completion-mode:
+      # All stages in the phase must be completed.
+      all: "Complete all stages"
+      # Any single stage completing advances the phase.
+      any: "Complete any one stage"
+    # QuestObjectiveState display labels used in the <state> placeholder.
+    objective-state:
+      not-started: "Not Started"
+      in-progress: "In Progress"
+      completed: "Completed"
+      cancelled: "Cancelled"
     # Quest duration slot shown in quest detail GUI navigation row.
     # Placeholder: <quest_duration>
     duration-slot:
@@ -324,6 +351,10 @@ gui:
         lore:
           - '<gray>Click to abandon this quest.'
           - '<gray>This action requires confirmation.'
+    # Label shown as the quest_state placeholder when viewing a quest preview (not yet accepted).
+    state-preview: 'Preview'
+    # Label shown as the quest_state placeholder when viewing a completed quest's history.
+    state-completed: 'Completed'
   # Confirmation GUI shown before abandoning a quest.
   quest-abandon-confirm-gui:
     title: '<red>Confirm Abandon'

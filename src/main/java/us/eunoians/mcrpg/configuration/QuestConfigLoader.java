@@ -3,6 +3,7 @@ package us.eunoians.mcrpg.configuration;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import dev.dejvokep.boostedyaml.YamlDocument;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
+import dev.dejvokep.boostedyaml.route.Route;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,9 @@ import us.eunoians.mcrpg.quest.board.distribution.PotBehavior;
 import us.eunoians.mcrpg.quest.board.distribution.RemainderStrategy;
 import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionConfig;
 import us.eunoians.mcrpg.quest.board.distribution.RewardSplitMode;
+import us.eunoians.mcrpg.quest.board.template.condition.ConditionParser;
+import us.eunoians.mcrpg.quest.board.template.condition.RewardFallback;
+import us.eunoians.mcrpg.quest.board.template.condition.TemplateCondition;
 import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveType;
 import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveTypeRegistry;
 import us.eunoians.mcrpg.quest.reward.QuestRewardType;
@@ -72,6 +76,12 @@ public class QuestConfigLoader {
             "(?:(\\d+)d)?\\s*(?:(\\d+)h)?\\s*(?:(\\d+)m)?\\s*(?:(\\d+)s)?",
             Pattern.CASE_INSENSITIVE
     );
+
+    private final ConditionParser conditionParser;
+
+    public QuestConfigLoader(@NotNull ConditionParser conditionParser) {
+        this.conditionParser = conditionParser;
+    }
 
     /**
      * Recursively scans the given directory for {@code .yml}/{@code .yaml} files and parses
@@ -187,7 +197,7 @@ public class QuestConfigLoader {
                 repeatMode = QuestRepeatMode.valueOf(section.getString("repeat-mode").toUpperCase());
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Invalid repeat-mode '" + section.getString("repeat-mode")
-                        + "' in quest " + questKey + ". Valid values: ONCE, REPEATABLE, COOLDOWN, LIMITED");
+                        + "' in quest " + questKey + ". Valid values: ONCE, REPEATABLE, COOLDOWN, LIMITED, COOLDOWN_LIMITED");
             }
         }
 
@@ -201,11 +211,24 @@ public class QuestConfigLoader {
             repeatLimit = section.getInt("repeat-limit", -1);
         }
 
+        if (repeatMode == QuestRepeatMode.COOLDOWN_LIMITED) {
+            Logger logger = McRPG.getInstance().getLogger();
+            if (repeatCooldown == null) {
+                logger.warning("Quest " + questKey + " uses COOLDOWN_LIMITED but is missing 'repeat-cooldown'."
+                        + " Cooldown will default to zero (no delay enforced).");
+            }
+            if (repeatLimit <= 0) {
+                logger.warning("Quest " + questKey + " uses COOLDOWN_LIMITED but is missing a valid 'repeat-limit'."
+                        + " Limit will default to 1.");
+            }
+        }
+
         NamespacedKey expansionKey = section.contains("expansion")
                 ? parseNamespacedKey(section.getString("expansion")).orElse(null)
                 : null;
 
-        List<QuestRewardType> rewards = parseRewards(section, fileName, questKey.toString());
+        String questLocalizationPrefix = "quests." + questKey.getNamespace() + "." + questKey.getKey();
+        List<QuestRewardType> rewards = parseRewards(section, fileName, questKey.toString(), questLocalizationPrefix);
 
         Section phasesSection = section.getSection("phases");
         if (phasesSection == null) {
@@ -225,7 +248,7 @@ public class QuestConfigLoader {
                 throw new IllegalArgumentException("Phase '" + phaseLabel + "' in quest " + questKey
                         + " has no configuration");
             }
-            phases.add(parsePhaseDefinition(phaseIndex, phaseSection, fileName, questKey.toString()));
+            phases.add(parsePhaseDefinition(phaseIndex, phaseSection, fileName, questKey));
             phaseIndex++;
         }
 
@@ -235,7 +258,7 @@ public class QuestConfigLoader {
         return new QuestDefinition(questKey, scopeType, expiration, phases, rewards,
                 repeatMode, repeatCooldown, repeatLimit, expansionKey,
                 metadata.isEmpty() ? null : metadata,
-                parseRewardDistribution(section, fileName, questKey.toString()).orElse(null),
+                parseRewardDistribution(section, fileName, questKey.toString(), conditionParser).orElse(null),
                 inlineDisplay.isEmpty() ? null : inlineDisplay);
     }
 
@@ -262,12 +285,7 @@ public class QuestConfigLoader {
         Set<NamespacedKey> supportedRarities = new LinkedHashSet<>();
         if (boardSection.contains("supported-rarities")) {
             for (String rawRarity : boardSection.getStringList("supported-rarities")) {
-                NamespacedKey key;
-                if (rawRarity.contains(":")) {
-                    key = NamespacedKey.fromString(rawRarity.toLowerCase());
-                } else {
-                    key = new NamespacedKey(McRPGMethods.getMcRPGNamespace(), rawRarity.toLowerCase());
-                }
+                NamespacedKey key = McRPGMethods.parseNamespacedKey(rawRarity);
                 supportedRarities.add(key);
             }
         } else {
@@ -286,7 +304,7 @@ public class QuestConfigLoader {
             cooldownScope = boardSection.getString("cooldown-scope").toUpperCase();
         }
 
-        Set<String> supportedRefreshTypes = new java.util.LinkedHashSet<>();
+        Set<String> supportedRefreshTypes = new LinkedHashSet<>();
         if (boardSection.contains("supported-refresh-types")) {
             for (String rt : boardSection.getStringList("supported-refresh-types")) {
                 supportedRefreshTypes.add(rt.toUpperCase());
@@ -302,6 +320,11 @@ public class QuestConfigLoader {
     /**
      * Parses the optional {@code display} section from a quest definition into a flat
      * string map used as inline fallback display strings.
+     * <p>
+     * Supported keys: {@code name}, {@code description}, and per-objective descriptions
+     * under {@code objectives.<key>}. Reward display labels are resolved via auto-derived
+     * localization routes rather than an inline {@code rewards} block, so that section
+     * is intentionally not parsed here.
      *
      * @param section the quest definition section
      * @return a map of display keys to values, empty if no display section present
@@ -330,14 +353,6 @@ public class QuestConfigLoader {
                 }
             }
         }
-        if (displaySection.contains("rewards")) {
-            Section rewardSection = displaySection.getSection("rewards");
-            if (rewardSection != null) {
-                for (String rewardKey : rewardSection.getRoutesAsStrings(false)) {
-                    display.put("reward." + rewardKey, rewardSection.getString(rewardKey));
-                }
-            }
-        }
         return display;
     }
 
@@ -347,14 +362,14 @@ public class QuestConfigLoader {
      * @param phaseIndex   the zero-based index of the phase within its parent quest
      * @param phaseSection the section for this phase
      * @param fileName     the source file name (for log messages)
-     * @param questKey     the parent quest's key string (for log messages)
+     * @param questKey     the parent quest's namespaced key
      * @return the parsed phase definition
      */
     @NotNull
     private QuestPhaseDefinition parsePhaseDefinition(int phaseIndex,
                                                       @NotNull Section phaseSection,
                                                       @NotNull String fileName,
-                                                      @NotNull String questKey) {
+                                                      @NotNull NamespacedKey questKey) {
         String modeString = phaseSection.getString("completion-mode", "ALL");
         PhaseCompletionMode mode;
         try {
@@ -387,7 +402,7 @@ public class QuestConfigLoader {
         }
 
         return new QuestPhaseDefinition(phaseIndex, mode, stages,
-                parseRewardDistribution(phaseSection, fileName, questKey + "/phase-" + phaseIndex).orElse(null));
+                parseRewardDistribution(phaseSection, fileName, questKey + "/phase-" + phaseIndex, conditionParser).orElse(null));
     }
 
     /**
@@ -395,13 +410,13 @@ public class QuestConfigLoader {
      *
      * @param stageSection the section for this stage
      * @param fileName     the source file name (for log messages)
-     * @param questKey     the parent quest's key string (for log messages)
+     * @param questKey     the parent quest's namespaced key
      * @return the parsed stage definition
      */
     @NotNull
     private QuestStageDefinition parseStageDefinition(@NotNull Section stageSection,
                                                       @NotNull String fileName,
-                                                      @NotNull String questKey) {
+                                                      @NotNull NamespacedKey questKey) {
         String stageKeyString = stageSection.getString("key");
         if (stageKeyString == null || stageKeyString.isEmpty()) {
             throw new IllegalArgumentException("Stage in quest " + questKey + " is missing a 'key'");
@@ -411,7 +426,10 @@ public class QuestConfigLoader {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid stage key '" + stageKeyString
                     + "' in quest " + questKey));
 
-        List<QuestRewardType> rewards = parseRewards(stageSection, fileName, questKey + "/" + stageKey);
+        String stageLocalizationPrefix = "quests." + questKey.getNamespace() + "." + questKey.getKey()
+                + ".stages." + stageKey.getKey();
+        List<QuestRewardType> rewards = parseRewards(stageSection, fileName, questKey + "/" + stageKey,
+                stageLocalizationPrefix);
 
         Section objectivesSection = stageSection.getSection("objectives");
         if (objectivesSection == null) {
@@ -436,7 +454,7 @@ public class QuestConfigLoader {
         }
 
         return new QuestStageDefinition(stageKey, objectives, rewards,
-                parseRewardDistribution(stageSection, fileName, questKey + "/" + stageKey).orElse(null));
+                parseRewardDistribution(stageSection, fileName, questKey + "/" + stageKey, conditionParser).orElse(null));
     }
 
     /**
@@ -444,13 +462,13 @@ public class QuestConfigLoader {
      *
      * @param objectiveSection the section for this objective
      * @param fileName         the source file name (for log messages)
-     * @param questKey         the parent quest's key string (for log messages)
+     * @param questKey         the parent quest's namespaced key
      * @return the parsed objective definition
      */
     @NotNull
     private QuestObjectiveDefinition parseObjectiveDefinition(@NotNull Section objectiveSection,
                                                               @NotNull String fileName,
-                                                              @NotNull String questKey) {
+                                                              @NotNull NamespacedKey questKey) {
         QuestObjectiveTypeRegistry objectiveTypeRegistry = RegistryAccess.registryAccess()
                 .registry(McRPGRegistryKey.QUEST_OBJECTIVE_TYPE);
 
@@ -506,9 +524,12 @@ public class QuestConfigLoader {
             configuredType = configuredType.parseConfig(configSection);
         }
 
-        List<QuestRewardType> rewards = parseRewards(objectiveSection, fileName, questKey + "/" + objectiveKey);
+        String objectiveLocalizationPrefix = "quests." + questKey.getNamespace() + "." + questKey.getKey()
+                + ".objectives." + objectiveKey.getKey();
+        List<QuestRewardType> rewards = parseRewards(objectiveSection, fileName, questKey + "/" + objectiveKey,
+                objectiveLocalizationPrefix);
         RewardDistributionConfig rewardDistribution = parseRewardDistribution(objectiveSection, fileName,
-                questKey + "/" + objectiveKey).orElse(null);
+                questKey + "/" + objectiveKey, conditionParser).orElse(null);
 
         if (requiredProgress != null) {
             return new QuestObjectiveDefinition(objectiveKey, configuredType, requiredProgress, rewards, rewardDistribution);
@@ -519,16 +540,24 @@ public class QuestConfigLoader {
     /**
      * Parses rewards from a BoostedYaml {@link Section} containing a {@code rewards} subsection.
      * Each reward is a named subsection within {@code rewards} (map-based, not list-based).
+     * <p>
+     * When {@code localizationPrefix} is provided, each parsed reward is given an auto-derived
+     * localization route via {@link QuestRewardType#withLocalizationRoute}. The route follows
+     * the pattern {@code <prefix>.rewards.<rewardLabel>}, e.g.
+     * {@code quests.mcrpg.my_quest.objectives.break_gold.rewards.hero_title}.
      *
-     * @param parentSection the parent section containing the optional {@code rewards} subsection
-     * @param fileName      the source file name (for log messages)
-     * @param contextKey    a human-readable context path (for log messages)
+     * @param parentSection       the parent section containing the optional {@code rewards} subsection
+     * @param fileName            the source file name (for log messages)
+     * @param contextKey          a human-readable context path (for log messages)
+     * @param localizationPrefix  the localization route prefix up to (but not including) {@code .rewards.<label>},
+     *                            or {@code null} to skip route assignment
      * @return the list of configured reward type instances (may be empty)
      */
     @NotNull
     static List<QuestRewardType> parseRewards(@NotNull Section parentSection,
                                               @NotNull String fileName,
-                                              @NotNull String contextKey) {
+                                              @NotNull String contextKey,
+                                              @Nullable String localizationPrefix) {
         Section rewardsSection = parentSection.getSection("rewards");
         if (rewardsSection == null) {
             return List.of();
@@ -576,6 +605,10 @@ public class QuestConfigLoader {
 
             try {
                 QuestRewardType configuredReward = baseType.get().parseConfig(rewardSection);
+                if (localizationPrefix != null) {
+                    configuredReward = configuredReward.withLocalizationRoute(
+                            Route.fromString(localizationPrefix + ".rewards." + rewardLabel));
+                }
                 rewards.add(configuredReward);
             } catch (Exception e) {
                 logger.warning("Failed to parse reward of type '" + typeKey + "' in " + contextKey
@@ -598,7 +631,8 @@ public class QuestConfigLoader {
     @NotNull
     static Optional<RewardDistributionConfig> parseRewardDistribution(@NotNull Section parentSection,
                                                                       @NotNull String fileName,
-                                                                      @NotNull String contextKey) {
+                                                                      @NotNull String contextKey,
+                                                                      @NotNull ConditionParser conditionParser) {
         Section distSection = parentSection.getSection("reward-distribution");
         if (distSection == null) {
             return Optional.empty();
@@ -646,7 +680,7 @@ public class QuestConfigLoader {
             }
 
             List<DistributionRewardEntry> rewardEntries = parseDistributionRewardEntries(
-                    tierSection, fileName, contextKey + "/dist:" + tierLabel);
+                    tierSection, fileName, contextKey + "/dist:" + tierLabel, conditionParser);
 
             Map<String, Object> typeParameters = new HashMap<>();
             if (tierSection.contains("top-player-count")) {
@@ -691,7 +725,8 @@ public class QuestConfigLoader {
     private static List<DistributionRewardEntry> parseDistributionRewardEntries(
             @NotNull Section tierSection,
             @NotNull String fileName,
-            @NotNull String contextKey) {
+            @NotNull String contextKey,
+            @NotNull ConditionParser conditionParser) {
         Section rewardsSection = tierSection.getSection("rewards");
         if (rewardsSection == null) {
             return List.of();
@@ -762,10 +797,85 @@ public class QuestConfigLoader {
             int minScaled = rewardSection.getInt("min-scaled-amount", 1);
             int topCount = rewardSection.getInt("top-count", 1);
 
-            entries.add(new DistributionRewardEntry(reward, potBehavior, remainder, minScaled, topCount, null));
+            RewardFallback fallback = null;
+            if (rewardSection.contains("fallback")) {
+                Section fallbackSection = rewardSection.getSection("fallback");
+                if (fallbackSection != null) {
+                    try {
+                        Section conditionSection = fallbackSection.getSection("condition");
+                        Section fallbackRewardSection = fallbackSection.getSection("reward");
+                        if (conditionSection == null) {
+                            McRPG.getInstance().getLogger().warning("Fallback for reward '" + rewardKey
+                                    + "' in " + contextKey + " (" + fileName
+                                    + ") is missing a 'condition' block, skipping fallback");
+                        } else if (fallbackRewardSection == null) {
+                            McRPG.getInstance().getLogger().warning("Fallback for reward '" + rewardKey
+                                    + "' in " + contextKey + " (" + fileName
+                                    + ") is missing a 'reward' block, skipping fallback");
+                        } else {
+                            TemplateCondition condition = conditionParser.parseSingle(conditionSection);
+                            QuestRewardType fallbackReward = parseSingleReward(fallbackRewardSection, fileName,
+                                    contextKey + "." + rewardKey + ".fallback.reward");
+                            if (fallbackReward != null) {
+                                fallback = new RewardFallback(condition, fallbackReward);
+                            }
+                        }
+                    } catch (Exception e) {
+                        McRPG.getInstance().getLogger().warning("Failed to parse fallback for reward '"
+                                + rewardKey + "' in " + contextKey + " (" + fileName + "): " + e.getMessage());
+                    }
+                }
+            }
+
+            entries.add(new DistributionRewardEntry(reward, potBehavior, remainder, minScaled, topCount, fallback));
         }
 
         return entries;
+    }
+
+    /**
+     * Parses a single reward from a YAML section containing a {@code type:} key and
+     * optional reward-specific config entries.
+     * <p>
+     * Logs a warning and returns {@code null} if the type key is missing, invalid,
+     * or not registered — the caller is responsible for deciding how to handle a
+     * {@code null} result (typically by skipping the surrounding construct).
+     *
+     * @param rewardSection the section containing the reward's {@code type:} and config keys
+     * @param fileName      the source file name (for log messages)
+     * @param contextKey    a human-readable context path (for log messages)
+     * @return the configured reward, or {@code null} on any parse failure
+     */
+    @Nullable
+    private static QuestRewardType parseSingleReward(@NotNull Section rewardSection,
+                                                     @NotNull String fileName,
+                                                     @NotNull String contextKey) {
+        Logger logger = McRPG.getInstance().getLogger();
+        String typeStr = rewardSection.getString("type");
+        if (typeStr == null || typeStr.isBlank()) {
+            logger.warning("Reward in " + contextKey + " (" + fileName + ") is missing a 'type', skipping");
+            return null;
+        }
+        Optional<NamespacedKey> typeKeyOpt = parseNamespacedKey(typeStr);
+        if (typeKeyOpt.isEmpty()) {
+            logger.warning("Invalid reward type key '" + typeStr + "' in " + contextKey
+                    + " (" + fileName + "), skipping");
+            return null;
+        }
+        QuestRewardTypeRegistry rewardTypeRegistry = RegistryAccess.registryAccess()
+                .registry(McRPGRegistryKey.QUEST_REWARD_TYPE);
+        Optional<QuestRewardType> baseType = rewardTypeRegistry.get(typeKeyOpt.get());
+        if (baseType.isEmpty()) {
+            logger.warning("Unknown reward type '" + typeKeyOpt.get() + "' in " + contextKey
+                    + " (" + fileName + "), skipping. Is the type registered?");
+            return null;
+        }
+        try {
+            return baseType.get().parseConfig(rewardSection);
+        } catch (Exception e) {
+            logger.warning("Failed to parse reward in " + contextKey + " (" + fileName + "): " + e.getMessage());
+            return null;
+        }
     }
 
     /**
@@ -779,13 +889,7 @@ public class QuestConfigLoader {
      */
     @NotNull
     static Optional<NamespacedKey> parseNamespacedKey(@Nullable String input) {
-        if (input == null || input.isEmpty()) {
-            return Optional.empty();
-        }
-        if (input.contains(":")) {
-            return Optional.ofNullable(NamespacedKey.fromString(input));
-        }
-        return Optional.of(new NamespacedKey(McRPGMethods.getMcRPGNamespace(), input.toLowerCase()));
+        return Optional.ofNullable(McRPGMethods.parseNamespacedKey(input));
     }
 
     /**

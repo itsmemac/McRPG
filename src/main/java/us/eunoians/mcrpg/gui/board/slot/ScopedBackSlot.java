@@ -17,6 +17,7 @@ import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Back button in scoped (group) mode. If the player manages multiple entities,
@@ -64,7 +65,7 @@ public class ScopedBackSlot implements McRPGSlot {
         return Set.of(QuestBoardGui.class);
     }
 
-    private static int countManageableEntities(@NotNull java.util.UUID playerUUID) {
+    private static int countManageableEntities(@NotNull UUID playerUUID) {
         ScopedBoardAdapterRegistry registry = McRPG.getInstance().registryAccess()
                 .registry(McRPGRegistryKey.SCOPED_BOARD_ADAPTER);
 

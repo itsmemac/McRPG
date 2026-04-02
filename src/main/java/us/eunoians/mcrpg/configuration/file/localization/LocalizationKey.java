@@ -299,7 +299,6 @@ public final class LocalizationKey extends ConfigFile {
     public static final Route QUEST_BOARD_OFFERING_LORE = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "offering-lore"));
     public static final Route QUEST_BOARD_ACCEPT_BUTTON = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "accept"));
     public static final Route QUEST_BOARD_SLOT_FULL = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "slots-full"));
-    public static final Route QUEST_BOARD_ABANDONED = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "abandoned"));
     public static final Route QUEST_BOARD_COOLDOWN = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "on-cooldown"));
 
     // Board Admin Commands
@@ -359,6 +358,7 @@ public final class LocalizationKey extends ConfigFile {
     public static final Route QUEST_BOARD_GROUP_SELECTOR_TITLE = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "group-selector-title"));
     public static final Route QUEST_BOARD_GROUP_ENTITY_SLOT = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "group-entity-slot"));
     public static final Route QUEST_BOARD_GROUP_NO_OFFERINGS = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "group-no-offerings"));
+    public static final Route QUEST_BOARD_GROUP_NO_OFFERINGS_DISPLAY_ITEM = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "group-no-offerings.display-item"));
     public static final Route QUEST_BOARD_GROUP_ACCEPT = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "group-accept"));
     public static final Route QUEST_BOARD_GROUP_ABANDON = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "group-abandon"));
     public static final Route QUEST_BOARD_GROUP_NO_PERMISSION = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "group-no-permission"));
@@ -371,7 +371,6 @@ public final class LocalizationKey extends ConfigFile {
     public static final Route ACTIVE_QUEST_GUI_PREVIOUS_GUI_BUTTON_DISPLAY_ITEM = Route.fromString(toRoutePath(ACTIVE_QUEST_GUI_HEADER, "previous-gui-button.display-item"));
     public static final Route ACTIVE_QUEST_GUI_QUEST_SLOT_DISPLAY_ITEM = Route.fromString(toRoutePath(ACTIVE_QUEST_GUI_HEADER, "quest-slot.display-item"));
     public static final Route ACTIVE_QUEST_GUI_VIEW_HISTORY_BUTTON_DISPLAY_ITEM = Route.fromString(toRoutePath(ACTIVE_QUEST_GUI_HEADER, "view-history-button.display-item"));
-    public static final Route ACTIVE_QUEST_GUI_NO_ACTIVE_QUESTS_DISPLAY_ITEM = Route.fromString(toRoutePath(ACTIVE_QUEST_GUI_HEADER, "no-active-quests.display-item"));
     public static final Route ACTIVE_QUEST_GUI_PHASE_LINE = Route.fromString(toRoutePath(ACTIVE_QUEST_GUI_HEADER, "quest-slot.phase-line"));
     public static final Route ACTIVE_QUEST_GUI_OBJECTIVE_PROGRESS_LINE = Route.fromString(toRoutePath(ACTIVE_QUEST_GUI_HEADER, "quest-slot.objective-progress-line"));
     public static final Route ACTIVE_QUEST_GUI_OBJECTIVE_DETAIL_LINE = Route.fromString(toRoutePath(ACTIVE_QUEST_GUI_HEADER, "quest-slot.objective-detail-line"));
@@ -390,7 +389,6 @@ public final class LocalizationKey extends ConfigFile {
     public static final Route QUEST_HISTORY_GUI_SORT_DATE_ASC_DISPLAY_ITEM = Route.fromString(toRoutePath(QUEST_HISTORY_GUI_HEADER, "sort-date-asc.display-item"));
     public static final Route QUEST_HISTORY_GUI_COMPLETED_QUEST_SLOT_DISPLAY_ITEM = Route.fromString(toRoutePath(QUEST_HISTORY_GUI_HEADER, "completed-quest-slot.display-item"));
     public static final Route QUEST_HISTORY_GUI_UNKNOWN_QUEST_SLOT_DISPLAY_ITEM = Route.fromString(toRoutePath(QUEST_HISTORY_GUI_HEADER, "unknown-quest-slot.display-item"));
-
     // Quest Detail GUI
     private static final String QUEST_DETAIL_GUI_HEADER = toRoutePath(GUI_HEADER, "quest-detail-gui");
     public static final Route QUEST_DETAIL_GUI_TITLE = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "title"));
@@ -402,6 +400,24 @@ public final class LocalizationKey extends ConfigFile {
     public static final Route QUEST_DETAIL_GUI_REWARD_SLOT_DISPLAY_ITEM = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "reward-slot.display-item"));
     public static final Route QUEST_DETAIL_GUI_DURATION_SLOT_DISPLAY_ITEM = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "duration-slot.display-item"));
     public static final Route QUEST_DETAIL_GUI_ABANDON_BUTTON_DISPLAY_ITEM = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "abandon-button.display-item"));
+    public static final Route QUEST_DETAIL_GUI_STATE_PREVIEW = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "state-preview"));
+    public static final Route QUEST_DETAIL_GUI_STATE_COMPLETED = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "state-completed"));
+    public static final Route QUEST_DETAIL_GUI_REWARD_SLOT_NO_REWARDS = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "reward-slot.no-rewards"));
+    public static final Route QUEST_DETAIL_GUI_REWARD_COMPLETION_HEADER = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "reward-slot.completion-header"));
+    public static final Route QUEST_DETAIL_GUI_REWARD_PHASE_HEADER = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "reward-slot.phase-header"));
+    public static final Route QUEST_DETAIL_GUI_OBJECTIVE_PROGRESS = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "objective-slot.progress-line"));
+    public static final Route QUEST_DETAIL_GUI_OBJECTIVE_STATE = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "objective-slot.state-line"));
+    public static final Route QUEST_DETAIL_GUI_OBJECTIVE_DESCRIPTION_CONTINUATION = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "objective-slot.description-continuation-line"));
+    // PhaseCompletionMode display labels
+    public static final Route QUEST_DETAIL_GUI_COMPLETION_MODE_ALL = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "completion-mode.all"));
+    public static final Route QUEST_DETAIL_GUI_COMPLETION_MODE_ANY = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "completion-mode.any"));
+    // QuestObjectiveState display labels
+    public static final Route QUEST_DETAIL_GUI_OBJECTIVE_STATE_NOT_STARTED = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "objective-state.not-started"));
+    public static final Route QUEST_DETAIL_GUI_OBJECTIVE_STATE_IN_PROGRESS = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "objective-state.in-progress"));
+    public static final Route QUEST_DETAIL_GUI_OBJECTIVE_STATE_COMPLETED = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "objective-state.completed"));
+    public static final Route QUEST_DETAIL_GUI_OBJECTIVE_STATE_CANCELLED = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "objective-state.cancelled"));
+    // Reward slot entry line. Placeholder: <reward>
+    public static final Route QUEST_DETAIL_GUI_REWARD_ENTRY_LINE = Route.fromString(toRoutePath(QUEST_DETAIL_GUI_HEADER, "reward-slot.reward-entry-line"));
 
     // Quest Abandon Confirm GUI
     private static final String QUEST_ABANDON_CONFIRM_GUI_HEADER = toRoutePath(GUI_HEADER, "quest-abandon-confirm-gui");
@@ -608,6 +624,7 @@ public final class LocalizationKey extends ConfigFile {
     public static final Route TOO_MANY_PLANTS_DISPLAY_ITEM_HEADER = Route.fromString(toRoutePath(TOO_MANY_PLANTS_HEADER, "display-item"));
 
     public static final Route QUEST_BOARD_OFFERING_SLOT_DISPLAY_ITEM = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "offering-slot.display-item"));
+    public static final Route QUEST_BOARD_SCOPED_OFFERING_SLOT_DISPLAY_ITEM = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "scoped-offering-slot.display-item"));
     public static final Route QUEST_BOARD_NO_OFFERINGS_SLOT_DISPLAY_ITEM = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "no-offerings-slot.display-item"));
 
     // Quest progress notification player setting (settings GUI display items)
@@ -616,6 +633,10 @@ public final class LocalizationKey extends ConfigFile {
     public static final Route QUEST_PROGRESS_NOTIFICATION_SETTING_DISABLED_DISPLAY_ITEM = Route.fromString(toRoutePath(QUEST_PROGRESS_NOTIFICATION_SETTING_HEADER, "disabled.display-item"));
 
     // Quest Board GUI Polish (Phase 4)
+    public static final Route QUEST_BOARD_RARITY_LINE = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "rarity-line"));
+    public static final Route QUEST_BOARD_DURATION_LINE = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "duration-line"));
+    public static final Route QUEST_BOARD_BOARD_QUESTS_LINE = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "board-quests-line"));
+    public static final Route QUEST_BOARD_RIGHT_CLICK_PREVIEW = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "right-click-preview"));
     public static final Route QUEST_BOARD_OBJECTIVES_HEADER = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "objectives-header"));
     public static final Route QUEST_BOARD_OBJECTIVE_LINE = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "objective-line"));
     public static final Route QUEST_BOARD_REWARDS_HEADER = Route.fromString(toRoutePath(QUEST_BOARD_GUI_HEADER, "rewards-header"));
@@ -642,4 +663,23 @@ public final class LocalizationKey extends ConfigFile {
     public static final Route QUEST_NEAR_EXPIRY_SINGLE_NOTIFICATION = Route.fromString(toRoutePath(QUEST_NOTIFICATION_HEADER, "near-expiry-single"));
     public static final Route QUEST_NEAR_EXPIRY_BATCH_HEADER = Route.fromString(toRoutePath(QUEST_NOTIFICATION_HEADER, "near-expiry-batch-header"));
     public static final Route QUEST_NEAR_EXPIRY_BATCH_ENTRY = Route.fromString(toRoutePath(QUEST_NOTIFICATION_HEADER, "near-expiry-batch-entry"));
+
+    // Quest objective type fallback descriptions (used when no quest-specific locale entry exists)
+    private static final String QUEST_OBJECTIVE_TYPE_HEADER = "quest-objective-types";
+    private static final String QUEST_OBJECTIVE_BLOCK_BREAK_HEADER = toRoutePath(QUEST_OBJECTIVE_TYPE_HEADER, "block-break");
+    public static final Route QUEST_OBJECTIVE_BLOCK_BREAK_ANY = Route.fromString(toRoutePath(QUEST_OBJECTIVE_BLOCK_BREAK_HEADER, "any"));
+    public static final Route QUEST_OBJECTIVE_BLOCK_BREAK_SINGLE = Route.fromString(toRoutePath(QUEST_OBJECTIVE_BLOCK_BREAK_HEADER, "single"));
+    public static final Route QUEST_OBJECTIVE_BLOCK_BREAK_MULTI_HEADER = Route.fromString(toRoutePath(QUEST_OBJECTIVE_BLOCK_BREAK_HEADER, "multi-header"));
+    public static final Route QUEST_OBJECTIVE_BLOCK_BREAK_MULTI_ITEM = Route.fromString(toRoutePath(QUEST_OBJECTIVE_BLOCK_BREAK_HEADER, "multi-item"));
+    private static final String QUEST_OBJECTIVE_MOB_KILL_HEADER = toRoutePath(QUEST_OBJECTIVE_TYPE_HEADER, "mob-kill");
+    public static final Route QUEST_OBJECTIVE_MOB_KILL_ANY = Route.fromString(toRoutePath(QUEST_OBJECTIVE_MOB_KILL_HEADER, "any"));
+    public static final Route QUEST_OBJECTIVE_MOB_KILL_SINGLE = Route.fromString(toRoutePath(QUEST_OBJECTIVE_MOB_KILL_HEADER, "single"));
+    public static final Route QUEST_OBJECTIVE_MOB_KILL_MULTI_HEADER = Route.fromString(toRoutePath(QUEST_OBJECTIVE_MOB_KILL_HEADER, "multi-header"));
+    public static final Route QUEST_OBJECTIVE_MOB_KILL_MULTI_ITEM = Route.fromString(toRoutePath(QUEST_OBJECTIVE_MOB_KILL_HEADER, "multi-item"));
+
+    // Quest reward type fallback display labels (used when no display-key or display label is configured)
+    private static final String QUEST_REWARD_TYPE_HEADER = "quest-reward-types";
+    public static final Route QUEST_REWARD_COMMAND_FALLBACK_DISPLAY = Route.fromString(toRoutePath(QUEST_REWARD_TYPE_HEADER, "command.fallback-display"));
+    public static final Route QUEST_REWARD_SCALABLE_COMMAND_FALLBACK_DISPLAY = Route.fromString(toRoutePath(QUEST_REWARD_TYPE_HEADER, "scalable-command.fallback-display"));
+    public static final Route QUEST_REWARD_SCALABLE_AMOUNT_SUFFIX = Route.fromString(toRoutePath(QUEST_REWARD_TYPE_HEADER, "scalable-command.amount-suffix"));
 }

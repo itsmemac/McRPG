@@ -31,6 +31,7 @@ public record TemplateObjectiveDefinition(
         int weight
 ) {
 
+    /** Canonical constructor — makes {@code config} immutable and clamps {@code weight} to at least 1. */
     public TemplateObjectiveDefinition {
         config = Map.copyOf(config);
         if (weight < 1) {
@@ -47,11 +48,23 @@ public record TemplateObjectiveDefinition(
         this(typeKey, requiredProgressExpression, config, null, 1);
     }
 
+    /**
+     * Returns the optional generation-time condition that must evaluate to {@code true}
+     * for this objective to be included in the generated quest.
+     *
+     * @return the condition, or empty if this objective is unconditional
+     */
     @NotNull
     public Optional<TemplateCondition> getCondition() {
         return Optional.ofNullable(condition);
     }
 
+    /**
+     * Returns the relative selection weight used by {@link WeightedObjectiveSelector}.
+     * Always {@code >= 1}.
+     *
+     * @return the selection weight
+     */
     public int getWeight() {
         return weight;
     }

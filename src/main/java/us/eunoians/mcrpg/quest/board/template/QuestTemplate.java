@@ -45,6 +45,20 @@ public final class QuestTemplate implements McRPGContent {
     private final NamespacedKey expansionKey;
     private final Map<String, String> inlineDisplay;
 
+    /**
+     * Convenience constructor for templates without a reward distribution config,
+     * prerequisite condition, expansion key, or inline display overrides.
+     *
+     * @param key               the unique key identifying this template
+     * @param displayNameRoute  the localization route for the template's display name
+     * @param boardEligible     whether the template may appear on quest boards
+     * @param scopeProviderKey  the key of the quest scope provider (e.g. single-player)
+     * @param supportedRarities the set of rarity keys this template supports
+     * @param rarityOverrides   per-rarity overrides for reward scaling
+     * @param variables         the template variables available for expression substitution
+     * @param phases            the phase definitions that make up the quest structure
+     * @param rewards           the reward definitions granted on completion
+     */
     public QuestTemplate(@NotNull NamespacedKey key,
                          @NotNull Route displayNameRoute,
                          boolean boardEligible,
@@ -58,6 +72,22 @@ public final class QuestTemplate implements McRPGContent {
                 rarityOverrides, variables, phases, rewards, null, null, null);
     }
 
+    /**
+     * Convenience constructor for templates with a reward distribution config and
+     * expansion key, but without a prerequisite condition or inline display overrides.
+     *
+     * @param key                  the unique key identifying this template
+     * @param displayNameRoute     the localization route for the template's display name
+     * @param boardEligible        whether the template may appear on quest boards
+     * @param scopeProviderKey     the key of the quest scope provider
+     * @param supportedRarities    the set of rarity keys this template supports
+     * @param rarityOverrides      per-rarity overrides for reward scaling
+     * @param variables            the template variables available for expression substitution
+     * @param phases               the phase definitions that make up the quest structure
+     * @param rewards              the reward definitions granted on completion
+     * @param rewardDistribution   optional group reward distribution config; {@code null} for solo distribution
+     * @param expansionKey         the key of the {@link us.eunoians.mcrpg.expansion.ContentExpansion} that owns this template, or {@code null}
+     */
     public QuestTemplate(@NotNull NamespacedKey key,
                          @NotNull Route displayNameRoute,
                          boolean boardEligible,
@@ -73,6 +103,23 @@ public final class QuestTemplate implements McRPGContent {
                 rarityOverrides, variables, phases, rewards, rewardDistribution, null, expansionKey);
     }
 
+    /**
+     * Convenience constructor for templates with a reward distribution config,
+     * prerequisite condition, and expansion key, but without inline display overrides.
+     *
+     * @param key                  the unique key identifying this template
+     * @param displayNameRoute     the localization route for the template's display name
+     * @param boardEligible        whether the template may appear on quest boards
+     * @param scopeProviderKey     the key of the quest scope provider
+     * @param supportedRarities    the set of rarity keys this template supports
+     * @param rarityOverrides      per-rarity overrides for reward scaling
+     * @param variables            the template variables available for expression substitution
+     * @param phases               the phase definitions that make up the quest structure
+     * @param rewards              the reward definitions granted on completion
+     * @param rewardDistribution   optional group reward distribution config; {@code null} for solo distribution
+     * @param prerequisite         optional condition evaluated before offering this template to a player
+     * @param expansionKey         the key of the {@link us.eunoians.mcrpg.expansion.ContentExpansion} that owns this template, or {@code null}
+     */
     public QuestTemplate(@NotNull NamespacedKey key,
                          @NotNull Route displayNameRoute,
                          boolean boardEligible,
@@ -89,6 +136,24 @@ public final class QuestTemplate implements McRPGContent {
                 rarityOverrides, variables, phases, rewards, rewardDistribution, prerequisite, expansionKey, null);
     }
 
+    /**
+     * Full constructor. Defensively copies all mutable collections; a {@code null}
+     * {@code inlineDisplay} is stored as an empty map.
+     *
+     * @param key                  the unique key identifying this template
+     * @param displayNameRoute     the localization route for the template's display name
+     * @param boardEligible        whether the template may appear on quest boards
+     * @param scopeProviderKey     the key of the quest scope provider
+     * @param supportedRarities    the set of rarity keys this template supports
+     * @param rarityOverrides      per-rarity overrides for reward scaling
+     * @param variables            the template variables available for expression substitution
+     * @param phases               the phase definitions that make up the quest structure
+     * @param rewards              the reward definitions granted on completion
+     * @param rewardDistribution   optional group reward distribution config; {@code null} for solo distribution
+     * @param prerequisite         optional condition evaluated before offering this template to a player
+     * @param expansionKey         the key of the {@link us.eunoians.mcrpg.expansion.ContentExpansion} that owns this template, or {@code null}
+     * @param inlineDisplay        optional map of locale code to inline display name override; {@code null} treated as empty
+     */
     public QuestTemplate(@NotNull NamespacedKey key,
                          @NotNull Route displayNameRoute,
                          boolean boardEligible,
@@ -117,6 +182,13 @@ public final class QuestTemplate implements McRPGContent {
         this.inlineDisplay = inlineDisplay != null ? Map.copyOf(inlineDisplay) : Collections.emptyMap();
     }
 
+    /**
+     * Returns the key of the {@link us.eunoians.mcrpg.expansion.ContentExpansion} that
+     * registered this template, or empty if it was loaded from config rather than
+     * registered programmatically via an expansion.
+     *
+     * @return the expansion key, or empty if config-loaded
+     */
     @Override
     @NotNull
     public Optional<NamespacedKey> getExpansionKey() {
@@ -270,19 +342,6 @@ public final class QuestTemplate implements McRPGContent {
     }
 
     /**
-     * Returns the effective reward multiplier for a rarity, checking
-     * template-level overrides first and falling back to the global rarity
-     * registry value.
-     * <p>
-     * Does NOT validate that the rarity is in {@code supportedRarities} --
-     * call {@link #validateRaritySupported(NamespacedKey)} first if validation
-     * is needed.
-     *
-     * @param rarityKey the rarity to look up
-     * @param registry  the global rarity registry used as fallback
-     * @return the reward multiplier (template override if present, otherwise registry default, otherwise {@code 1.0})
-     */
-    /**
      * Returns the optional prerequisite condition for this template.
      * Evaluated during personal offering generation to gate template eligibility.
      *
@@ -304,6 +363,17 @@ public final class QuestTemplate implements McRPGContent {
         return inlineDisplay;
     }
 
+    /**
+     * Returns the effective reward multiplier for a rarity, checking template-level
+     * overrides first and falling back to the global rarity registry value.
+     * <p>
+     * Does NOT validate that the rarity is in {@code supportedRarities} —
+     * call {@link #validateRaritySupported(NamespacedKey)} first if validation is needed.
+     *
+     * @param rarityKey the rarity to look up
+     * @param registry  the global rarity registry used as fallback
+     * @return the reward multiplier (template override if present, otherwise registry default, otherwise {@code 1.0})
+     */
     public double getEffectiveRewardMultiplier(@NotNull NamespacedKey rarityKey,
                                                 @NotNull QuestRarityRegistry registry) {
         RarityOverride override = rarityOverrides.get(rarityKey);

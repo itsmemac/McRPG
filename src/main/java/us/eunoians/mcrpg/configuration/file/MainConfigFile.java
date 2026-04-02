@@ -52,7 +52,6 @@ public final class MainConfigFile extends ConfigFile {
     // Quest cache fields
     private static final String QUEST_CACHE_HEADER = toRoutePath(CONFIGURATION_HEADER, "quest-cache");
     public static final Route QUEST_CACHE_FINISHED_KEEP_ALIVE_MINUTES = Route.fromString(toRoutePath(QUEST_CACHE_HEADER, "finished-keep-alive-minutes"));
-    public static final Route QUEST_CACHE_FINISHED_OFFLINE_TTL_MINUTES = Route.fromString(toRoutePath(QUEST_CACHE_HEADER, "finished-offline-ttl-minutes"));
 
     // Experience fields
     public static final Route MODIFY_MOB_SPAWN_EXPERIENCE_CONFIGURATION = Route.fromString(toRoutePath(EXPERIENCE_CONFIGURATION_HEADER, "modify-mob-spawn-experience"));

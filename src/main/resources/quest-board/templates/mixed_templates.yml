@@ -1,4 +1,39 @@
 # Mixed/multi-phase templates showcasing advanced features.
+#
+# -----------------------------------------------------------------------
+# TEMPLATE AUTHORING GUIDE
+# -----------------------------------------------------------------------
+#
+# VARIABLE NAMES
+#   Declare variables under the 'variables' key. Variable names must use
+#   underscores (not hyphens) because the expression parser treats '-' as
+#   subtraction. Example: block_count, not block-count.
+#
+# EXPRESSION SYNTAX (required-progress and reward amount fields)
+#   Use bare variable names directly in expressions. Do NOT wrap them in
+#   curly braces or quotes — just write the variable name:
+#     required-progress: block_count
+#     amount: block_count * 4
+#   Supported operators: +  -  *  /  ^  %  ( )
+#   Results are rounded to the nearest whole number.
+#
+# VARIABLE SUBSTITUTION IN CONFIG BLOCKS
+#   To substitute a pool variable (e.g. a list of block/mob types) into an
+#   objective config, write the bare variable name as the value with no
+#   quotes and no braces:
+#     config:
+#       blocks: target_blocks     <- correct
+#       blocks: "{target_blocks}" <- WRONG — breaks substitution
+#
+# RANGE VARIABLE SCALING
+#   RANGE variables are scaled by: pool difficulty * rarity difficulty-multiplier.
+#   Higher rarity = larger difficulty multiplier = higher counts.
+#
+# VALID SKILL VALUES (for mcrpg:experience rewards)
+#   MINING, SWORDS, WOODCUTTING, HERBALISM
+#   (Plus any skills registered by third-party expansions.)
+#
+# -----------------------------------------------------------------------
 
 quest-templates:
   # -------------------------------------------------------------------
@@ -34,7 +69,7 @@ quest-templates:
             objectives:
               mine_ores:
                 type: mcrpg:block_break
-                required-progress: "{block_count}"
+                required-progress: block_count
                 config:
                   blocks:
                     - IRON_ORE
@@ -48,7 +83,7 @@ quest-templates:
             objectives:
               kill_hostiles:
                 type: mcrpg:mob_kill
-                required-progress: "{mob_count}"
+                required-progress: mob_count
                 config:
                   mobs:
                     - ZOMBIE
@@ -59,11 +94,11 @@ quest-templates:
       mining_xp:
         type: mcrpg:experience
         skill: MINING
-        amount: "{block_count} * 4"
+        amount: block_count * 4
       swords_xp:
         type: mcrpg:experience
         skill: SWORDS
-        amount: "{mob_count} * 8"
+        amount: mob_count * 8
 
   # -------------------------------------------------------------------
   # Branching template: choose your path (ANY completion)
@@ -93,7 +128,7 @@ quest-templates:
             objectives:
               mine_coal:
                 type: mcrpg:block_break
-                required-progress: "{amount}"
+                required-progress: amount
                 config:
                   blocks:
                     - COAL_ORE
@@ -102,7 +137,7 @@ quest-templates:
             objectives:
               kill_zombies:
                 type: mcrpg:mob_kill
-                required-progress: "{amount}"
+                required-progress: amount
                 config:
                   mobs:
                     - ZOMBIE
@@ -111,7 +146,7 @@ quest-templates:
       versatile_xp:
         type: mcrpg:experience
         skill: MINING
-        amount: "{amount} * 5"
+        amount: amount * 5
 
   # -------------------------------------------------------------------
   # Condition-gated template: bonus phase only for rare+
@@ -143,12 +178,13 @@ quest-templates:
             objectives:
               break_iron:
                 type: mcrpg:block_break
-                required-progress: "{ore_count}"
+                required-progress: ore_count
                 config:
                   blocks:
                     - IRON_ORE
                     - DEEPSLATE_IRON_ORE
       bonus_phase:
+        # min-rarity accepts bare keys (rare) or namespaced keys (mcrpg:rare) — both are valid.
         condition:
           type: mcrpg:rarity_gate
           min-rarity: rare
@@ -167,8 +203,11 @@ quest-templates:
       mining_xp:
         type: mcrpg:experience
         skill: MINING
-        amount: "{ore_count} * 5"
+        amount: ore_count * 5
       bonus_reward:
+        # base-amount is scaled by the rarity reward-multiplier at generation time.
+        # {amount} in the command string is replaced with the scaled value when the reward is granted.
+        # Commands run as console. Use {player} for the accepting player's name.
         type: mcrpg:scalable_command
         display: "Bonus Diamonds"
         command: "give {player} diamond {amount}"

@@ -5,6 +5,8 @@ import org.bukkit.NamespacedKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.quest.board.rarity.QuestRarity;
 import us.eunoians.mcrpg.quest.board.rarity.QuestRarityRegistry;
 import us.eunoians.mcrpg.quest.board.template.condition.ConditionContext;
@@ -24,6 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.logging.Logger;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -75,16 +78,19 @@ class QuestTemplateEngineConditionTest {
         QuestRewardType mockRewardType = mock(QuestRewardType.class);
         when(mockRewardType.getKey()).thenReturn(REWARD_TYPE_KEY);
         when(mockRewardType.fromSerializedConfig(any())).thenReturn(mockRewardType);
+        when(mockRewardType.withLocalizationRoute(any())).thenReturn(mockRewardType);
         when(mockRewardType.serializeConfig()).thenReturn(Map.of("amount", 100));
         when(rewardTypeRegistry.get(REWARD_TYPE_KEY)).thenReturn(Optional.of(mockRewardType));
 
-        engine = new QuestTemplateEngine(rarityRegistry, objectiveTypeRegistry, rewardTypeRegistry);
+        McRPG mockPlugin = mock(McRPG.class);
+        when(mockPlugin.getLogger()).thenReturn(Logger.getLogger("QuestTemplateEngineConditionTest"));
+        engine = new QuestTemplateEngine(rarityRegistry, objectiveTypeRegistry, rewardTypeRegistry, mockPlugin);
     }
 
     private QuestTemplate buildTemplate(List<TemplatePhaseDefinition> phases) {
         Map<String, TemplateVariable> variables = new LinkedHashMap<>();
         List<TemplateRewardDefinition> rewards = List.of(
-                new TemplateRewardDefinition(REWARD_TYPE_KEY, Map.of("amount", 100)));
+                new TemplateRewardDefinition(REWARD_TYPE_KEY, "test_reward", Map.of("amount", 100)));
         return new QuestTemplate(TEMPLATE_KEY, Route.fromString("test.display"),
                 true, SCOPE_KEY, Set.of(COMMON, RARE, LEGENDARY),
                 Map.of(), variables, phases, rewards, null, null);

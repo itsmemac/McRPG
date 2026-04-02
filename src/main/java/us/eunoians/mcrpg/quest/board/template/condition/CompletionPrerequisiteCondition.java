@@ -7,11 +7,54 @@ import org.jetbrains.annotations.Nullable;
 import us.eunoians.mcrpg.expansion.McRPGExpansion;
 import us.eunoians.mcrpg.util.McRPGMethods;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 
 /**
- * Evaluates to {@code true} if the player has completed at least {@code minCompletions} quests,
- * optionally filtered by board category and/or minimum rarity.
+ * A {@link TemplateCondition} that gates a template element behind a quest completion
+ * history threshold. The condition passes when the player has completed at least
+ * {@code minCompletions} quests, with optional filters to count only completions from a
+ * specific board category and/or at or above a minimum rarity. This enables progressive
+ * content unlocks — for example, showing advanced weekly quests only to players who have
+ * already completed a certain number of dailies.
+ *
+ * <p><b>Player-dependent:</b> this condition requires both a player UUID and a
+ * {@link QuestCompletionHistory} in the {@link ConditionContext}. It returns {@code false}
+ * when either is absent (e.g. during shared offering generation via
+ * {@link ConditionContext#forTemplateGeneration}). Use this condition only in templates
+ * targeting personal offerings where history is available via
+ * {@link ConditionContext#forPersonalGeneration}.
+ *
+ * <p><b>YAML — shorthand (recommended):</b>
+ * <pre>{@code
+ * condition:
+ *   min-completions: 10                    # any quest, any rarity
+ * }</pre>
+ *
+ * <pre>{@code
+ * condition:
+ *   min-completions: 5
+ *   category: mcrpg:personal_daily         # only personal-daily completions count
+ *   min-rarity: mcrpg:rare                 # only RARE or rarer completions count
+ * }</pre>
+ *
+ * <p><b>YAML — explicit type:</b>
+ * <pre>{@code
+ * condition:
+ *   type: mcrpg:completion_prerequisite
+ *   min-completions: 3
+ *   category: mcrpg:personal_weekly
+ * }</pre>
+ *
+ * <p>Category and rarity keys support both fully-qualified form ({@code mcrpg:personal_daily})
+ * and bare form ({@code personal_daily}), which is auto-namespaced under {@code mcrpg:}.
+ * Omitting {@code category} counts completions across all categories; omitting {@code min-rarity}
+ * counts completions at all rarities.
+ *
+ * @see QuestCompletionHistory
+ * @see TemplateCondition
+ * @see ConditionContext
  */
 public final class CompletionPrerequisiteCondition implements TemplateCondition {
 
@@ -23,6 +66,25 @@ public final class CompletionPrerequisiteCondition implements TemplateCondition 
     @Nullable
     private final NamespacedKey minRarity;
 
+    /**
+     * Creates an unconfigured prototype instance for registry registration.
+     * The stored values are placeholders; this instance is never evaluated.
+     * Use {@link #fromConfig} to produce a live, configured condition.
+     */
+    public CompletionPrerequisiteCondition() {
+        this.minCompletions = 1;
+        this.categoryKey = null;
+        this.minRarity = null;
+    }
+
+    /**
+     * Creates a new completion prerequisite condition.
+     *
+     * @param minCompletions the minimum number of completed quests required; must be {@code >= 1}
+     * @param categoryKey    if non-null, only completions from this board category count
+     * @param minRarity      if non-null, only completions at or above this rarity count
+     * @throws IllegalArgumentException if {@code minCompletions < 1}
+     */
     public CompletionPrerequisiteCondition(int minCompletions,
                                            @Nullable NamespacedKey categoryKey,
                                            @Nullable NamespacedKey minRarity) {
@@ -58,37 +120,55 @@ public final class CompletionPrerequisiteCondition implements TemplateCondition 
 
     @NotNull
     @Override
-    public TemplateCondition fromConfig(@NotNull Section section) {
+    public TemplateCondition fromConfig(@NotNull Section section, @NotNull ConditionParser parser) {
         int count = section.getInt("min-completions");
         NamespacedKey category = section.contains("category")
-                ? parseKey(section.getString("category"))
+                ? McRPGMethods.parseNamespacedKey(section.getString("category"))
                 : null;
         NamespacedKey rarity = section.contains("min-rarity")
-                ? parseKey(section.getString("min-rarity"))
+                ? McRPGMethods.parseNamespacedKey(section.getString("min-rarity"))
                 : null;
         return new CompletionPrerequisiteCondition(count, category, rarity);
     }
 
-    @Nullable
-    private static NamespacedKey parseKey(@Nullable String input) {
-        if (input == null || input.isBlank()) {
-            return null;
+    @NotNull
+    @Override
+    public Map<String, Object> serializeConfig() {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("min-completions", minCompletions);
+        if (categoryKey != null) {
+            map.put("category", categoryKey.toString());
         }
-        if (input.contains(":")) {
-            return NamespacedKey.fromString(input.toLowerCase());
+        if (minRarity != null) {
+            map.put("min-rarity", minRarity.toString());
         }
-        return new NamespacedKey(McRPGMethods.getMcRPGNamespace(), input.toLowerCase());
+        return map;
     }
 
+    /**
+     * Returns the minimum number of quest completions the player must have.
+     *
+     * @return the minimum completion count
+     */
     public int getMinCompletions() {
         return minCompletions;
     }
 
+    /**
+     * Returns the optional board category filter applied to completion counting.
+     *
+     * @return the category key, or empty if all categories count
+     */
     @NotNull
     public Optional<NamespacedKey> getCategoryKey() {
         return Optional.ofNullable(categoryKey);
     }
 
+    /**
+     * Returns the optional minimum rarity filter applied to completion counting.
+     *
+     * @return the minimum rarity key, or empty if all rarities count
+     */
     @NotNull
     public Optional<NamespacedKey> getMinRarity() {
         return Optional.ofNullable(minRarity);

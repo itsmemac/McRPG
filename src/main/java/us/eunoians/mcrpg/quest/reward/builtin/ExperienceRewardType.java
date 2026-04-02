@@ -77,7 +77,7 @@ public class ExperienceRewardType implements QuestRewardType {
             return;
         }
 
-        NamespacedKey skillKey = resolveSkillKey(skillName);
+        NamespacedKey skillKey = McRPGMethods.parseNamespacedKey(skillName);
         if (skillKey == null || !RegistryAccess.registryAccess().registry(McRPGRegistryKey.SKILL).registered(skillKey)) {
             Logger.getLogger(ExperienceRewardType.class.getName())
                     .warning("Cannot grant experience — unknown skill: " + skillName);
@@ -92,14 +92,6 @@ public class ExperienceRewardType implements QuestRewardType {
         mcRPGPlayer.ifPresent(p ->
                 p.asSkillHolder().getSkillHolderData(skillKey)
                         .ifPresent(data -> data.addExperience((int) amount)));
-    }
-
-    @org.jetbrains.annotations.Nullable
-    private static NamespacedKey resolveSkillKey(@NotNull String input) {
-        if (input.contains(":")) {
-            return NamespacedKey.fromString(input.toLowerCase());
-        }
-        return new NamespacedKey(McRPGMethods.getMcRPGNamespace(), input.toLowerCase());
     }
 
     @NotNull

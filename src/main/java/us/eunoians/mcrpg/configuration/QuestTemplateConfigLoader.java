@@ -60,9 +60,11 @@ import java.util.stream.Stream;
 public final class QuestTemplateConfigLoader {
 
     private final Logger logger;
+    private final ConditionParser conditionParser;
 
-    public QuestTemplateConfigLoader(@NotNull Logger logger) {
+    public QuestTemplateConfigLoader(@NotNull Logger logger, @NotNull ConditionParser conditionParser) {
         this.logger = logger;
+        this.conditionParser = conditionParser;
     }
 
     /**
@@ -221,9 +223,9 @@ public final class QuestTemplateConfigLoader {
         List<TemplateRewardDefinition> rewards = parseRewardDefinitions(section);
 
         RewardDistributionConfig rewardDistribution = QuestConfigLoader.parseRewardDistribution(
-                section, fileName, key.toString()).orElse(null);
+                section, fileName, key.toString(), conditionParser).orElse(null);
 
-        TemplateCondition prerequisite = ConditionParser.parsePrerequisiteBlock(section);
+        TemplateCondition prerequisite = conditionParser.parsePrerequisiteBlock(section);
 
         Map<String, String> inlineDisplay = parseInlineDisplay(section);
 
@@ -433,7 +435,7 @@ public final class QuestTemplateConfigLoader {
                         + templateKey + " must have at least one stage");
             }
 
-            TemplateCondition phaseCondition = ConditionParser.parseConditionBlock(phaseSection);
+            TemplateCondition phaseCondition = conditionParser.parseConditionBlock(phaseSection);
 
             List<TemplateStageDefinition> stages = new ArrayList<>();
             for (String stageLabel : stagesSection.getRoutesAsStrings(false)) {
@@ -471,7 +473,7 @@ public final class QuestTemplateConfigLoader {
                                                          @NotNull String templateKey,
                                                          @NotNull String phaseLabel,
                                                          @NotNull String stageLabel) {
-        TemplateCondition stageCondition = ConditionParser.parseConditionBlock(stageSection);
+        TemplateCondition stageCondition = conditionParser.parseConditionBlock(stageSection);
         ObjectiveSelectionConfig selectionConfig = parseObjectiveSelectionConfig(stageSection);
 
         Section objectivesSection = stageSection.getSection("objectives");
@@ -507,7 +509,7 @@ public final class QuestTemplateConfigLoader {
                         + templateKey + " is missing 'required-progress'");
             }
 
-            TemplateCondition objCondition = ConditionParser.parseConditionBlock(objSection);
+            TemplateCondition objCondition = conditionParser.parseConditionBlock(objSection);
             int weight = objSection.getInt("weight", 1);
 
             Map<String, Object> config = parseConfigMap(objSection.getSection("config"));
@@ -587,7 +589,7 @@ public final class QuestTemplateConfigLoader {
                 config.put(key, rewardSection.get(key));
             }
 
-            rewards.add(new TemplateRewardDefinition(typeKey, config));
+            rewards.add(new TemplateRewardDefinition(typeKey, rewardLabel, config));
         }
         return rewards;
     }
@@ -704,7 +706,7 @@ public final class QuestTemplateConfigLoader {
             return Optional.empty();
         }
         if (input.contains(":")) {
-            return Optional.ofNullable(NamespacedKey.fromString(input.toLowerCase()));
+            return Optional.ofNullable(McRPGMethods.parseNamespacedKey(input));
         }
         return Optional.of(new NamespacedKey(McRPGMethods.getMcRPGNamespace(), input.toLowerCase().replace('-', '_')));
     }

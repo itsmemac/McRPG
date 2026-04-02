@@ -18,10 +18,13 @@ land-daily:
   # Overrides the global max-scoped-quests-per-entity in board.yml for this category.
   max-active-per-entity: 1
   # Minimum number of slots this category contributes per rotation.
+  # With min: 0 and chance-per-slot: 0.15, land quests appear roughly 15% of days.
+  # Raise min to 1 to guarantee at least one land quest every rotation.
   min: 0
   # Maximum number of slots this category contributes per rotation.
   max: 1
   # Probability (0.0-1.0) that each potential slot actually generates an offering.
+  # 0.15 = 15% chance per slot. Combined with min: 0, most days will have no land quest.
   chance-per-slot: 0.15
   # Cooldown before the same quest definition can reappear in this category.
   appearance-cooldown: 7d

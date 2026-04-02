@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import us.eunoians.mcrpg.quest.board.template.QuestTemplate;
 import us.eunoians.mcrpg.quest.board.template.RarityOverride;
+import us.eunoians.mcrpg.quest.board.template.condition.ConditionParser;
+import us.eunoians.mcrpg.quest.board.template.condition.TemplateConditionRegistry;
 import us.eunoians.mcrpg.quest.board.template.variable.PoolVariable;
 import us.eunoians.mcrpg.quest.board.template.variable.RangeVariable;
 import us.eunoians.mcrpg.quest.board.template.variable.TemplateVariable;
@@ -31,7 +33,7 @@ class QuestTemplateConfigLoaderTest {
 
     @BeforeEach
     void setUp() {
-        loader = new QuestTemplateConfigLoader(Logger.getLogger("TestLoader"));
+        loader = new QuestTemplateConfigLoader(Logger.getLogger("TestLoader"), new ConditionParser(new TemplateConditionRegistry()));
     }
 
     @Test

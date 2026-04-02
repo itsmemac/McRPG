@@ -4,6 +4,7 @@ import com.diamonddagger590.mccore.database.Database;
 import com.diamonddagger590.mccore.database.table.impl.TableVersionHistoryDAO;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
+import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
 import us.eunoians.mcrpg.quest.impl.stage.QuestStageInstance;
 import us.eunoians.mcrpg.quest.impl.stage.QuestStageState;
@@ -12,9 +13,11 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * DAO for the {@code mcrpg_quest_stage_instances} table, storing stage-level quest state.
@@ -51,7 +54,7 @@ public class QuestStageInstanceDAO {
             statement.executeUpdate();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.SEVERE, "[QuestStageInstanceDAO] Failed to create table " + TABLE_NAME, e);
             return false;
         }
     }
@@ -71,7 +74,7 @@ public class QuestStageInstanceDAO {
                     "CREATE INDEX idx_stage_instances_quest ON " + TABLE_NAME + " (quest_uuid)")) {
                 ps.executeUpdate();
             } catch (SQLException e) {
-                e.printStackTrace();
+                McRPG.getInstance().getLogger().log(Level.SEVERE, "[QuestStageInstanceDAO] Failed to create index during migration", e);
             }
             TableVersionHistoryDAO.setTableVersion(connection, TABLE_NAME, 1);
         }
@@ -106,7 +109,7 @@ public class QuestStageInstanceDAO {
             setNullableLong(ps, 7, stage.getEndTime().orElse(null));
             statements.add(ps);
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestStageInstanceDAO] Failed to prepare saveStageInstance statement for stage " + stage.getQuestStageUUID(), e);
         }
         return statements;
     }
@@ -149,7 +152,12 @@ public class QuestStageInstanceDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     UUID stageUUID = UUID.fromString(rs.getString("stage_uuid"));
-                    NamespacedKey defKey = NamespacedKey.fromString(rs.getString("definition_key"));
+                    String rawDefKey = rs.getString("definition_key");
+                    NamespacedKey defKey = NamespacedKey.fromString(rawDefKey);
+                    if (defKey == null) {
+                        McRPG.getInstance().getLogger().warning("[QuestStageInstanceDAO] Skipping stage " + stageUUID + ": malformed definition_key '" + rawDefKey + "'");
+                        continue;
+                    }
                     int phaseIndex = rs.getInt("phase_index");
                     QuestStageState state = QuestStageState.valueOf(rs.getString("state"));
                     Long startTime = getNullableLong(rs, "start_time");
@@ -158,7 +166,7 @@ public class QuestStageInstanceDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestStageInstanceDAO] Failed to load stage instances for quest " + questUUID, e);
         }
         return stages;
     }
@@ -180,7 +188,7 @@ public class QuestStageInstanceDAO {
             ps.setString(1, questUUID.toString());
             statements.add(ps);
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestStageInstanceDAO] Failed to prepare deleteStageInstances statement for quest " + questUUID, e);
         }
         return statements;
     }
@@ -189,7 +197,7 @@ public class QuestStageInstanceDAO {
         if (value != null) {
             ps.setLong(index, value);
         } else {
-            ps.setNull(index, java.sql.Types.BIGINT);
+            ps.setNull(index, Types.BIGINT);
         }
     }
 

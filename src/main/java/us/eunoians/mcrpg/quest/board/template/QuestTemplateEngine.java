@@ -2,10 +2,14 @@ package us.eunoians.mcrpg.quest.board.template;
 
 import com.diamonddagger590.mccore.parser.Parser;
 import dev.dejvokep.boostedyaml.YamlDocument;
+import dev.dejvokep.boostedyaml.route.Route;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.quest.board.rarity.QuestRarityRegistry;
 import us.eunoians.mcrpg.quest.board.template.condition.ConditionContext;
+import us.eunoians.mcrpg.quest.board.template.condition.QuestCompletionHistory;
 import us.eunoians.mcrpg.quest.board.template.variable.PoolVariable;
 import us.eunoians.mcrpg.quest.board.template.variable.RangeVariable;
 import us.eunoians.mcrpg.quest.board.template.variable.ResolvedPool;
@@ -30,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.logging.Logger;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -48,18 +52,19 @@ import java.util.stream.Collectors;
  */
 public final class QuestTemplateEngine {
 
-    private static final Logger LOGGER = Logger.getLogger(QuestTemplateEngine.class.getName());
-
     private final QuestRarityRegistry rarityRegistry;
     private final QuestObjectiveTypeRegistry objectiveTypeRegistry;
     private final QuestRewardTypeRegistry rewardTypeRegistry;
+    private final McRPG plugin;
 
     public QuestTemplateEngine(@NotNull QuestRarityRegistry rarityRegistry,
                                @NotNull QuestObjectiveTypeRegistry objectiveTypeRegistry,
-                               @NotNull QuestRewardTypeRegistry rewardTypeRegistry) {
+                               @NotNull QuestRewardTypeRegistry rewardTypeRegistry,
+                               @NotNull McRPG plugin) {
         this.rarityRegistry = rarityRegistry;
         this.objectiveTypeRegistry = objectiveTypeRegistry;
         this.rewardTypeRegistry = rewardTypeRegistry;
+        this.plugin = plugin;
     }
 
     /**
@@ -81,12 +86,40 @@ public final class QuestTemplateEngine {
     public GeneratedQuestResult generate(@NotNull QuestTemplate template,
                                          @NotNull NamespacedKey rarityKey,
                                          @NotNull Random random) {
+        return generate(template, rarityKey, random, null, null);
+    }
+
+    /**
+     * Generates a concrete quest definition from a template and a rolled rarity,
+     * with optional player context for evaluating player-dependent conditions
+     * (e.g., {@code PermissionCondition}, {@code CompletionPrerequisiteCondition})
+     * during personal offering generation.
+     *
+     * @param template           the template to generate from
+     * @param rarityKey          the rolled rarity
+     * @param random             the random source
+     * @param playerUUID         the player UUID for personal generation, or {@code null} for shared
+     * @param completionHistory  completion history for player-dependent conditions, or {@code null}
+     * @return the generated result
+     */
+    @NotNull
+    public GeneratedQuestResult generate(@NotNull QuestTemplate template,
+                                         @NotNull NamespacedKey rarityKey,
+                                         @NotNull Random random,
+                                         @Nullable UUID playerUUID,
+                                         @Nullable QuestCompletionHistory completionHistory) {
         template.validateRaritySupported(rarityKey);
 
         ResolvedVariableContext variableContext = resolveVariables(template, rarityKey, random);
 
-        ConditionContext conditionContext = ConditionContext.forTemplateGeneration(
-                rarityKey, rarityRegistry, random, variableContext);
+        ConditionContext conditionContext;
+        if (playerUUID != null && completionHistory != null) {
+            conditionContext = ConditionContext.forPersonalGeneration(
+                    rarityKey, rarityRegistry, random, variableContext, playerUUID, completionHistory);
+        } else {
+            conditionContext = ConditionContext.forTemplateGeneration(
+                    rarityKey, rarityRegistry, random, variableContext);
+        }
 
         List<TemplatePhaseDefinition> filteredPhases = filterPhases(
                 template.getPhases(), conditionContext, random);
@@ -325,7 +358,11 @@ public final class QuestTemplateEngine {
 
             Map<String, Object> resolvedConfig = resolveRewardConfig(
                     templateReward.config(), context, rewardMultiplier);
-            rewards.add(baseType.fromSerializedConfig(resolvedConfig));
+            var reward = baseType.fromSerializedConfig(resolvedConfig)
+                    .withLocalizationRoute(Route.fromString(
+                            "templates." + template.getKey().getNamespace() + "."
+                            + template.getKey().getKey() + ".rewards." + templateReward.label()));
+            rewards.add(reward);
         }
 
         return rewards;
@@ -527,7 +564,7 @@ public final class QuestTemplateEngine {
                             filteredObjectives = WeightedObjectiveSelector.select(
                                     filteredObjectives, selConfig, random);
                         } catch (IllegalStateException e) {
-                            LOGGER.warning("[QuestTemplateEngine] Stage excluded: " + e.getMessage());
+                            plugin.getLogger().warning("[QuestTemplateEngine] Stage excluded: " + e.getMessage());
                             continue;
                         }
                     }

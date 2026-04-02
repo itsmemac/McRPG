@@ -4,8 +4,10 @@ import com.diamonddagger590.mccore.parser.Parser;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import me.clip.placeholderapi.PlaceholderAPI;
 import net.kyori.adventure.text.Component;
+import org.bukkit.NamespacedKey;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.registry.plugin.McRPGPluginHookKey;
 
@@ -64,6 +66,43 @@ public class McRPGMethods {
     @NotNull
     public static Parser parseWithPapi(@NotNull Parser parser, @NotNull OfflinePlayer offlinePlayer) {
         return McRPG.getInstance().registryAccess().registry(RegistryKey.PLUGIN_HOOK).pluginHook(McRPGPluginHookKey.PAPI).map(papiHook -> new Parser(papiHook.translateMessage(offlinePlayer, parser.getInputString()))).orElse(parser);
+    }
+
+    /**
+     * Runs a plain string through {@link PlaceholderAPI} if PAPI is enabled, replacing any
+     * {@code %placeholder%} tokens for the given player. When PAPI is not installed the
+     * original string is returned unchanged.
+     *
+     * @param message the string to resolve placeholders in
+     * @param player  the {@link OfflinePlayer} whose context PAPI uses for resolution
+     * @return the string with PAPI placeholders replaced, or the original string if PAPI is absent
+     */
+    @NotNull
+    public static String applyPapi(@NotNull String message, @NotNull OfflinePlayer player) {
+        return McRPG.getInstance().registryAccess()
+                .registry(RegistryKey.PLUGIN_HOOK)
+                .pluginHook(McRPGPluginHookKey.PAPI)
+                .map(papiHook -> papiHook.translateMessage(player, message))
+                .orElse(message);
+    }
+
+    /**
+     * Parses a {@link NamespacedKey} from a config string. Supports both fully-qualified
+     * {@code "namespace:key"} form and bare keys, which are automatically namespaced under
+     * {@code mcrpg:}. The input is lowercased before parsing.
+     *
+     * @param input the string to parse; may be {@code null} or blank
+     * @return the parsed key, or {@code null} if {@code input} is {@code null} or blank
+     */
+    @Nullable
+    public static NamespacedKey parseNamespacedKey(@Nullable String input) {
+        if (input == null || input.isBlank()) {
+            return null;
+        }
+        if (input.contains(":")) {
+            return NamespacedKey.fromString(input.toLowerCase());
+        }
+        return new NamespacedKey(getMcRPGNamespace(), input.toLowerCase());
     }
 
     /**

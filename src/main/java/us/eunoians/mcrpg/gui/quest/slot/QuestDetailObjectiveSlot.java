@@ -11,8 +11,10 @@ import us.eunoians.mcrpg.configuration.file.localization.LocalizationKey;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.gui.quest.QuestDetailGui;
 import us.eunoians.mcrpg.gui.slot.McRPGSlot;
+import us.eunoians.mcrpg.localization.McRPGLocalizationManager;
 import us.eunoians.mcrpg.quest.definition.QuestObjectiveDefinition;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveInstance;
+import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveState;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 
 import java.util.HashMap;
@@ -55,10 +57,14 @@ public class QuestDetailObjectiveSlot implements McRPGSlot {
         String required;
         String state;
 
+        McRPGLocalizationManager localization = RegistryAccess.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(McRPGManagerKey.LOCALIZATION);
+
         if (objectiveInstance != null) {
             progress = String.valueOf(objectiveInstance.getCurrentProgression());
             required = String.valueOf(objectiveInstance.getRequiredProgression());
-            state = objectiveInstance.getQuestObjectiveState().name();
+            state = resolveObjectiveStateLabel(localization, mcRPGPlayer, objectiveInstance.getQuestObjectiveState());
         } else {
             progress = "0";
             try {
@@ -66,23 +72,40 @@ public class QuestDetailObjectiveSlot implements McRPGSlot {
             } catch (IllegalStateException e) {
                 required = "?";
             }
-            state = "PREVIEW";
+            state = localization.getLocalizedMessage(mcRPGPlayer, LocalizationKey.QUEST_DETAIL_GUI_STATE_PREVIEW);
         }
 
-        ItemBuilder builder = ItemBuilder.from(RegistryAccess.registryAccess()
-                        .registry(RegistryKey.MANAGER)
-                        .manager(McRPGManagerKey.LOCALIZATION)
-                        .getLocalizedSection(mcRPGPlayer, LocalizationKey.QUEST_DETAIL_GUI_OBJECTIVE_SLOT_DISPLAY_ITEM))
+        ItemBuilder builder = ItemBuilder.from(localization.getLocalizedSection(mcRPGPlayer,
+                        LocalizationKey.QUEST_DETAIL_GUI_OBJECTIVE_SLOT_DISPLAY_ITEM))
                 .addPlaceholders(placeholders);
 
         for (int i = 1; i < descLines.length; i++) {
-            builder.addDisplayLore("<gray>" + descLines[i]);
+            builder.addDisplayLore(localization.getLocalizedMessage(mcRPGPlayer,
+                    LocalizationKey.QUEST_DETAIL_GUI_OBJECTIVE_DESCRIPTION_CONTINUATION,
+                    Map.of("line", descLines[i])));
         }
 
-        builder.addDisplayLore("<gray>Progress: <gold>" + progress + "/" + required);
-        builder.addDisplayLore("<gray>State: <gold>" + state);
+        builder.addDisplayLore(localization.getLocalizedMessage(mcRPGPlayer,
+                LocalizationKey.QUEST_DETAIL_GUI_OBJECTIVE_PROGRESS,
+                Map.of("progress", progress, "required", required)));
+        builder.addDisplayLore(localization.getLocalizedMessage(mcRPGPlayer,
+                LocalizationKey.QUEST_DETAIL_GUI_OBJECTIVE_STATE,
+                Map.of("state", state)));
 
         return builder;
+    }
+
+    @NotNull
+    private String resolveObjectiveStateLabel(@NotNull McRPGLocalizationManager localization,
+                                              @NotNull McRPGPlayer mcRPGPlayer,
+                                              @NotNull QuestObjectiveState state) {
+        var route = switch (state) {
+            case NOT_STARTED -> LocalizationKey.QUEST_DETAIL_GUI_OBJECTIVE_STATE_NOT_STARTED;
+            case IN_PROGRESS -> LocalizationKey.QUEST_DETAIL_GUI_OBJECTIVE_STATE_IN_PROGRESS;
+            case COMPLETED -> LocalizationKey.QUEST_DETAIL_GUI_OBJECTIVE_STATE_COMPLETED;
+            case CANCELLED -> LocalizationKey.QUEST_DETAIL_GUI_OBJECTIVE_STATE_CANCELLED;
+        };
+        return localization.getLocalizedMessage(mcRPGPlayer, route);
     }
 
     @NotNull

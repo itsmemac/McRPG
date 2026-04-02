@@ -3,6 +3,7 @@ package us.eunoians.mcrpg.bootstrap;
 import com.diamonddagger590.mccore.bootstrap.BootstrapContext;
 import com.diamonddagger590.mccore.bootstrap.StartupProfile;
 import com.diamonddagger590.mccore.bootstrap.registrar.Registrar;
+import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.jeff_media.customblockdata.CustomBlockData;
 import org.bukkit.Bukkit;
 import org.jetbrains.annotations.NotNull;
@@ -34,8 +35,14 @@ import us.eunoians.mcrpg.listener.board.BoardRotationNotificationListener;
 import us.eunoians.mcrpg.listener.quest.AbilityUpgradeQuestListener;
 import us.eunoians.mcrpg.listener.quest.BlockBreakQuestProgressListener;
 import us.eunoians.mcrpg.listener.quest.MobKillQuestProgressListener;
+import us.eunoians.mcrpg.quest.QuestManager;
+import us.eunoians.mcrpg.quest.board.distribution.DistributionCompletionService;
+import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionGranter;
+import us.eunoians.mcrpg.registry.McRPGRegistryKey;
+import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 import us.eunoians.mcrpg.listener.quest.QuestCancelListener;
 import us.eunoians.mcrpg.listener.quest.QuestCompleteListener;
+import us.eunoians.mcrpg.quest.board.QuestBoardTerminator;
 import us.eunoians.mcrpg.listener.quest.QuestFeedbackListener;
 import us.eunoians.mcrpg.listener.quest.QuestObjectiveCompleteListener;
 import us.eunoians.mcrpg.listener.quest.QuestPhaseCompleteListener;
@@ -88,17 +95,25 @@ final class McRPGListenerRegistrar implements Registrar<McRPG> {
         Bukkit.getPluginManager().registerEvents(new OnAbilityPutOnCooldownListener(), plugin);
 
         // Quest Listeners
+        QuestManager questManager = plugin.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(McRPGManagerKey.QUEST);
+        QuestBoardTerminator questBoardTerminator = new QuestBoardTerminator(plugin);
+        var rarityRegistry = plugin.registryAccess().registry(McRPGRegistryKey.QUEST_RARITY);
+        var distTypeRegistry = plugin.registryAccess().registry(McRPGRegistryKey.REWARD_DISTRIBUTION_TYPE);
+        var distributionService = new DistributionCompletionService(
+                rarityRegistry, distTypeRegistry, new RewardDistributionGranter(plugin));
         Bukkit.getPluginManager().registerEvents(new QuestStartListener(), plugin);
-        Bukkit.getPluginManager().registerEvents(new QuestCompleteListener(), plugin);
-        Bukkit.getPluginManager().registerEvents(new QuestCancelListener(), plugin);
-        Bukkit.getPluginManager().registerEvents(new QuestObjectiveCompleteListener(), plugin);
-        Bukkit.getPluginManager().registerEvents(new QuestStageCompleteListener(), plugin);
-        Bukkit.getPluginManager().registerEvents(new QuestPhaseCompleteListener(), plugin);
+        Bukkit.getPluginManager().registerEvents(new QuestCompleteListener(questBoardTerminator, distributionService), plugin);
+        Bukkit.getPluginManager().registerEvents(new QuestCancelListener(questBoardTerminator), plugin);
+        Bukkit.getPluginManager().registerEvents(new QuestObjectiveCompleteListener(distributionService), plugin);
+        Bukkit.getPluginManager().registerEvents(new QuestStageCompleteListener(distributionService), plugin);
+        Bukkit.getPluginManager().registerEvents(new QuestPhaseCompleteListener(distributionService), plugin);
         Bukkit.getPluginManager().registerEvents(new AbilityUpgradeQuestListener(), plugin);
-        Bukkit.getPluginManager().registerEvents(new BlockBreakQuestProgressListener(), plugin);
-        Bukkit.getPluginManager().registerEvents(new MobKillQuestProgressListener(), plugin);
+        Bukkit.getPluginManager().registerEvents(new BlockBreakQuestProgressListener(questManager), plugin);
+        Bukkit.getPluginManager().registerEvents(new MobKillQuestProgressListener(questManager), plugin);
         Bukkit.getPluginManager().registerEvents(new QuestFeedbackListener(), plugin);
-        Bukkit.getPluginManager().registerEvents(new QuestProgressNotificationListener(), plugin);
+        Bukkit.getPluginManager().registerEvents(new QuestProgressNotificationListener(plugin), plugin);
         Bukkit.getPluginManager().registerEvents(new BoardRotationNotificationListener(), plugin);
 
         // World listener

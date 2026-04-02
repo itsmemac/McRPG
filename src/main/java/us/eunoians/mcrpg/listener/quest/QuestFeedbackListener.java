@@ -46,8 +46,12 @@ public class QuestFeedbackListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuestStart(@NotNull QuestStartEvent event) {
-        notifyScope(event.getQuestInstance(), LocalizationKey.QUEST_STARTED_NOTIFICATION,
-                player -> Map.of("quest_name", resolveDisplayName(event.getQuestInstance(), player)));
+        QuestInstance quest = event.getQuestInstance();
+        Optional<QuestDefinition> defOpt = resolveDefinition(quest);
+        String fallback = QuestDefinition.formatFallbackDisplayName(quest.getQuestKey().getKey());
+        notifyScope(quest, LocalizationKey.QUEST_STARTED_NOTIFICATION,
+                player -> Map.of("quest_name",
+                        defOpt.map(def -> def.getDisplayName(player)).orElse(fallback)));
     }
 
     /**
@@ -56,8 +60,11 @@ public class QuestFeedbackListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuestComplete(@NotNull QuestCompleteEvent event) {
         QuestInstance quest = event.getQuestInstance();
+        Optional<QuestDefinition> defOpt = resolveDefinition(quest);
+        String fallback = QuestDefinition.formatFallbackDisplayName(quest.getQuestKey().getKey());
         notifyScope(quest, LocalizationKey.QUEST_COMPLETED_NOTIFICATION,
-                player -> Map.of("quest_name", resolveDisplayName(quest, player)));
+                player -> Map.of("quest_name",
+                        defOpt.map(def -> def.getDisplayName(player)).orElse(fallback)));
         playSoundToScope(quest, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
     }
 
@@ -68,8 +75,12 @@ public class QuestFeedbackListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuestExpire(@NotNull QuestExpireEvent event) {
-        notifyScope(event.getQuestInstance(), LocalizationKey.QUEST_EXPIRED_NOTIFICATION,
-                player -> Map.of("quest_name", resolveDisplayName(event.getQuestInstance(), player)));
+        QuestInstance quest = event.getQuestInstance();
+        Optional<QuestDefinition> defOpt = resolveDefinition(quest);
+        String fallback = QuestDefinition.formatFallbackDisplayName(quest.getQuestKey().getKey());
+        notifyScope(quest, LocalizationKey.QUEST_EXPIRED_NOTIFICATION,
+                player -> Map.of("quest_name",
+                        defOpt.map(def -> def.getDisplayName(player)).orElse(fallback)));
     }
 
     /**
@@ -81,8 +92,12 @@ public class QuestFeedbackListener implements Listener {
         if (event.getQuestInstance().isExpired()) {
             return;
         }
-        notifyScope(event.getQuestInstance(), LocalizationKey.QUEST_CANCELLED_NOTIFICATION,
-                player -> Map.of("quest_name", resolveDisplayName(event.getQuestInstance(), player)));
+        QuestInstance quest = event.getQuestInstance();
+        Optional<QuestDefinition> defOpt = resolveDefinition(quest);
+        String fallback = QuestDefinition.formatFallbackDisplayName(quest.getQuestKey().getKey());
+        notifyScope(quest, LocalizationKey.QUEST_CANCELLED_NOTIFICATION,
+                player -> Map.of("quest_name",
+                        defOpt.map(def -> def.getDisplayName(player)).orElse(fallback)));
     }
 
     /**
@@ -90,29 +105,30 @@ public class QuestFeedbackListener implements Listener {
      */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onQuestPhaseComplete(@NotNull QuestPhaseCompleteEvent event) {
+        QuestInstance quest = event.getQuestInstance();
+        Optional<QuestDefinition> defOpt = resolveDefinition(quest);
+        String fallback = QuestDefinition.formatFallbackDisplayName(quest.getQuestKey().getKey());
         int humanPhaseNumber = event.getCompletedPhaseIndex() + 1;
-        notifyScope(event.getQuestInstance(), LocalizationKey.QUEST_PHASE_COMPLETED_NOTIFICATION,
+        notifyScope(quest, LocalizationKey.QUEST_PHASE_COMPLETED_NOTIFICATION,
                 player -> Map.of(
-                        "quest_name", resolveDisplayName(event.getQuestInstance(), player),
+                        "quest_name", defOpt.map(def -> def.getDisplayName(player)).orElse(fallback),
                         "phase_number", String.valueOf(humanPhaseNumber)
                 ));
     }
 
     /**
-     * Resolves the display name for a quest instance using the given player's locale.
-     * Falls back to the quest key string if the definition is no longer in the registry.
+     * Resolves the {@link QuestDefinition} for the given quest instance from the registry.
+     * The result is resolved once per event handler invocation and captured in the
+     * per-player placeholder lambda to avoid a registry lookup per in-scope player.
      *
-     * @param quest  the quest instance to resolve a name for
-     * @param player the player whose locale to use
-     * @return the display name string (MiniMessage formatted, safe to embed as a placeholder)
+     * @param quest the quest instance to resolve a definition for
+     * @return the definition, or empty if it has already been deregistered (e.g. ephemeral quest)
      */
     @NotNull
-    private String resolveDisplayName(@NotNull QuestInstance quest, @NotNull McRPGPlayer player) {
+    private Optional<QuestDefinition> resolveDefinition(@NotNull QuestInstance quest) {
         QuestDefinitionRegistry definitionRegistry = RegistryAccess.registryAccess()
                 .registry(McRPGRegistryKey.QUEST_DEFINITION);
-        return definitionRegistry.get(quest.getQuestKey())
-                .map(def -> def.getDisplayName(player))
-                .orElse(quest.getQuestKey().getKey());
+        return definitionRegistry.get(quest.getQuestKey());
     }
 
     /**

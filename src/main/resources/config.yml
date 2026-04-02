@@ -23,10 +23,8 @@ configuration:
     # How many days pending rewards for offline players are kept before expiring
     expiry-days: 30
   quest-cache:
-    # How long (minutes) finished quests stay cached while scope players are online
+    # How long (minutes) finished quests stay in the Tier 2 cache before eviction
     finished-keep-alive-minutes: 15
-    # How long (minutes) finished quests linger after all scope players go offline
-    finished-offline-ttl-minutes: 5
   localization:
     # Language support will go in the order of user's local language -> server default -> english
     # User local language is determined by their minecraft client

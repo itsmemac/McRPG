@@ -8,6 +8,7 @@ import us.eunoians.mcrpg.quest.board.distribution.DistributionTierConfig;
 import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionType;
 import us.eunoians.mcrpg.util.McRPGMethods;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -43,7 +44,7 @@ public final class ContributionThresholdDistributionType implements RewardDistri
                     double percent = ((double) e.getValue() / total) * 100.0;
                     return percent >= threshold;
                 })
-                .map(java.util.Map.Entry::getKey)
+                .map(Map.Entry::getKey)
                 .collect(Collectors.toUnmodifiableSet());
     }
 

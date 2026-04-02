@@ -21,6 +21,7 @@ public record TemplateStageDefinition(
         @Nullable ObjectiveSelectionConfig objectiveSelection
 ) {
 
+    /** Canonical constructor — makes {@code objectives} immutable. */
     public TemplateStageDefinition {
         objectives = List.copyOf(objectives);
     }
@@ -32,18 +33,34 @@ public record TemplateStageDefinition(
         this(objectives, null, null);
     }
 
+    /**
+     * Returns the optional generation-time condition that must evaluate to {@code true}
+     * for this stage to be included in the generated quest.
+     *
+     * @return the condition, or empty if this stage is unconditional
+     */
     @NotNull
     public Optional<TemplateCondition> getCondition() {
         return Optional.ofNullable(condition);
     }
 
+    /**
+     * Returns the optional weighted objective selection config. When empty, all
+     * objectives in the stage are included ({@link ObjectiveSelectionConfig.ObjectiveSelectionMode#ALL}).
+     *
+     * @return the selection config, or empty for full inclusion
+     */
     @NotNull
     public Optional<ObjectiveSelectionConfig> getObjectiveSelection() {
         return Optional.ofNullable(objectiveSelection);
     }
 
     /**
-     * Returns a copy of this stage with the given objectives list.
+     * Returns a copy of this stage with the given objectives list, preserving all
+     * other fields (condition, objective selection config).
+     *
+     * @param newObjectives the replacement objectives list
+     * @return a new {@link TemplateStageDefinition} with the updated objectives
      */
     @NotNull
     public TemplateStageDefinition withObjectives(@NotNull List<TemplateObjectiveDefinition> newObjectives) {

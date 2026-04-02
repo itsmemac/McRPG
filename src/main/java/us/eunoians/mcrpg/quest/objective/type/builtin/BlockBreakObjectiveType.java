@@ -1,15 +1,21 @@
 package us.eunoians.mcrpg.quest.objective.type.builtin;
 
+import com.diamonddagger590.mccore.registry.RegistryAccess;
+import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.util.item.CustomBlockWrapper;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
+import us.eunoians.mcrpg.configuration.file.localization.LocalizationKey;
+import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.expansion.McRPGExpansion;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveInstance;
 import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveProgressContext;
 import us.eunoians.mcrpg.quest.objective.type.QuestObjectiveType;
+import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 import us.eunoians.mcrpg.util.McRPGMethods;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -77,36 +83,31 @@ public class BlockBreakObjectiveType implements QuestObjectiveType {
         return validBlocks.contains(brokenBlock) ? 1 : 0;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Resolves a localized description via the player's locale chain.
+     */
     @NotNull
     @Override
-    public String describeObjective(long requiredProgress) {
+    public String describeObjective(@NotNull McRPGPlayer player, long requiredProgress) {
+        var localization = RegistryAccess.registryAccess()
+                .registry(RegistryKey.MANAGER)
+                .manager(McRPGManagerKey.LOCALIZATION);
+        String count = String.valueOf(requiredProgress);
         if (validBlocks.isEmpty()) {
-            return "Break " + requiredProgress + " blocks";
+            return localization.getLocalizedMessage(player, LocalizationKey.QUEST_OBJECTIVE_BLOCK_BREAK_ANY,
+                    Map.of("count", count));
         }
         if (validBlocks.size() == 1) {
-            return "Break " + requiredProgress + " " + formatBlockName(validBlocks.iterator().next());
+            return localization.getLocalizedMessage(player, LocalizationKey.QUEST_OBJECTIVE_BLOCK_BREAK_SINGLE,
+                    Map.of("count", count, "block", validBlocks.iterator().next().blockName()));
         }
-        StringBuilder sb = new StringBuilder("Break ").append(requiredProgress).append(" blocks:");
+        StringBuilder sb = new StringBuilder(localization.getLocalizedMessage(player,
+                LocalizationKey.QUEST_OBJECTIVE_BLOCK_BREAK_MULTI_HEADER, Map.of("count", count)));
         for (CustomBlockWrapper block : validBlocks) {
-            sb.append("\n  - ").append(formatBlockName(block));
-        }
-        return sb.toString();
-    }
-
-    private static String formatBlockName(@NotNull CustomBlockWrapper wrapper) {
-        return wrapper.customBlock()
-                .orElseGet(() -> wrapper.material()
-                        .map(m -> formatMaterialName(m.name()))
-                        .orElse("Unknown Block"));
-    }
-
-    private static String formatMaterialName(@NotNull String raw) {
-        String[] parts = raw.toLowerCase().split("_");
-        StringBuilder sb = new StringBuilder();
-        for (String part : parts) {
-            if (part.isEmpty()) continue;
-            if (!sb.isEmpty()) sb.append(' ');
-            sb.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+            sb.append("\n").append(localization.getLocalizedMessage(player,
+                    LocalizationKey.QUEST_OBJECTIVE_BLOCK_BREAK_MULTI_ITEM, Map.of("block", block.blockName())));
         }
         return sb.toString();
     }

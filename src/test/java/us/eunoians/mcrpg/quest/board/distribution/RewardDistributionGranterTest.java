@@ -23,6 +23,13 @@ public class RewardDistributionGranterTest extends McRPGBaseTest {
 
     private static final NamespacedKey QUEST_KEY = new NamespacedKey(McRPGMethods.getMcRPGNamespace(), "test_quest");
 
+    private RewardDistributionGranter granter;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUp() {
+        granter = new RewardDistributionGranter(mcRPG);
+    }
+
     static class TrackingRewardType implements QuestRewardType {
 
         static final NamespacedKey KEY = new NamespacedKey(McRPGMethods.getMcRPGNamespace(), "tracking_reward");
@@ -80,7 +87,7 @@ public class RewardDistributionGranterTest extends McRPGBaseTest {
         var reward = new TrackingRewardType(100);
         Map<UUID, List<QuestRewardType>> resolved = Map.of(playerUUID, List.of(reward));
 
-        RewardDistributionGranter.grant(resolved, QUEST_KEY);
+        granter.grant(resolved, QUEST_KEY);
 
         assertEquals(1, TrackingRewardType.GRANTED_TO.size());
         assertEquals(playerUUID, TrackingRewardType.GRANTED_TO.get(0));
@@ -92,7 +99,7 @@ public class RewardDistributionGranterTest extends McRPGBaseTest {
         TrackingRewardType.GRANTED_TO.clear();
         Map<UUID, List<QuestRewardType>> resolved = Map.of();
 
-        RewardDistributionGranter.grant(resolved, QUEST_KEY);
+        granter.grant(resolved, QUEST_KEY);
 
         assertTrue(TrackingRewardType.GRANTED_TO.isEmpty());
     }
@@ -105,7 +112,7 @@ public class RewardDistributionGranterTest extends McRPGBaseTest {
 
         Map<UUID, List<QuestRewardType>> resolved = Map.of(player.getUniqueId(), List.of());
 
-        RewardDistributionGranter.grant(resolved, QUEST_KEY);
+        granter.grant(resolved, QUEST_KEY);
 
         assertTrue(TrackingRewardType.GRANTED_TO.isEmpty());
     }
@@ -122,7 +129,7 @@ public class RewardDistributionGranterTest extends McRPGBaseTest {
         var r3 = new TrackingRewardType(300);
         Map<UUID, List<QuestRewardType>> resolved = Map.of(playerUUID, List.of(r1, r2, r3));
 
-        RewardDistributionGranter.grant(resolved, QUEST_KEY);
+        granter.grant(resolved, QUEST_KEY);
 
         assertEquals(3, TrackingRewardType.GRANTED_TO.size());
         assertTrue(TrackingRewardType.GRANTED_TO.stream().allMatch(uuid -> uuid.equals(playerUUID)));
@@ -141,7 +148,7 @@ public class RewardDistributionGranterTest extends McRPGBaseTest {
                 player2.getUniqueId(), List.of(reward)
         );
 
-        RewardDistributionGranter.grant(resolved, QUEST_KEY);
+        granter.grant(resolved, QUEST_KEY);
 
         assertEquals(2, TrackingRewardType.GRANTED_TO.size());
         assertTrue(TrackingRewardType.GRANTED_TO.contains(player1.getUniqueId()));

@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.database.table.impl.TableVersionHistoryDAO;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
+import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
 import us.eunoians.mcrpg.quest.impl.QuestState;
 import us.eunoians.mcrpg.quest.impl.objective.QuestObjectiveInstance;
@@ -17,10 +18,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Level;
 
 /**
  * DAO for the {@code mcrpg_quest_instances} table, storing the top-level quest instance data.
@@ -60,7 +63,7 @@ public class QuestInstanceDAO {
             statement.executeUpdate();
             return true;
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.SEVERE, "[QuestInstanceDAO] Failed to create table " + TABLE_NAME, e);
             return false;
         }
     }
@@ -84,7 +87,7 @@ public class QuestInstanceDAO {
                 try (PreparedStatement ps = connection.prepareStatement(sql)) {
                     ps.executeUpdate();
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    McRPG.getInstance().getLogger().log(Level.SEVERE, "[QuestInstanceDAO] Failed to create index during migration", e);
                 }
             }
             TableVersionHistoryDAO.setTableVersion(connection, TABLE_NAME, 1);
@@ -128,11 +131,11 @@ public class QuestInstanceDAO {
             if (boardRarityKey != null) {
                 ps.setString(9, boardRarityKey);
             } else {
-                ps.setNull(9, java.sql.Types.VARCHAR);
+                ps.setNull(9, Types.VARCHAR);
             }
             statements.add(ps);
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestInstanceDAO] Failed to prepare saveQuestInstance statement for quest " + quest.getQuestUUID(), e);
         }
         return statements;
     }
@@ -157,7 +160,9 @@ public class QuestInstanceDAO {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestInstanceDAO] Failed to load quest instance " + questUUID, e);
+        } catch (IllegalStateException e) {
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestInstanceDAO] Skipping corrupt quest instance " + questUUID, e);
         }
         return Optional.empty();
     }
@@ -176,11 +181,17 @@ public class QuestInstanceDAO {
             ps.setString(1, questUUID.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
-                    return Optional.of(NamespacedKey.fromString(rs.getString("scope_type")));
+                    String rawScopeType = rs.getString("scope_type");
+                    NamespacedKey scopeType = NamespacedKey.fromString(rawScopeType);
+                    if (scopeType == null) {
+                        McRPG.getInstance().getLogger().warning("[QuestInstanceDAO] Malformed scope_type '" + rawScopeType + "' for quest " + questUUID);
+                        return Optional.empty();
+                    }
+                    return Optional.of(scopeType);
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestInstanceDAO] Failed to load scope type for quest " + questUUID, e);
         }
         return Optional.empty();
     }
@@ -216,11 +227,15 @@ public class QuestInstanceDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     UUID questUUID = UUID.fromString(rs.getString("quest_uuid"));
-                    results.add(buildQuestInstance(questUUID, rs));
+                    try {
+                        results.add(buildQuestInstance(questUUID, rs));
+                    } catch (IllegalStateException e) {
+                        McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestInstanceDAO] Skipping corrupt quest instance " + questUUID + " during bulk load", e);
+                    }
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestInstanceDAO] Failed to load quest instances by state", e);
         }
         return results;
     }
@@ -241,7 +256,7 @@ public class QuestInstanceDAO {
             ps.setString(1, questUUID.toString());
             statements.add(ps);
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestInstanceDAO] Failed to prepare deleteQuestInstance statement for quest " + questUUID, e);
         }
         return statements;
     }
@@ -274,21 +289,35 @@ public class QuestInstanceDAO {
             ps.setLong(5, currentTime);
             return ps.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
+            McRPG.getInstance().getLogger().log(Level.WARNING, "[QuestInstanceDAO] Failed to bulk-expire stale quests", e);
             return 0;
         }
     }
 
     @NotNull
     private static QuestInstance buildQuestInstance(@NotNull UUID questUUID, @NotNull ResultSet rs) throws SQLException {
-        NamespacedKey definitionKey = NamespacedKey.fromString(rs.getString("definition_key"));
-        NamespacedKey scopeType = NamespacedKey.fromString(rs.getString("scope_type"));
+        String rawDefKey = rs.getString("definition_key");
+        NamespacedKey definitionKey = NamespacedKey.fromString(rawDefKey);
+        if (definitionKey == null) {
+            throw new IllegalStateException("Malformed definition_key '" + rawDefKey + "' for quest " + questUUID);
+        }
+
+        String rawScopeType = rs.getString("scope_type");
+        NamespacedKey scopeType = NamespacedKey.fromString(rawScopeType);
+        if (scopeType == null) {
+            throw new IllegalStateException("Malformed scope_type '" + rawScopeType + "' for quest " + questUUID);
+        }
+
         QuestState state = QuestState.valueOf(rs.getString("state"));
         Long startTime = getNullableLong(rs, "start_time");
         Long endTime = getNullableLong(rs, "end_time");
         Long expirationTime = getNullableLong(rs, "expiration_time");
 
-        NamespacedKey sourceKey = NamespacedKey.fromString(rs.getString("quest_source"));
+        String rawSourceKey = rs.getString("quest_source");
+        NamespacedKey sourceKey = NamespacedKey.fromString(rawSourceKey);
+        if (sourceKey == null) {
+            throw new IllegalStateException("Malformed quest_source '" + rawSourceKey + "' for quest " + questUUID);
+        }
         QuestSourceRegistry sourceRegistry = RegistryAccess.registryAccess()
                 .registry(McRPGRegistryKey.QUEST_SOURCE);
         QuestSource questSource = sourceRegistry.get(sourceKey)
@@ -297,7 +326,12 @@ public class QuestInstanceDAO {
         QuestInstance questInstance = new QuestInstance(definitionKey, questUUID, scopeType, state, null, startTime, endTime, expirationTime, questSource, null);
         String boardRarityKeyStr = rs.getString("board_rarity_key");
         if (boardRarityKeyStr != null) {
-            questInstance.setBoardRarityKey(NamespacedKey.fromString(boardRarityKeyStr));
+            NamespacedKey boardRarityKey = NamespacedKey.fromString(boardRarityKeyStr);
+            if (boardRarityKey != null) {
+                questInstance.setBoardRarityKey(boardRarityKey);
+            } else {
+                McRPG.getInstance().getLogger().warning("[QuestInstanceDAO] Malformed board_rarity_key '" + boardRarityKeyStr + "' for quest " + questUUID + " — rarity will be absent");
+            }
         }
         return questInstance;
     }
@@ -374,7 +408,7 @@ public class QuestInstanceDAO {
         if (value != null) {
             ps.setLong(index, value);
         } else {
-            ps.setNull(index, java.sql.Types.BIGINT);
+            ps.setNull(index, Types.BIGINT);
         }
     }
 
