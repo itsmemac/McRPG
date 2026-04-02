@@ -1,0 +1,234 @@
+# Daily land quests for the quest board (scope: land).
+
+quests:
+  # -------------------------------------------------------------------
+  # Easy: Mine stone for the land
+  # -------------------------------------------------------------------
+  mcrpg:land_daily_stone_quarry:
+    display:
+      name: "Stone Quarry"
+      description: "Quarry stone for your land's construction projects"
+      objectives:
+        land_daily_break_stone: "Mine stone blocks"
+      rewards:
+        mining_xp: "Mining XP"
+    scope: mcrpg:land_scope
+    expiration: 3d
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:common
+        - mcrpg:uncommon
+      supported-refresh-types:
+        - DAILY
+    rewards:
+      mining_xp:
+        type: mcrpg:experience
+        skill: MINING
+        amount: 2000
+    phases:
+      quarry:
+        completion-mode: ALL
+        stages:
+          mine_stone:
+            key: mcrpg:land_daily_mine_stone
+            objectives:
+              break_stone:
+                key: mcrpg:land_daily_break_stone
+                type: mcrpg:block_break
+                required-progress: 192
+                config:
+                  blocks:
+                    - STONE
+                    - COBBLESTONE
+                    - ANDESITE
+                    - DIORITE
+                    - GRANITE
+
+  # -------------------------------------------------------------------
+  # Medium: Mine mixed ores for the land
+  # -------------------------------------------------------------------
+  mcrpg:land_daily_ore_collection:
+    display:
+      name: "Ore Collection"
+      description: "Gather ores for your land's smelters"
+      objectives:
+        land_daily_break_ores: "Mine mixed ores"
+      rewards:
+        mining_xp: "Mining XP"
+        iron_bonus: "Iron Ingots"
+    scope: mcrpg:land_scope
+    expiration: 3d
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:uncommon
+        - mcrpg:rare
+        - mcrpg:epic
+      supported-refresh-types:
+        - DAILY
+    rewards:
+      mining_xp:
+        type: mcrpg:experience
+        skill: MINING
+        amount: 5000
+      iron_bonus:
+        type: mcrpg:item
+        item:
+          material: IRON_INGOT
+        amount: 8
+    phases:
+      collect:
+        completion-mode: ALL
+        stages:
+          mine_ores:
+            key: mcrpg:land_daily_mine_ores
+            objectives:
+              break_ores:
+                key: mcrpg:land_daily_break_ores
+                type: mcrpg:block_break
+                required-progress: 64
+                config:
+                  blocks:
+                    - IRON_ORE
+                    - DEEPSLATE_IRON_ORE
+                    - COPPER_ORE
+                    - DEEPSLATE_COPPER_ORE
+                    - GOLD_ORE
+                    - DEEPSLATE_GOLD_ORE
+                    - COAL_ORE
+                    - DEEPSLATE_COAL_ORE
+
+  # -------------------------------------------------------------------
+  # Easy: Patrol and kill hostile mobs
+  # -------------------------------------------------------------------
+  mcrpg:land_daily_perimeter_patrol:
+    display:
+      name: "Perimeter Patrol"
+      description: "Defend your land from hostile mobs"
+      objectives:
+        land_daily_slay_hostiles: "Slay hostile mobs"
+      rewards:
+        swords_xp: "Swords XP"
+    scope: mcrpg:land_scope
+    expiration: 3d
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:common
+        - mcrpg:uncommon
+      supported-refresh-types:
+        - DAILY
+    rewards:
+      swords_xp:
+        type: mcrpg:experience
+        skill: SWORDS
+        amount: 2000
+    phases:
+      patrol:
+        completion-mode: ALL
+        stages:
+          kill_hostiles:
+            key: mcrpg:land_daily_kill_hostiles
+            objectives:
+              slay_hostiles:
+                key: mcrpg:land_daily_slay_hostiles
+                type: mcrpg:mob_kill
+                required-progress: 60
+                config:
+                  mobs:
+                    - ZOMBIE
+                    - SKELETON
+                    - SPIDER
+                    - CREEPER
+                    - WITCH
+
+  # -------------------------------------------------------------------
+  # Easy: Chop logs for the land
+  # -------------------------------------------------------------------
+  mcrpg:land_daily_lumber_supply:
+    display:
+      name: "Lumber Supply"
+      description: "Supply your land with fresh lumber"
+      objectives:
+        land_daily_chop_logs: "Chop mixed logs"
+      rewards:
+        woodcutting_xp: "Woodcutting XP"
+    scope: mcrpg:land_scope
+    expiration: 3d
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:common
+        - mcrpg:uncommon
+      supported-refresh-types:
+        - DAILY
+    rewards:
+      woodcutting_xp:
+        type: mcrpg:experience
+        skill: WOODCUTTING
+        amount: 2000
+    phases:
+      chop:
+        completion-mode: ALL
+        stages:
+          chop_logs:
+            key: mcrpg:land_daily_chop_logs
+            objectives:
+              chop_mixed_logs:
+                key: mcrpg:land_daily_chop_logs
+                type: mcrpg:block_break
+                required-progress: 96
+                config:
+                  blocks:
+                    - OAK_LOG
+                    - BIRCH_LOG
+                    - SPRUCE_LOG
+                    - JUNGLE_LOG
+                    - DARK_OAK_LOG
+                    - ACACIA_LOG
+
+  # -------------------------------------------------------------------
+  # Easy: Harvest crops for the land
+  # -------------------------------------------------------------------
+  mcrpg:land_daily_crop_harvest:
+    display:
+      name: "Crop Harvest"
+      description: "Harvest crops to feed your land's people"
+      objectives:
+        land_daily_break_crops: "Harvest mixed crops"
+      rewards:
+        herbalism_xp: "Herbalism XP"
+    scope: mcrpg:land_scope
+    expiration: 3d
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:common
+        - mcrpg:uncommon
+      supported-refresh-types:
+        - DAILY
+    rewards:
+      herbalism_xp:
+        type: mcrpg:experience
+        skill: HERBALISM
+        amount: 2000
+    phases:
+      harvest:
+        completion-mode: ALL
+        stages:
+          harvest_crops:
+            key: mcrpg:land_daily_harvest_crops
+            objectives:
+              break_crops:
+                key: mcrpg:land_daily_break_crops
+                type: mcrpg:block_break
+                required-progress: 128
+                config:
+                  blocks:
+                    - WHEAT
+                    - CARROTS
+                    - POTATOES
+                    - BEETROOTS
+                    - MELON
+                    - PUMPKIN

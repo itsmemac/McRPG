@@ -142,7 +142,7 @@ class PersonalOfferingGeneratorTest extends McRPGBaseTest {
                 generatedDef,
                 NamespacedKey.fromString("mcrpg:daily_template"),
                 "{\"key\":\"mcrpg:gen_tmpl_only_abcd1234\"}");
-        when(mockedPool.selectForSlot(any(), any(), any(), eq(0), eq(100), nullable(UUID.class), nullable(QuestCompletionHistory.class)))
+        when(mockedPool.selectForSlot(any(), any(), any(), eq(0), eq(100), nullable(UUID.class), nullable(QuestCompletionHistory.class), nullable(NamespacedKey.class)))
                 .thenReturn(Optional.of(new SlotSelection.TemplateGenerated(genResult, COMMON)));
 
         List<BoardOffering> offerings = generator.generatePersonalOfferings(

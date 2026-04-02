@@ -38,7 +38,7 @@ public class BoardBackSlot implements McRPGSlot {
         return ItemBuilder.from(RegistryAccess.registryAccess()
                 .registry(RegistryKey.MANAGER)
                 .manager(McRPGManagerKey.LOCALIZATION)
-                .getLocalizedSection(mcRPGPlayer, LocalizationKey.GUI_COMMON_PREVIOUS_GUI_BUTTON_DISPLAY_ITEM));
+                .getLocalizedSection(mcRPGPlayer, LocalizationKey.QUEST_BOARD_GUI_PREVIOUS_GUI_BUTTON_DISPLAY_ITEM));
     }
 
     @NotNull

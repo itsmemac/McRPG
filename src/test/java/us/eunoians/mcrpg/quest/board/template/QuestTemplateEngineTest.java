@@ -326,6 +326,53 @@ class QuestTemplateEngineTest {
                 Set.of(COMMON, RARE), Map.of(), variables, List.of(phase), List.of(reward));
     }
 
+    @Test
+    @DisplayName("Reward multiplier is applied to base-amount key (scalable_command fix)")
+    void resolveRewardConfig_baseAmountScaledByRewardMultiplier() {
+        NamespacedKey scalableCmdKey = NamespacedKey.fromString("mcrpg:scalable_command");
+        QuestRewardType mockScalableCmd = mock(QuestRewardType.class);
+        when(mockScalableCmd.getKey()).thenReturn(scalableCmdKey);
+        when(mockScalableCmd.fromSerializedConfig(any())).thenAnswer(invocation -> {
+            Map<String, Object> config = invocation.getArgument(0);
+            QuestRewardType configured = mock(QuestRewardType.class);
+            when(configured.getKey()).thenReturn(scalableCmdKey);
+            when(configured.serializeConfig()).thenReturn(new LinkedHashMap<>(config));
+            when(configured.withLocalizationRoute(any())).thenReturn(configured);
+            return configured;
+        });
+        when(rewardTypeRegistry.get(scalableCmdKey)).thenReturn(Optional.of(mockScalableCmd));
+
+        RangeVariable killCount = new RangeVariable("kill_count", 10, 10);
+        Map<String, TemplateVariable> variables = new LinkedHashMap<>();
+        variables.put("kill_count", killCount);
+
+        TemplateObjectiveDefinition objective = new TemplateObjectiveDefinition(
+                OBJECTIVE_TYPE_KEY, "kill_count", Map.of());
+        TemplateStageDefinition stage = new TemplateStageDefinition(List.of(objective));
+        TemplatePhaseDefinition phase = new TemplatePhaseDefinition(
+                PhaseCompletionMode.ALL, List.of(stage));
+
+        TemplateRewardDefinition reward = new TemplateRewardDefinition(
+                scalableCmdKey, "cmd_reward",
+                Map.of("command-template", "give {player} diamond {amount}",
+                        "base-amount", 5,
+                        "display-label", "Diamonds"));
+
+        QuestTemplate template = new QuestTemplate(
+                NamespacedKey.fromString("mcrpg:base_amount_test"),
+                Route.fromString("quests.templates.base_amount_test.display-name"),
+                true, SCOPE_KEY, Set.of(RARE), Map.of(), variables,
+                List.of(phase), List.of(reward));
+
+        GeneratedQuestResult result = engine.generate(template, RARE, new Random(42L));
+        QuestRewardType generatedReward = result.definition().getRewards().get(0);
+        Map<String, Object> config = generatedReward.serializeConfig();
+
+        long baseAmount = ((Number) config.get("base-amount")).longValue();
+        assertTrue(baseAmount > 5, "base-amount (" + baseAmount
+                + ") should be scaled by RARE reward multiplier 1.2x; expected > 5");
+    }
+
     private QuestTemplate createMiningTemplateWithOverrides(Map<NamespacedKey, RarityOverride> overrides) {
         Pool ores = new Pool("ores", 1.0,
                 Map.of(COMMON, 10, RARE, 5),

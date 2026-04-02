@@ -1,0 +1,13 @@
+# Daily quests visible to all players on the board.
+# Each player sees the same pool of offerings; accepting one does not remove it for others.
+shared-daily:
+  # SHARED: all players see the same offerings from this category.
+  visibility: SHARED
+  refresh-type: DAILY
+  refresh-interval: 1d
+  completion-time: 1d
+  scope-provider: mcrpg:single_player
+  min: 3
+  max: 5
+  chance-per-slot: 1.0
+  priority: 10

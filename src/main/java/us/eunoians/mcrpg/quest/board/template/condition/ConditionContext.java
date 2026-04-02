@@ -32,8 +32,10 @@ public record ConditionContext(
 
     /**
      * Context for template generation (shared offerings). Has rarity, random, and
-     * resolved variables. No player data — player-dependent conditions return true
-     * (include by default) so they don't inadvertently filter shared content.
+     * resolved variables. No player data — player-dependent conditions (such as
+     * {@link CompletionPrerequisiteCondition} and {@link PermissionCondition})
+     * return {@code false} when player fields are absent, causing gated elements
+     * to be excluded from shared generation.
      */
     @NotNull
     public static ConditionContext forTemplateGeneration(

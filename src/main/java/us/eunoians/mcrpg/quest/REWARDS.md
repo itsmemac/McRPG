@@ -5,6 +5,7 @@ How to configure built-in reward types in YAML and implement custom reward types
 **Key source files:**
 - [`QuestRewardType.java`](reward/QuestRewardType.java)
 - [`quest/reward/builtin/`](reward/builtin/) — all built-in implementations
+- [`ItemRewardType.java`](reward/builtin/ItemRewardType.java)
 - [`RewardFallback.java`](board/template/condition/RewardFallback.java)
 - [`QuestRewardEntry.java`](board/template/condition/QuestRewardEntry.java)
 - [`DistributionRewardEntry.java`](board/distribution/DistributionRewardEntry.java)
@@ -74,7 +75,7 @@ public interface QuestRewardType extends McRPGContent {
 
 ## 3. Built-in Reward Types
 
-McRPG ships five reward types registered by `McRPGExpansion`.
+McRPG ships six reward types registered by `McRPGExpansion`.
 
 | Class | Key | Config Fields | Scalable |
 |-------|-----|--------------|----------|
@@ -83,6 +84,7 @@ McRPG ships five reward types registered by `McRPGExpansion`.
 | `ScalableCommandRewardType` | `mcrpg:scalable_command` | `command`, `base-amount`, `display` | Yes (`{amount}` token) |
 | `AbilityUpgradeRewardType` | `mcrpg:ability_upgrade` | `ability`, `tier` | No |
 | `AbilityUpgradeNextTierRewardType` | `mcrpg:ability_upgrade_next_tier` | `ability` | No |
+| `ItemRewardType` | `mcrpg:item` | `item` (map: material, amount, enchantments, name, lore, custom-model-data, glowing), top-level `amount` | Partial (top-level `amount` only) |
 
 **Scalable** means the type correctly implements `withAmountMultiplier` and `getNumericAmount`, making it safe to use in `SPLIT_EVEN` / `SPLIT_PROPORTIONAL` distribution tiers. Non-scalable types used in split tiers fall back to `ALL` behavior (every qualifier receives the full reward) and log a warning.
 
@@ -130,6 +132,24 @@ upgrade-reward:
 next-tier-reward:
   type: mcrpg:ability_upgrade_next_tier
   ability: mcrpg:bleed
+
+# mcrpg:item
+# Grants an ItemStack built from McCore's ItemBuilder.
+# Top-level 'amount' is optional and scalable (used by distribution tiers and template reward-multiplier).
+# Nested 'item.amount' is the actual item stack size (not scaled).
+item-reward:
+  type: mcrpg:item
+  amount: 3
+  item:
+    material: DIAMOND_PICKAXE
+    amount: 1
+    name: "<gold>Miner's Pickaxe"
+    lore:
+      - "<gray>A reward for dedicated miners"
+    enchantments:
+      efficiency: 3
+      unbreaking: 2
+    glowing: true
 ```
 
 ---
@@ -343,11 +363,23 @@ Custom `QuestRewardType` implementations that want the same localization support
 
 ---
 
-## 6. Registering a Custom Reward Type
+## 6. Template Reward Multiplier
+
+When a quest is generated from a template, the template engine applies the rarity's `reward-multiplier` to scale reward amounts. The engine now scales **both** the `amount` and `base-amount` fields on rewards. This means:
+
+- `mcrpg:experience` rewards have their `amount` scaled as before.
+- `mcrpg:scalable_command` rewards in templates correctly have their `base-amount` scaled by the rarity's reward multiplier, producing appropriately scaled commands at higher rarities.
+- `mcrpg:item` rewards have their top-level `amount` scaled (the nested `item.amount` stack size is not affected).
+
+The multiplier is applied during the `buildDefinition` phase of template generation (see [`TEMPLATES.md`](TEMPLATES.md) section 6 for the template-side perspective).
+
+---
+
+## 7. Registering a Custom Reward Type
 
 Custom reward types are registered via the `ContentExpansion` system. The steps are:
 
-1. **Implement `QuestRewardType`** with a unique `NamespacedKey` (see section 7 for a full example).
+1. **Implement `QuestRewardType`** with a unique `NamespacedKey` (see section 8 for a full example).
 2. **Create a `ContentExpansion` subclass** if your plugin doesn't already have one.
 3. **Create a `QuestRewardTypeContentPack`** and add your type to it with `addContent`.
 4. **Return the pack** from `getExpansionContent()`.
@@ -386,7 +418,7 @@ The `McRPGExpansion` class is the canonical example of this pattern — see [`Mc
 
 ---
 
-## 7. Worked Example — Custom Money Reward
+## 8. Worked Example — Custom Money Reward
 
 This example implements a `myplugin:money` reward type that calls a hypothetical `EconomyAPI`.
 
@@ -538,7 +570,7 @@ pack.addContent(new MoneyRewardType());
 
 ---
 
-## 8. Common Pitfalls
+## 9. Common Pitfalls
 
 - **Missing `serializeConfig` / `fromSerializedConfig` implementations** — these methods have no default. If you leave them returning empty maps or throwing, pending rewards for offline players will be silently lost or fail to reconstruct on login.
 

@@ -66,6 +66,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -92,12 +93,25 @@ public class QuestManager extends Manager<McRPG> {
 
     private static final String QUESTS_DIRECTORY = "quests";
     private static final String DEFAULT_QUEST_RESOURCE = "quests/example_quest.yml";
-    private static final String DEFAULT_UPGRADE_QUEST_RESOURCE = "quests/upgrades/swords_upgrades.yml";
-    private static final String DEFAULT_BOARD_MINING_QUEST_RESOURCE = "quests/board/daily_mining_quests.yml";
-    private static final String DEFAULT_BOARD_COMBAT_QUEST_RESOURCE = "quests/board/daily_combat_quests.yml";
-    private static final String DEFAULT_BOARD_WEEKLY_QUEST_RESOURCE = "quests/board/weekly_quests.yml";
+    private static final String DEFAULT_SWORDS_UPGRADE_QUEST_RESOURCE = "quests/upgrades/swords_upgrades.yml";
+    private static final String DEFAULT_MINING_UPGRADE_QUEST_RESOURCE = "quests/upgrades/mining_upgrades.yml";
+    private static final String DEFAULT_WOODCUTTING_UPGRADE_QUEST_RESOURCE = "quests/upgrades/woodcutting_upgrades.yml";
+    private static final String DEFAULT_HERBALISM_UPGRADE_QUEST_RESOURCE = "quests/upgrades/herbalism_upgrades.yml";
+    private static final String[] DEFAULT_BOARD_QUEST_RESOURCES = {
+            "quest-board/quests/daily/mining.yml",
+            "quest-board/quests/daily/combat.yml",
+            "quest-board/quests/daily/woodcutting.yml",
+            "quest-board/quests/daily/herbalism.yml",
+            "quest-board/quests/weekly/mining.yml",
+            "quest-board/quests/weekly/combat.yml",
+            "quest-board/quests/weekly/woodcutting.yml",
+            "quest-board/quests/weekly/herbalism.yml",
+            "quest-board/quests/weekly/mixed.yml",
+            "quest-board/quests/land/daily.yml",
+            "quest-board/quests/land/weekly.yml",
+            "quest-board/quests/legendary/legendary.yml"
+    };
     private static final String DEFAULT_GENERIC_UPGRADE_QUEST_RESOURCE = "quests/upgrades/generic_ability_upgrades.yml";
-    private static final String DEFAULT_TIER_OVERRIDE_UPGRADE_QUEST_RESOURCE = "quests/upgrades/tier_override_ability_upgrades.yml";
 
     private final long finishedQuestKeepAliveNanos;
 
@@ -1044,16 +1058,24 @@ public class QuestManager extends Manager<McRPG> {
     }
 
     /**
-     * Loads (or reloads) quest definitions from the {@code quests/} directory.
-     * Replaces all previously loaded definitions in the registry with the newly
-     * parsed ones.
+     * Loads (or reloads) quest definitions from the {@code quests/} and
+     * {@code quest-board/quests/} directories. Replaces all previously loaded
+     * definitions in the registry with the newly parsed ones.
      */
     public void loadQuestDefinitions() {
         File questsDir = new File(plugin().getDataFolder(), QUESTS_DIRECTORY);
         if (!questsDir.exists()) {
             questsDir.mkdirs();
         }
-        questDefinitionRegistry.replaceConfigDefinitions(configLoader.loadQuestsFromDirectory(questsDir));
+        Map<NamespacedKey, QuestDefinition> allDefinitions = new LinkedHashMap<>(
+                configLoader.loadQuestsFromDirectory(questsDir));
+
+        File boardQuestsDir = new File(plugin().getDataFolder(), "quest-board/quests");
+        if (boardQuestsDir.exists() && boardQuestsDir.isDirectory()) {
+            allDefinitions.putAll(configLoader.loadQuestsFromDirectory(boardQuestsDir));
+        }
+
+        questDefinitionRegistry.replaceConfigDefinitions(allDefinitions);
         enforceTierableAbilityUpgradeQuestConfiguration();
     }
 
@@ -1113,20 +1135,23 @@ public class QuestManager extends Manager<McRPG> {
         File markerFile = new File(questsDir, ".extracted-defaults");
         Set<String> alreadyExtracted = loadExtractedMarker(markerFile);
 
-        File boardDir = new File(questsDir, "board");
-        if (!boardDir.exists()) {
-            boardDir.mkdirs();
+        File boardQuestsDir = new File(plugin.getDataFolder(), "quest-board/quests");
+        for (String sub : new String[]{"daily", "weekly", "land", "legendary"}) {
+            File dir = new File(boardQuestsDir, sub);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
         }
 
-        List<String> defaultResources = List.of(
+        List<String> defaultResources = new java.util.ArrayList<>(List.of(
                 DEFAULT_QUEST_RESOURCE,
-                DEFAULT_UPGRADE_QUEST_RESOURCE,
-                DEFAULT_GENERIC_UPGRADE_QUEST_RESOURCE,
-                DEFAULT_TIER_OVERRIDE_UPGRADE_QUEST_RESOURCE,
-                DEFAULT_BOARD_MINING_QUEST_RESOURCE,
-                DEFAULT_BOARD_COMBAT_QUEST_RESOURCE,
-                DEFAULT_BOARD_WEEKLY_QUEST_RESOURCE
-        );
+                DEFAULT_SWORDS_UPGRADE_QUEST_RESOURCE,
+                DEFAULT_MINING_UPGRADE_QUEST_RESOURCE,
+                DEFAULT_WOODCUTTING_UPGRADE_QUEST_RESOURCE,
+                DEFAULT_HERBALISM_UPGRADE_QUEST_RESOURCE,
+                DEFAULT_GENERIC_UPGRADE_QUEST_RESOURCE
+        ));
+        defaultResources.addAll(List.of(DEFAULT_BOARD_QUEST_RESOURCES));
 
         boolean markerDirty = false;
         for (String resource : defaultResources) {

@@ -1,0 +1,321 @@
+# Ability upgrade quests for Woodcutting abilities (tiers 2–5).
+#
+# T2/T3: Single objective. Log types escalate in rarity/biome per tier.
+# T4/T5: Two independent objectives in one stage — both must complete.
+#         Primary = the ability's established log family.
+#         Secondary = an exotic or otherworldly wood type on its own progress bar.
+#
+# See docs/design-principles/upgrade-quest-design-principles.md for full rationale.
+
+quests:
+  # ────────────────────────────────────────────
+  #  Heavy Swing  (raw power / hardwood deforestation)
+  #  Theme: common temperate logs → dense canopy logs → exotic woods → nether stems
+  # ────────────────────────────────────────────
+  mcrpg:heavy_swing_tier2:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:heavy_swing
+        tier: 2
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:heavy_swing_tier2_stage
+            objectives:
+              objective:
+                key: mcrpg:heavy_swing_tier2_obj
+                type: mcrpg:block_break
+                required-progress: 80
+                config:
+                  blocks: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG]
+
+  mcrpg:heavy_swing_tier3:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:heavy_swing
+        tier: 3
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:heavy_swing_tier3_stage
+            objectives:
+              objective:
+                key: mcrpg:heavy_swing_tier3_obj
+                type: mcrpg:block_break
+                required-progress: 120
+                config:
+                  blocks: [DARK_OAK_LOG, JUNGLE_LOG, ACACIA_LOG]
+
+  mcrpg:heavy_swing_tier4:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:heavy_swing
+        tier: 4
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:heavy_swing_tier4_stage
+            objectives:
+              primary:
+                key: mcrpg:heavy_swing_tier4_primary
+                type: mcrpg:block_break
+                required-progress: 150
+                config:
+                  blocks: [DARK_OAK_LOG, JUNGLE_LOG, ACACIA_LOG]
+              secondary:
+                key: mcrpg:heavy_swing_tier4_secondary
+                type: mcrpg:block_break
+                required-progress: 40
+                config:
+                  blocks: [MANGROVE_LOG, CHERRY_LOG]
+
+  mcrpg:heavy_swing_tier5:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:heavy_swing
+        tier: 5
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:heavy_swing_tier5_stage
+            objectives:
+              primary:
+                key: mcrpg:heavy_swing_tier5_primary
+                type: mcrpg:block_break
+                required-progress: 200
+                config:
+                  blocks: [DARK_OAK_LOG, JUNGLE_LOG, ACACIA_LOG, MANGROVE_LOG]
+              secondary:
+                key: mcrpg:heavy_swing_tier5_secondary
+                type: mcrpg:block_break
+                required-progress: 50
+                config:
+                  blocks: [CRIMSON_STEM, WARPED_STEM]
+
+  # ────────────────────────────────────────────
+  #  Dryad's Gift  (tropical / nature attunement)
+  #  Theme: warm and lush biome woods, culminating in delicate or rare plants
+  # ────────────────────────────────────────────
+  mcrpg:dryads_gift_tier2:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:dryads_gift
+        tier: 2
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:dryads_gift_tier2_stage
+            objectives:
+              objective:
+                key: mcrpg:dryads_gift_tier2_obj
+                type: mcrpg:block_break
+                required-progress: 80
+                config:
+                  blocks: [JUNGLE_LOG, ACACIA_LOG]
+
+  mcrpg:dryads_gift_tier3:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:dryads_gift
+        tier: 3
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:dryads_gift_tier3_stage
+            objectives:
+              objective:
+                key: mcrpg:dryads_gift_tier3_obj
+                type: mcrpg:block_break
+                required-progress: 120
+                config:
+                  blocks: [JUNGLE_LOG, ACACIA_LOG, MANGROVE_LOG]
+
+  mcrpg:dryads_gift_tier4:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:dryads_gift
+        tier: 4
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:dryads_gift_tier4_stage
+            objectives:
+              primary:
+                key: mcrpg:dryads_gift_tier4_primary
+                type: mcrpg:block_break
+                required-progress: 150
+                config:
+                  blocks: [JUNGLE_LOG, ACACIA_LOG, MANGROVE_LOG]
+              secondary:
+                key: mcrpg:dryads_gift_tier4_secondary
+                type: mcrpg:block_break
+                required-progress: 40
+                config:
+                  blocks: [CHERRY_LOG, BAMBOO_BLOCK]
+
+  mcrpg:dryads_gift_tier5:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:dryads_gift
+        tier: 5
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:dryads_gift_tier5_stage
+            objectives:
+              primary:
+                key: mcrpg:dryads_gift_tier5_primary
+                type: mcrpg:block_break
+                required-progress: 220
+                config:
+                  blocks: [JUNGLE_LOG, ACACIA_LOG, MANGROVE_LOG, CHERRY_LOG]
+              secondary:
+                key: mcrpg:dryads_gift_tier5_secondary
+                type: mcrpg:block_break
+                required-progress: 60
+                config:
+                  blocks: [BAMBOO_BLOCK]
+
+  # ────────────────────────────────────────────
+  #  Nymph's Vitality  (cold / mystic forests)
+  #  Theme: cool-climate woods, deepening into dark and otherworldly growth
+  # ────────────────────────────────────────────
+  mcrpg:nymphs_vitality_tier2:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:nymphs_vitality
+        tier: 2
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:nymphs_vitality_tier2_stage
+            objectives:
+              objective:
+                key: mcrpg:nymphs_vitality_tier2_obj
+                type: mcrpg:block_break
+                required-progress: 80
+                config:
+                  blocks: [BIRCH_LOG, SPRUCE_LOG]
+
+  mcrpg:nymphs_vitality_tier3:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:nymphs_vitality
+        tier: 3
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:nymphs_vitality_tier3_stage
+            objectives:
+              objective:
+                key: mcrpg:nymphs_vitality_tier3_obj
+                type: mcrpg:block_break
+                required-progress: 120
+                config:
+                  blocks: [BIRCH_LOG, SPRUCE_LOG, DARK_OAK_LOG]
+
+  mcrpg:nymphs_vitality_tier4:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:nymphs_vitality
+        tier: 4
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:nymphs_vitality_tier4_stage
+            objectives:
+              primary:
+                key: mcrpg:nymphs_vitality_tier4_primary
+                type: mcrpg:block_break
+                required-progress: 150
+                config:
+                  blocks: [BIRCH_LOG, SPRUCE_LOG, DARK_OAK_LOG]
+              secondary:
+                key: mcrpg:nymphs_vitality_tier4_secondary
+                type: mcrpg:block_break
+                required-progress: 40
+                config:
+                  blocks: [MANGROVE_LOG]
+
+  mcrpg:nymphs_vitality_tier5:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:nymphs_vitality
+        tier: 5
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:nymphs_vitality_tier5_stage
+            objectives:
+              primary:
+                key: mcrpg:nymphs_vitality_tier5_primary
+                type: mcrpg:block_break
+                required-progress: 200
+                config:
+                  blocks: [BIRCH_LOG, SPRUCE_LOG, DARK_OAK_LOG, MANGROVE_LOG]
+              secondary:
+                key: mcrpg:nymphs_vitality_tier5_secondary
+                type: mcrpg:block_break
+                required-progress: 50
+                config:
+                  blocks: [CRIMSON_STEM, WARPED_STEM]

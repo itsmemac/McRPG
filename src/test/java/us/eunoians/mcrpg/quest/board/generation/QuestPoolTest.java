@@ -30,6 +30,8 @@ import us.eunoians.mcrpg.quest.definition.QuestDefinitionRegistry;
 import us.eunoians.mcrpg.quest.definition.QuestRepeatMode;
 import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 
+import us.eunoians.mcrpg.quest.board.template.condition.CompletionPrerequisiteCondition;
+import us.eunoians.mcrpg.quest.board.template.condition.ConditionContext;
 import us.eunoians.mcrpg.quest.board.template.condition.QuestCompletionHistory;
 
 import java.util.LinkedHashMap;
@@ -454,6 +456,192 @@ public class QuestPoolTest extends McRPGBaseTest {
         questPool.selectForSlot(COMMON_KEY, new Random(42), templateEngine, 0, 100, (UUID) null, (QuestCompletionHistory) null);
 
         verify(templateEngine).generate(any(), any(), any(), isNull(), isNull());
+    }
+
+    @DisplayName("getEligibleTemplates with prerequisite: excluded when context is null (shared generation)")
+    @Test
+    void getEligibleTemplates_prerequisiteExcluded_whenContextNull() {
+        QuestTemplate gated = createTemplateWithPrerequisite("gated_tmpl", Set.of(COMMON_KEY), 5);
+        QuestTemplate ungated = createTemplate("ungated_tmpl", Set.of(COMMON_KEY));
+        templateRegistry.register(gated);
+        templateRegistry.register(ungated);
+
+        List<QuestTemplate> result = questPool.getEligibleTemplates(COMMON_KEY, (NamespacedKey) null, null);
+        assertEquals(1, result.size());
+        assertEquals(ungated.getKey(), result.get(0).getKey());
+    }
+
+    @DisplayName("getEligibleTemplates with prerequisite: included when context satisfies prerequisite")
+    @Test
+    void getEligibleTemplates_prerequisiteIncluded_whenContextSatisfies() {
+        QuestTemplate gated = createTemplateWithPrerequisite("gated_tmpl2", Set.of(COMMON_KEY), 5);
+        templateRegistry.register(gated);
+
+        QuestCompletionHistory history = mock(QuestCompletionHistory.class);
+        when(history.countCompletedQuests(any(), isNull(), isNull())).thenReturn(10);
+        ConditionContext context = ConditionContext.forPrerequisiteCheck(UUID.randomUUID(), history);
+
+        List<QuestTemplate> result = questPool.getEligibleTemplates(COMMON_KEY, (NamespacedKey) null, context);
+        assertEquals(1, result.size());
+        assertEquals(gated.getKey(), result.get(0).getKey());
+    }
+
+    @DisplayName("getEligibleTemplates with prerequisite: excluded when context does not meet min-completions")
+    @Test
+    void getEligibleTemplates_prerequisiteExcluded_whenContextDoesNotMeet() {
+        QuestTemplate gated = createTemplateWithPrerequisite("gated_tmpl3", Set.of(COMMON_KEY), 15);
+        templateRegistry.register(gated);
+
+        QuestCompletionHistory history = mock(QuestCompletionHistory.class);
+        when(history.countCompletedQuests(any(), isNull(), isNull())).thenReturn(3);
+        ConditionContext context = ConditionContext.forPrerequisiteCheck(UUID.randomUUID(), history);
+
+        List<QuestTemplate> result = questPool.getEligibleTemplates(COMMON_KEY, (NamespacedKey) null, context);
+        assertTrue(result.isEmpty());
+    }
+
+    @DisplayName("getEligibleTemplates without prerequisite: templates without prerequisites always included with null context")
+    @Test
+    void getEligibleTemplates_noPrerequisite_alwaysIncludedWithNullContext() {
+        QuestTemplate ungated = createTemplate("ungated_null", Set.of(COMMON_KEY));
+        templateRegistry.register(ungated);
+
+        List<QuestTemplate> result = questPool.getEligibleTemplates(COMMON_KEY, (NamespacedKey) null, (ConditionContext) null);
+        assertEquals(1, result.size());
+    }
+
+    @DisplayName("getEligibleTemplates with scope: land templates excluded from single_player scope")
+    @Test
+    void getEligibleTemplates_landExcluded_fromSinglePlayerScope() {
+        QuestTemplate singlePlayer = createTemplate("sp_tmpl", Set.of(COMMON_KEY));
+        QuestTemplate land = createTemplateWithScope("land_tmpl", Set.of(COMMON_KEY), new NamespacedKey("mcrpg", "land_scope"));
+        templateRegistry.register(singlePlayer);
+        templateRegistry.register(land);
+
+        List<QuestTemplate> result = questPool.getEligibleTemplates(COMMON_KEY, SINGLE_PLAYER_SCOPE);
+        assertEquals(1, result.size());
+        assertEquals(singlePlayer.getKey(), result.get(0).getKey());
+    }
+
+    @DisplayName("getEligibleTemplates with scope: land templates included for land_scope")
+    @Test
+    void getEligibleTemplates_landIncluded_forLandScope() {
+        QuestTemplate singlePlayer = createTemplate("sp_tmpl2", Set.of(COMMON_KEY));
+        QuestTemplate land = createTemplateWithScope("land_tmpl2", Set.of(COMMON_KEY), new NamespacedKey("mcrpg", "land_scope"));
+        templateRegistry.register(singlePlayer);
+        templateRegistry.register(land);
+
+        NamespacedKey landScope = new NamespacedKey("mcrpg", "land_scope");
+        List<QuestTemplate> result = questPool.getEligibleTemplates(COMMON_KEY, landScope);
+        assertEquals(1, result.size());
+        assertEquals(land.getKey(), result.get(0).getKey());
+    }
+
+    @DisplayName("selectForSlot with scope: land template not selected when single_player scope is given")
+    @Test
+    void selectForSlot_scopeAware_landTemplateExcluded_forSinglePlayerScope() {
+        QuestTemplate land = createTemplateWithScope("scope_land_tmpl", Set.of(COMMON_KEY), new NamespacedKey("mcrpg", "land_scope"));
+        templateRegistry.register(land);
+
+        // Template only, no hand-crafted; with land template excluded the pool is empty → no selection
+        Optional<SlotSelection> result = questPool.selectForSlot(
+                COMMON_KEY, new Random(42), templateEngine, 0, 100,
+                null, Set.of(), SINGLE_PLAYER_SCOPE);
+        assertTrue(result.isEmpty());
+    }
+
+    @DisplayName("selectForSlot with scope: land template selected when land_scope is given")
+    @Test
+    void selectForSlot_scopeAware_landTemplateIncluded_forLandScope() {
+        NamespacedKey landScope = new NamespacedKey("mcrpg", "land_scope");
+        QuestTemplate land = createTemplateWithScope("scope_land_tmpl2", Set.of(COMMON_KEY), landScope);
+        templateRegistry.register(land);
+
+        QuestDefinition generatedDef = questWithBoardMetadata("scope_gen", true, Set.of(COMMON_KEY));
+        GeneratedQuestResult genResult = new GeneratedQuestResult(generatedDef, land.getKey(), "{}");
+        when(templateEngine.generate(any(), any(), any())).thenReturn(genResult);
+
+        Optional<SlotSelection> result = questPool.selectForSlot(
+                COMMON_KEY, new Random(42), templateEngine, 0, 100,
+                null, Set.of(), landScope);
+        assertTrue(result.isPresent());
+        assertInstanceOf(SlotSelection.TemplateGenerated.class, result.get());
+    }
+
+    @DisplayName("selectForSlot player-context with scope: land template excluded for single_player scope")
+    @Test
+    void selectForSlot_playerContext_scopeAware_landTemplateExcluded() {
+        QuestTemplate land = createTemplateWithScope("scope_land_tmpl3", Set.of(COMMON_KEY), new NamespacedKey("mcrpg", "land_scope"));
+        templateRegistry.register(land);
+
+        // Template only; with land template excluded, pool is empty → no selection
+        Optional<SlotSelection> result = questPool.selectForSlot(
+                COMMON_KEY, new Random(42), templateEngine, 0, 100,
+                UUID.randomUUID(), null, SINGLE_PLAYER_SCOPE);
+        assertTrue(result.isEmpty());
+    }
+
+    @DisplayName("getEligibleTemplates with null scope: returns all templates regardless of scope")
+    @Test
+    void getEligibleTemplates_nullScope_returnsAll() {
+        QuestTemplate singlePlayer = createTemplate("sp_tmpl3", Set.of(COMMON_KEY));
+        QuestTemplate land = createTemplateWithScope("land_tmpl3", Set.of(COMMON_KEY), new NamespacedKey("mcrpg", "land_scope"));
+        templateRegistry.register(singlePlayer);
+        templateRegistry.register(land);
+
+        List<QuestTemplate> result = questPool.getEligibleTemplates(COMMON_KEY, (NamespacedKey) null);
+        assertEquals(2, result.size());
+    }
+
+    private QuestTemplate createTemplateWithScope(String key, Set<NamespacedKey> rarities, NamespacedKey scopeKey) {
+        RangeVariable rangeVar = new RangeVariable("count", 10, 50);
+        Map<String, TemplateVariable> variables = new LinkedHashMap<>();
+        variables.put("count", rangeVar);
+
+        NamespacedKey objType = new NamespacedKey("mcrpg", "block_break");
+        TemplateObjectiveDefinition obj = new TemplateObjectiveDefinition(objType, "count", Map.of());
+        TemplateStageDefinition stage = new TemplateStageDefinition(List.of(obj));
+        TemplatePhaseDefinition phase = new TemplatePhaseDefinition(PhaseCompletionMode.ALL, List.of(stage));
+
+        return new QuestTemplate(
+                new NamespacedKey("mcrpg", key),
+                Route.fromString("quests.templates." + key + ".display-name"),
+                true,
+                scopeKey,
+                rarities,
+                Map.of(),
+                variables,
+                List.of(phase),
+                List.of()
+        );
+    }
+
+    private QuestTemplate createTemplateWithPrerequisite(String key, Set<NamespacedKey> rarities, int minCompletions) {
+        RangeVariable rangeVar = new RangeVariable("count", 10, 50);
+        Map<String, TemplateVariable> variables = new LinkedHashMap<>();
+        variables.put("count", rangeVar);
+
+        NamespacedKey objType = new NamespacedKey("mcrpg", "block_break");
+        TemplateObjectiveDefinition obj = new TemplateObjectiveDefinition(objType, "count", Map.of());
+        TemplateStageDefinition stage = new TemplateStageDefinition(List.of(obj));
+        TemplatePhaseDefinition phase = new TemplatePhaseDefinition(PhaseCompletionMode.ALL, List.of(stage));
+
+        CompletionPrerequisiteCondition prereq = new CompletionPrerequisiteCondition(minCompletions, null, null);
+
+        return new QuestTemplate(
+                new NamespacedKey("mcrpg", key),
+                Route.fromString("quests.templates." + key + ".display-name"),
+                true,
+                new NamespacedKey("mcrpg", "single_player"),
+                rarities,
+                Map.of(),
+                variables,
+                List.of(phase),
+                List.of(),
+                null,
+                prereq,
+                null
+        );
     }
 
     private QuestTemplate createTemplate(String key, Set<NamespacedKey> rarities) {

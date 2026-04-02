@@ -123,7 +123,9 @@ public class ScopedOfferingSlot implements McRPGSlot {
 
         ItemBuilder builder = ItemBuilder.from(localization.getLocalizedSection(mcRPGPlayer,
                 LocalizationKey.QUEST_BOARD_SCOPED_OFFERING_SLOT_DISPLAY_ITEM));
-        rarityOpt.ifPresent(rarity -> rarity.configureIcon(builder));
+        if (rarityOpt.isPresent()) {
+            builder = rarityOpt.get().configureIcon(builder);
+        }
         // Re-set name after configureIcon() since it unconditionally overwrites the display name
         builder.setDisplayName(nameColor + boardManager.getOfferingDisplayName(mcRPGPlayer, offering));
 

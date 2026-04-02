@@ -1,17 +1,18 @@
-# Default ability upgrade quests for Swords abilities.
+# Ability upgrade quests for Swords abilities (tiers 2–5).
 #
-# These quests are referenced by the ability configs via their "upgrade-quest" key.
-# Server owners can customize objectives, required progress, and rewards freely.
-# Each tier has its own quest so objectives can differ per tier.
+# T2/T3: Single objective. Targets escalate in difficulty per tier.
+# T4/T5: Two independent objectives in one stage — both must complete.
+#         Primary = the ability's established mob theme.
+#         Secondary = a harder mob group on its own progress bar.
 #
-# The mcrpg:ability_upgrade reward type handles the actual tier progression,
-# attribute cleanup, and cascading next-tier auto-start.
+# See docs/design-principles/upgrade-quest-design-principles.md for full rationale.
 
 quests:
   # ────────────────────────────────────────────
-  #  Enhanced Bleed
+  #  Enhanced Bleed  (venom / DoT)
+  #  Theme: venomous and poison-dealing mobs, culminating in Wither Skeletons
   # ────────────────────────────────────────────
-  mcrpg:enhanced_bleed_t2:
+  mcrpg:enhanced_bleed_tier2:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -24,18 +25,16 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:eb_t2_kill
+            key: mcrpg:enhanced_bleed_tier2_stage
             objectives:
               objective:
-                key: mcrpg:eb_t2_kill_spiders
+                key: mcrpg:enhanced_bleed_tier2_obj
                 type: mcrpg:mob_kill
-                required-progress: 80
+                required-progress: 60
                 config:
-                  entities:
-                    - SPIDER
-                    - CAVE_SPIDER
+                  entities: [SPIDER, CAVE_SPIDER]
 
-  mcrpg:enhanced_bleed_t3:
+  mcrpg:enhanced_bleed_tier3:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -48,18 +47,16 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:eb_t3_kill
+            key: mcrpg:enhanced_bleed_tier3_stage
             objectives:
               objective:
-                key: mcrpg:eb_t3_kill_spiders
+                key: mcrpg:enhanced_bleed_tier3_obj
                 type: mcrpg:mob_kill
-                required-progress: 180
+                required-progress: 100
                 config:
-                  entities:
-                    - SPIDER
-                    - CAVE_SPIDER
+                  entities: [SPIDER, CAVE_SPIDER, WITCH]
 
-  mcrpg:enhanced_bleed_t4:
+  mcrpg:enhanced_bleed_tier4:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -72,18 +69,22 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:eb_t4_kill
+            key: mcrpg:enhanced_bleed_tier4_stage
             objectives:
-              objective:
-                key: mcrpg:eb_t4_kill_spiders
+              primary:
+                key: mcrpg:enhanced_bleed_tier4_primary
                 type: mcrpg:mob_kill
-                required-progress: 320
+                required-progress: 150
                 config:
-                  entities:
-                    - SPIDER
-                    - CAVE_SPIDER
+                  entities: [SPIDER, CAVE_SPIDER, WITCH]
+              secondary:
+                key: mcrpg:enhanced_bleed_tier4_secondary
+                type: mcrpg:mob_kill
+                required-progress: 35
+                config:
+                  entities: [WITHER_SKELETON]
 
-  mcrpg:enhanced_bleed_t5:
+  mcrpg:enhanced_bleed_tier5:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -96,21 +97,26 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:eb_t5_kill
+            key: mcrpg:enhanced_bleed_tier5_stage
             objectives:
-              objective:
-                key: mcrpg:eb_t5_kill_spiders
+              primary:
+                key: mcrpg:enhanced_bleed_tier5_primary
                 type: mcrpg:mob_kill
-                required-progress: 500
+                required-progress: 200
                 config:
-                  entities:
-                    - SPIDER
-                    - CAVE_SPIDER
+                  entities: [SPIDER, CAVE_SPIDER, WITCH]
+              secondary:
+                key: mcrpg:enhanced_bleed_tier5_secondary
+                type: mcrpg:mob_kill
+                required-progress: 50
+                config:
+                  entities: [WITHER_SKELETON]
 
   # ────────────────────────────────────────────
-  #  Deeper Wound
+  #  Deeper Wound  (piercing / ranged threats)
+  #  Theme: skeletal ranged enemies, culminating in Wither Skeletons
   # ────────────────────────────────────────────
-  mcrpg:deeper_wound_t2:
+  mcrpg:deeper_wound_tier2:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -123,17 +129,16 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:dw_t2_kill
+            key: mcrpg:deeper_wound_tier2_stage
             objectives:
               objective:
-                key: mcrpg:dw_t2_kill_skeletons
+                key: mcrpg:deeper_wound_tier2_obj
                 type: mcrpg:mob_kill
-                required-progress: 80
+                required-progress: 60
                 config:
-                  entities:
-                    - SKELETON
+                  entities: [SKELETON, STRAY]
 
-  mcrpg:deeper_wound_t3:
+  mcrpg:deeper_wound_tier3:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -146,17 +151,16 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:dw_t3_kill
+            key: mcrpg:deeper_wound_tier3_stage
             objectives:
               objective:
-                key: mcrpg:dw_t3_kill_skeletons
+                key: mcrpg:deeper_wound_tier3_obj
                 type: mcrpg:mob_kill
-                required-progress: 180
+                required-progress: 100
                 config:
-                  entities:
-                    - SKELETON
+                  entities: [SKELETON, STRAY, BOGGED]
 
-  mcrpg:deeper_wound_t4:
+  mcrpg:deeper_wound_tier4:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -169,17 +173,22 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:dw_t4_kill
+            key: mcrpg:deeper_wound_tier4_stage
             objectives:
-              objective:
-                key: mcrpg:dw_t4_kill_skeletons
+              primary:
+                key: mcrpg:deeper_wound_tier4_primary
                 type: mcrpg:mob_kill
-                required-progress: 320
+                required-progress: 150
                 config:
-                  entities:
-                    - SKELETON
+                  entities: [SKELETON, STRAY]
+              secondary:
+                key: mcrpg:deeper_wound_tier4_secondary
+                type: mcrpg:mob_kill
+                required-progress: 40
+                config:
+                  entities: [BOGGED]
 
-  mcrpg:deeper_wound_t5:
+  mcrpg:deeper_wound_tier5:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -192,20 +201,26 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:dw_t5_kill
+            key: mcrpg:deeper_wound_tier5_stage
             objectives:
-              objective:
-                key: mcrpg:dw_t5_kill_skeletons
+              primary:
+                key: mcrpg:deeper_wound_tier5_primary
                 type: mcrpg:mob_kill
-                required-progress: 500
+                required-progress: 200
                 config:
-                  entities:
-                    - SKELETON
+                  entities: [SKELETON, STRAY, BOGGED]
+              secondary:
+                key: mcrpg:deeper_wound_tier5_secondary
+                type: mcrpg:mob_kill
+                required-progress: 50
+                config:
+                  entities: [WITHER_SKELETON]
 
   # ────────────────────────────────────────────
-  #  Vampire
+  #  Vampire  (undead / life drain)
+  #  Theme: core undead mobs, escalating to rare undead variants and Phantoms
   # ────────────────────────────────────────────
-  mcrpg:vampire_t2:
+  mcrpg:vampire_tier2:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -218,18 +233,16 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:vamp_t2_kill
+            key: mcrpg:vampire_tier2_stage
             objectives:
               objective:
-                key: mcrpg:vamp_t2_kill_undead
+                key: mcrpg:vampire_tier2_obj
                 type: mcrpg:mob_kill
-                required-progress: 80
+                required-progress: 60
                 config:
-                  entities:
-                    - ZOMBIE
-                    - DROWNED
+                  entities: [ZOMBIE, DROWNED]
 
-  mcrpg:vampire_t3:
+  mcrpg:vampire_tier3:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -242,18 +255,16 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:vamp_t3_kill
+            key: mcrpg:vampire_tier3_stage
             objectives:
               objective:
-                key: mcrpg:vamp_t3_kill_undead
+                key: mcrpg:vampire_tier3_obj
                 type: mcrpg:mob_kill
-                required-progress: 180
+                required-progress: 100
                 config:
-                  entities:
-                    - ZOMBIE
-                    - DROWNED
+                  entities: [ZOMBIE, DROWNED, HUSK]
 
-  mcrpg:vampire_t4:
+  mcrpg:vampire_tier4:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -266,18 +277,22 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:vamp_t4_kill
+            key: mcrpg:vampire_tier4_stage
             objectives:
-              objective:
-                key: mcrpg:vamp_t4_kill_undead
+              primary:
+                key: mcrpg:vampire_tier4_primary
                 type: mcrpg:mob_kill
-                required-progress: 320
+                required-progress: 150
                 config:
-                  entities:
-                    - ZOMBIE
-                    - DROWNED
+                  entities: [ZOMBIE, DROWNED, HUSK]
+              secondary:
+                key: mcrpg:vampire_tier4_secondary
+                type: mcrpg:mob_kill
+                required-progress: 35
+                config:
+                  entities: [ZOMBIE_VILLAGER, PHANTOM]
 
-  mcrpg:vampire_t5:
+  mcrpg:vampire_tier5:
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -290,13 +305,225 @@ quests:
         completion-mode: ALL
         stages:
           stage:
-            key: mcrpg:vamp_t5_kill
+            key: mcrpg:vampire_tier5_stage
+            objectives:
+              primary:
+                key: mcrpg:vampire_tier5_primary
+                type: mcrpg:mob_kill
+                required-progress: 200
+                config:
+                  entities: [ZOMBIE, DROWNED, HUSK]
+              secondary:
+                key: mcrpg:vampire_tier5_secondary
+                type: mcrpg:mob_kill
+                required-progress: 50
+                config:
+                  entities: [PHANTOM, ZOGLIN]
+
+  # ────────────────────────────────────────────
+  #  Serrated Strikes  (AoE / explosive)
+  #  Theme: burst and splash-damage mobs, escalating into Nether AoE threats
+  # ────────────────────────────────────────────
+  mcrpg:serrated_strikes_tier2:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:serrated_strikes
+        tier: 2
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:serrated_strikes_tier2_stage
             objectives:
               objective:
-                key: mcrpg:vamp_t5_kill_undead
+                key: mcrpg:serrated_strikes_tier2_obj
                 type: mcrpg:mob_kill
-                required-progress: 500
+                required-progress: 60
                 config:
-                  entities:
-                    - ZOMBIE
-                    - DROWNED
+                  entities: [CREEPER, SLIME]
+
+  mcrpg:serrated_strikes_tier3:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:serrated_strikes
+        tier: 3
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:serrated_strikes_tier3_stage
+            objectives:
+              objective:
+                key: mcrpg:serrated_strikes_tier3_obj
+                type: mcrpg:mob_kill
+                required-progress: 100
+                config:
+                  entities: [CREEPER, SLIME, MAGMA_CUBE]
+
+  mcrpg:serrated_strikes_tier4:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:serrated_strikes
+        tier: 4
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:serrated_strikes_tier4_stage
+            objectives:
+              primary:
+                key: mcrpg:serrated_strikes_tier4_primary
+                type: mcrpg:mob_kill
+                required-progress: 150
+                config:
+                  entities: [CREEPER, SLIME]
+              secondary:
+                key: mcrpg:serrated_strikes_tier4_secondary
+                type: mcrpg:mob_kill
+                required-progress: 40
+                config:
+                  entities: [MAGMA_CUBE, BLAZE]
+
+  mcrpg:serrated_strikes_tier5:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:serrated_strikes
+        tier: 5
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:serrated_strikes_tier5_stage
+            objectives:
+              primary:
+                key: mcrpg:serrated_strikes_tier5_primary
+                type: mcrpg:mob_kill
+                required-progress: 200
+                config:
+                  entities: [CREEPER, SLIME, MAGMA_CUBE]
+              secondary:
+                key: mcrpg:serrated_strikes_tier5_secondary
+                type: mcrpg:mob_kill
+                required-progress: 45
+                config:
+                  entities: [BLAZE, GHAST]
+
+  # ────────────────────────────────────────────
+  #  Rage Spike  (Nether aggression)
+  #  Theme: provocation-aggressive mobs, escalating deep into the Nether
+  # ────────────────────────────────────────────
+  mcrpg:rage_spike_tier2:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:rage_spike
+        tier: 2
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:rage_spike_tier2_stage
+            objectives:
+              objective:
+                key: mcrpg:rage_spike_tier2_obj
+                type: mcrpg:mob_kill
+                required-progress: 60
+                config:
+                  entities: [ENDERMAN, PIGLIN]
+
+  mcrpg:rage_spike_tier3:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:rage_spike
+        tier: 3
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:rage_spike_tier3_stage
+            objectives:
+              objective:
+                key: mcrpg:rage_spike_tier3_obj
+                type: mcrpg:mob_kill
+                required-progress: 100
+                config:
+                  entities: [ENDERMAN, PIGLIN, ZOMBIFIED_PIGLIN]
+
+  mcrpg:rage_spike_tier4:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:rage_spike
+        tier: 4
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:rage_spike_tier4_stage
+            objectives:
+              primary:
+                key: mcrpg:rage_spike_tier4_primary
+                type: mcrpg:mob_kill
+                required-progress: 150
+                config:
+                  entities: [ENDERMAN, PIGLIN]
+              secondary:
+                key: mcrpg:rage_spike_tier4_secondary
+                type: mcrpg:mob_kill
+                required-progress: 40
+                config:
+                  entities: [HOGLIN, ZOMBIFIED_PIGLIN]
+
+  mcrpg:rage_spike_tier5:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:rage_spike
+        tier: 5
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:rage_spike_tier5_stage
+            objectives:
+              primary:
+                key: mcrpg:rage_spike_tier5_primary
+                type: mcrpg:mob_kill
+                required-progress: 200
+                config:
+                  entities: [ENDERMAN, PIGLIN, ZOMBIFIED_PIGLIN]
+              secondary:
+                key: mcrpg:rage_spike_tier5_secondary
+                type: mcrpg:mob_kill
+                required-progress: 45
+                config:
+                  entities: [HOGLIN, GHAST]

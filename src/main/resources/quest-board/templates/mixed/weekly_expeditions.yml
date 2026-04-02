@@ -1,0 +1,282 @@
+# Weekly expedition templates — longer-running multi-day quests with
+# larger requirements and better rewards.
+#
+# VARIABLE NAMES use underscores (not hyphens) — the expression parser
+# treats '-' as subtraction.
+#
+# RANGE variables are scaled by: pool difficulty * rarity difficulty-multiplier.
+
+quest-templates:
+  # -------------------------------------------------------------------
+  # Weekly Mining Operation — large-scale mining expedition
+  # -------------------------------------------------------------------
+  mcrpg:template_weekly_mining_operation:
+    display:
+      name: "Weekly Mining Operation"
+      description: "A week-long mining expedition for serious miners"
+    display-name-route: quest-templates.weekly-mining-operation
+    board-eligible: true
+    scope: mcrpg:single_player
+    supported-rarities:
+      - mcrpg:rare
+      - mcrpg:epic
+      - mcrpg:legendary
+    variables:
+      target_blocks:
+        type: POOL
+        min-selections: 1
+        max-selections: 3
+        pools:
+          basic_stone:
+            difficulty: 1.0
+            weight:
+              mcrpg:rare: 15
+              mcrpg:epic: 5
+              mcrpg:legendary: 0
+            values:
+              - STONE
+              - COBBLESTONE
+              - ANDESITE
+              - DIORITE
+              - GRANITE
+          ores:
+            difficulty: 2.0
+            weight:
+              mcrpg:rare: 60
+              mcrpg:epic: 55
+              mcrpg:legendary: 20
+            values:
+              - COAL_ORE
+              - IRON_ORE
+              - COPPER_ORE
+              - DEEPSLATE_COAL_ORE
+              - DEEPSLATE_IRON_ORE
+              - DEEPSLATE_COPPER_ORE
+          rare_ores:
+            difficulty: 4.0
+            weight:
+              mcrpg:rare: 25
+              mcrpg:epic: 40
+              mcrpg:legendary: 80
+            values:
+              - GOLD_ORE
+              - DEEPSLATE_GOLD_ORE
+              - LAPIS_ORE
+              - DEEPSLATE_LAPIS_ORE
+              - REDSTONE_ORE
+              - DEEPSLATE_REDSTONE_ORE
+      block_count:
+        type: RANGE
+        base:
+          min: 128
+          max: 384
+    phases:
+      excavation:
+        completion-mode: ALL
+        stages:
+          mine_targets:
+            objectives:
+              break_blocks:
+                type: mcrpg:block_break
+                required-progress: block_count
+                config:
+                  blocks: target_blocks
+    rewards:
+      mining_xp:
+        type: mcrpg:experience
+        skill: MINING
+        amount: block_count * 15
+      diamonds:
+        type: mcrpg:item
+        item:
+          material: DIAMOND
+        amount: 3
+
+  # -------------------------------------------------------------------
+  # Weekly Combat Campaign — sustained combat over the week
+  # -------------------------------------------------------------------
+  mcrpg:template_weekly_combat_campaign:
+    display:
+      name: "Weekly Combat Campaign"
+      description: "A week-long campaign of monster slaying"
+    display-name-route: quest-templates.weekly-combat-campaign
+    board-eligible: true
+    scope: mcrpg:single_player
+    supported-rarities:
+      - mcrpg:rare
+      - mcrpg:epic
+      - mcrpg:legendary
+    variables:
+      target_mobs:
+        type: POOL
+        min-selections: 1
+        max-selections: 3
+        pools:
+          overworld_easy:
+            difficulty: 1.0
+            weight:
+              mcrpg:rare: 15
+              mcrpg:epic: 5
+              mcrpg:legendary: 0
+            values:
+              - ZOMBIE
+              - SKELETON
+              - SPIDER
+              - CREEPER
+          overworld_medium:
+            difficulty: 1.5
+            weight:
+              mcrpg:rare: 50
+              mcrpg:epic: 35
+              mcrpg:legendary: 15
+            values:
+              - HUSK
+              - STRAY
+              - DROWNED
+              - CAVE_SPIDER
+              - WITCH
+          nether_mobs:
+            difficulty: 2.5
+            weight:
+              mcrpg:rare: 25
+              mcrpg:epic: 40
+              mcrpg:legendary: 45
+            values:
+              - BLAZE
+              - PIGLIN_BRUTE
+              - WITHER_SKELETON
+              - HOGLIN
+          end_mobs:
+            difficulty: 3.0
+            weight:
+              mcrpg:rare: 10
+              mcrpg:epic: 20
+              mcrpg:legendary: 40
+            values:
+              - ENDERMAN
+              - SHULKER
+      kill_count:
+        type: RANGE
+        base:
+          min: 50
+          max: 150
+    phases:
+      campaign:
+        completion-mode: ALL
+        stages:
+          slay_targets:
+            objectives:
+              kill_mobs:
+                type: mcrpg:mob_kill
+                required-progress: kill_count
+                config:
+                  mobs: target_mobs
+    rewards:
+      swords_xp:
+        type: mcrpg:experience
+        skill: SWORDS
+        amount: kill_count * 40
+      xp_bottles:
+        type: mcrpg:item
+        item:
+          material: EXPERIENCE_BOTTLE
+        amount: 8
+
+  # -------------------------------------------------------------------
+  # Weekly Survivalist — multi-phase: mine, fight, and chop
+  # -------------------------------------------------------------------
+  mcrpg:template_weekly_survivalist:
+    display:
+      name: "Weekly Survivalist"
+      description: "Prove you can survive it all — mine, fight, and chop"
+    display-name-route: quest-templates.weekly-survivalist
+    board-eligible: true
+    scope: mcrpg:single_player
+    supported-rarities:
+      - mcrpg:epic
+      - mcrpg:legendary
+    variables:
+      ore_count:
+        type: RANGE
+        base:
+          min: 64
+          max: 192
+      mob_count:
+        type: RANGE
+        base:
+          min: 30
+          max: 80
+      log_count:
+        type: RANGE
+        base:
+          min: 48
+          max: 128
+    phases:
+      mining_phase:
+        completion-mode: ALL
+        stages:
+          mine_ores:
+            objectives:
+              break_ores:
+                type: mcrpg:block_break
+                required-progress: ore_count
+                config:
+                  blocks:
+                    - IRON_ORE
+                    - DEEPSLATE_IRON_ORE
+                    - GOLD_ORE
+                    - DEEPSLATE_GOLD_ORE
+                    - DIAMOND_ORE
+                    - DEEPSLATE_DIAMOND_ORE
+      combat_phase:
+        completion-mode: ALL
+        stages:
+          slay_mobs:
+            objectives:
+              kill_hostiles:
+                type: mcrpg:mob_kill
+                required-progress: mob_count
+                config:
+                  mobs:
+                    - ZOMBIE
+                    - SKELETON
+                    - CREEPER
+                    - SPIDER
+                    - BLAZE
+                    - ENDERMAN
+      woodcutting_phase:
+        completion-mode: ALL
+        stages:
+          chop_logs:
+            objectives:
+              break_logs:
+                type: mcrpg:block_break
+                required-progress: log_count
+                config:
+                  blocks:
+                    - OAK_LOG
+                    - BIRCH_LOG
+                    - SPRUCE_LOG
+                    - JUNGLE_LOG
+                    - DARK_OAK_LOG
+                    - ACACIA_LOG
+    rewards:
+      mining_xp:
+        type: mcrpg:experience
+        skill: MINING
+        amount: 3000
+      swords_xp:
+        type: mcrpg:experience
+        skill: SWORDS
+        amount: 3000
+      woodcutting_xp:
+        type: mcrpg:experience
+        skill: WOODCUTTING
+        amount: 3000
+      enchanted_pickaxe:
+        type: mcrpg:item
+        item:
+          material: DIAMOND_PICKAXE
+          enchantments:
+            EFFICIENCY: 3
+          amount: 1

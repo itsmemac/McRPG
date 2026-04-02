@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.configuration.file.localization.LocalizationKey;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
+import us.eunoians.mcrpg.gui.quest.ActiveQuestGui;
 import us.eunoians.mcrpg.gui.quest.QuestAbandonConfirmGui;
 import us.eunoians.mcrpg.gui.slot.McRPGSlot;
 import us.eunoians.mcrpg.quest.QuestManager;
@@ -41,7 +42,10 @@ public class QuestAbandonConfirmSlot implements McRPGSlot {
                     .manager(McRPGManagerKey.QUEST);
 
             questManager.abandonQuest(questInstance.getQuestUUID());
-            player.closeInventory();
+            ActiveQuestGui activeGui = new ActiveQuestGui(mcRPGPlayer);
+            McRPG.getInstance().registryAccess().registry(RegistryKey.MANAGER)
+                    .manager(McRPGManagerKey.GUI).trackPlayerGui(player, activeGui);
+            player.openInventory(activeGui.getInventory());
         });
         return true;
     }

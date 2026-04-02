@@ -1,0 +1,113 @@
+# Precision mining templates — targeting specific valuable ores.
+#
+# VARIABLE NAMES use underscores (not hyphens) — the expression parser
+# treats '-' as subtraction.
+#
+# RANGE variables are scaled by: pool difficulty * rarity difficulty-multiplier.
+
+quest-templates:
+  # -------------------------------------------------------------------
+  # Ore Hunter — target specific valuable ores by rarity
+  # -------------------------------------------------------------------
+  mcrpg:template_ore_hunter:
+    display:
+      name: "Ore Hunter"
+      description: "Seek out and mine valuable ores"
+    display-name-route: quest-templates.ore-hunter
+    board-eligible: true
+    scope: mcrpg:single_player
+    supported-rarities:
+      - mcrpg:common
+      - mcrpg:uncommon
+      - mcrpg:rare
+      - mcrpg:epic
+      - mcrpg:legendary
+    variables:
+      target_ores:
+        type: POOL
+        min-selections: 1
+        max-selections: 2
+        pools:
+          common_ores:
+            difficulty: 1.0
+            weight:
+              mcrpg:common: 80
+              mcrpg:uncommon: 50
+              mcrpg:rare: 15
+              mcrpg:epic: 5
+              mcrpg:legendary: 0
+            values:
+              - COAL_ORE
+              - DEEPSLATE_COAL_ORE
+              - COPPER_ORE
+              - DEEPSLATE_COPPER_ORE
+          mid_ores:
+            difficulty: 2.0
+            weight:
+              mcrpg:common: 15
+              mcrpg:uncommon: 40
+              mcrpg:rare: 55
+              mcrpg:epic: 35
+              mcrpg:legendary: 10
+            values:
+              - IRON_ORE
+              - DEEPSLATE_IRON_ORE
+              - LAPIS_ORE
+              - DEEPSLATE_LAPIS_ORE
+              - REDSTONE_ORE
+              - DEEPSLATE_REDSTONE_ORE
+          precious_ores:
+            difficulty: 4.0
+            weight:
+              mcrpg:common: 0
+              mcrpg:uncommon: 5
+              mcrpg:rare: 30
+              mcrpg:epic: 60
+              mcrpg:legendary: 90
+            values:
+              - GOLD_ORE
+              - DEEPSLATE_GOLD_ORE
+              - DIAMOND_ORE
+              - DEEPSLATE_DIAMOND_ORE
+              - EMERALD_ORE
+              - DEEPSLATE_EMERALD_ORE
+      ore_count:
+        type: RANGE
+        base:
+          min: 8
+          max: 32
+    phases:
+      main_hunt:
+        completion-mode: ALL
+        stages:
+          mine_ores:
+            objectives:
+              break_ores:
+                type: mcrpg:block_break
+                required-progress: ore_count
+                config:
+                  blocks: target_ores
+      bonus_phase:
+        condition:
+          rarity-at-least: mcrpg:epic
+        completion-mode: ALL
+        stages:
+          bonus_diamonds:
+            objectives:
+              mine_bonus_diamonds:
+                type: mcrpg:block_break
+                required-progress: 8
+                config:
+                  blocks:
+                    - DIAMOND_ORE
+                    - DEEPSLATE_DIAMOND_ORE
+    rewards:
+      mining_xp:
+        type: mcrpg:experience
+        skill: MINING
+        amount: ore_count * 60
+      diamond_reward:
+        type: mcrpg:item
+        item:
+          material: DIAMOND
+        amount: 1

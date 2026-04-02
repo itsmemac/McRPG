@@ -1,16 +1,22 @@
-# Generic, scalable ability upgrade quests (one per tierable ability).
+# Generic (formula-scaled) ability upgrade quests — one per tierable ability.
 #
-# These quests are intended to be REPEATABLE and scale their required progress using the `{tier}`
-# variable supplied at quest-start time (target tier = currentTier + 1).
+# These quests use the mcrpg:ability_upgrade_next_tier reward type, which upgrades
+# the ability to currentTier + 1 rather than a fixed tier. The required-progress
+# expression is evaluated at quest-start time with the {tier} variable set to the
+# target tier (i.e., currentTier + 1).
 #
-# Reward type `mcrpg:ability_upgrade_next_tier` upgrades the ability to the next tier on completion.
+# These fallback quests are NEVER used for tiers 2–5 by default because the
+# per-skill files (swords_upgrades.yml, mining_upgrades.yml, etc.) supply explicit
+# per-tier override quests that take precedence via the skill config. They exist as:
+#   - A safety net for any future tier beyond 5.
+#   - A simpler repeatable quest for server owners who prefer one quest per ability.
 #
-# Tier-specific override quests (e.g. `mcrpg:enhanced_bleed_tier3`) may be defined separately and
-# referenced via ability config if desired.
+# Target lists are the full superset of all tier-specific targets for the ability.
+# Formulas are tuned per skill group (see docs/design-principles/upgrade-quest-design-principles.md).
 
 quests:
   # ────────────────────────────────────────────
-  #  Swords
+  #  Swords  (mob_kill)  — formula: 15*(tier^2)
   # ────────────────────────────────────────────
   mcrpg:enhanced_bleed_upgrade:
     scope: mcrpg:single_player
@@ -27,11 +33,11 @@ quests:
             key: mcrpg:enhanced_bleed_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:enhanced_bleed_upgrade_objective
+                key: mcrpg:enhanced_bleed_upgrade_obj
                 type: mcrpg:mob_kill
-                required-progress: "20*(tier^2)"
+                required-progress: "15*(tier^2)"
                 config:
-                  entities: [SPIDER, CAVE_SPIDER]
+                  entities: [SPIDER, CAVE_SPIDER, WITCH, WITHER_SKELETON]
 
   mcrpg:deeper_wound_upgrade:
     scope: mcrpg:single_player
@@ -48,11 +54,11 @@ quests:
             key: mcrpg:deeper_wound_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:deeper_wound_upgrade_objective
+                key: mcrpg:deeper_wound_upgrade_obj
                 type: mcrpg:mob_kill
-                required-progress: "20*(tier^2)"
+                required-progress: "15*(tier^2)"
                 config:
-                  entities: [SKELETON, STRAY]
+                  entities: [SKELETON, STRAY, BOGGED, WITHER_SKELETON]
 
   mcrpg:vampire_upgrade:
     scope: mcrpg:single_player
@@ -69,11 +75,11 @@ quests:
             key: mcrpg:vampire_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:vampire_upgrade_objective
+                key: mcrpg:vampire_upgrade_obj
                 type: mcrpg:mob_kill
-                required-progress: "20*(tier^2)"
+                required-progress: "15*(tier^2)"
                 config:
-                  entities: [ZOMBIE, DROWNED, HUSK, ZOMBIE_VILLAGER]
+                  entities: [ZOMBIE, DROWNED, HUSK, ZOMBIE_VILLAGER, PHANTOM, ZOGLIN]
 
   mcrpg:serrated_strikes_upgrade:
     scope: mcrpg:single_player
@@ -90,11 +96,11 @@ quests:
             key: mcrpg:serrated_strikes_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:serrated_strikes_upgrade_objective
+                key: mcrpg:serrated_strikes_upgrade_obj
                 type: mcrpg:mob_kill
-                required-progress: "20*(tier^2)"
+                required-progress: "15*(tier^2)"
                 config:
-                  entities: [CREEPER, SPIDER]
+                  entities: [CREEPER, SLIME, MAGMA_CUBE, BLAZE, GHAST]
 
   mcrpg:rage_spike_upgrade:
     scope: mcrpg:single_player
@@ -111,14 +117,14 @@ quests:
             key: mcrpg:rage_spike_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:rage_spike_upgrade_objective
+                key: mcrpg:rage_spike_upgrade_obj
                 type: mcrpg:mob_kill
-                required-progress: "20*(tier^2)"
+                required-progress: "15*(tier^2)"
                 config:
-                  entities: [ENDERMAN, PIGLIN, ZOMBIFIED_PIGLIN]
+                  entities: [ENDERMAN, PIGLIN, ZOMBIFIED_PIGLIN, HOGLIN, GHAST]
 
   # ────────────────────────────────────────────
-  #  Mining
+  #  Mining  (block_break)  — formula: 20*(tier^2)
   # ────────────────────────────────────────────
   mcrpg:its_a_triple_upgrade:
     scope: mcrpg:single_player
@@ -135,11 +141,14 @@ quests:
             key: mcrpg:its_a_triple_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:its_a_triple_upgrade_objective
+                key: mcrpg:its_a_triple_upgrade_obj
                 type: mcrpg:block_break
                 required-progress: "20*(tier^2)"
                 config:
-                  blocks: [COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE]
+                  blocks: [COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE,
+                           IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE,
+                           REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE,
+                           DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE]
 
   mcrpg:remote_transfer_upgrade:
     scope: mcrpg:single_player
@@ -156,11 +165,13 @@ quests:
             key: mcrpg:remote_transfer_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:remote_transfer_upgrade_objective
+                key: mcrpg:remote_transfer_upgrade_obj
                 type: mcrpg:block_break
                 required-progress: "20*(tier^2)"
                 config:
-                  blocks: [IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE]
+                  blocks: [IRON_ORE, DEEPSLATE_IRON_ORE, GOLD_ORE, DEEPSLATE_GOLD_ORE,
+                           NETHER_GOLD_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE,
+                           DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE]
 
   mcrpg:ore_scanner_upgrade:
     scope: mcrpg:single_player
@@ -177,14 +188,15 @@ quests:
             key: mcrpg:ore_scanner_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:ore_scanner_upgrade_objective
+                key: mcrpg:ore_scanner_upgrade_obj
                 type: mcrpg:block_break
-                required-progress: "20*(tier^2)"
+                required-progress: "25*(tier^2)"
                 config:
-                  blocks: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE]
+                  blocks: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE,
+                           NETHER_QUARTZ_ORE, NETHER_GOLD_ORE, ANCIENT_DEBRIS]
 
   # ────────────────────────────────────────────
-  #  Woodcutting
+  #  Woodcutting  (block_break)  — formula: 20*(tier^2)
   # ────────────────────────────────────────────
   mcrpg:heavy_swing_upgrade:
     scope: mcrpg:single_player
@@ -201,11 +213,12 @@ quests:
             key: mcrpg:heavy_swing_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:heavy_swing_upgrade_objective
+                key: mcrpg:heavy_swing_upgrade_obj
                 type: mcrpg:block_break
                 required-progress: "20*(tier^2)"
                 config:
-                  blocks: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG]
+                  blocks: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, DARK_OAK_LOG, JUNGLE_LOG, ACACIA_LOG,
+                           MANGROVE_LOG, CHERRY_LOG, CRIMSON_STEM, WARPED_STEM]
 
   mcrpg:dryads_gift_upgrade:
     scope: mcrpg:single_player
@@ -222,11 +235,11 @@ quests:
             key: mcrpg:dryads_gift_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:dryads_gift_upgrade_objective
+                key: mcrpg:dryads_gift_upgrade_obj
                 type: mcrpg:block_break
                 required-progress: "20*(tier^2)"
                 config:
-                  blocks: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG]
+                  blocks: [JUNGLE_LOG, ACACIA_LOG, MANGROVE_LOG, CHERRY_LOG, BAMBOO_BLOCK]
 
   mcrpg:nymphs_vitality_upgrade:
     scope: mcrpg:single_player
@@ -243,14 +256,15 @@ quests:
             key: mcrpg:nymphs_vitality_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:nymphs_vitality_upgrade_objective
+                key: mcrpg:nymphs_vitality_upgrade_obj
                 type: mcrpg:block_break
                 required-progress: "20*(tier^2)"
                 config:
-                  blocks: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG, JUNGLE_LOG, ACACIA_LOG, DARK_OAK_LOG]
+                  blocks: [BIRCH_LOG, SPRUCE_LOG, DARK_OAK_LOG, MANGROVE_LOG,
+                           CRIMSON_STEM, WARPED_STEM]
 
   # ────────────────────────────────────────────
-  #  Herbalism
+  #  Herbalism  (block_break)  — formula: 20*(tier^2)
   # ────────────────────────────────────────────
   mcrpg:verdant_surge_upgrade:
     scope: mcrpg:single_player
@@ -267,11 +281,11 @@ quests:
             key: mcrpg:verdant_surge_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:verdant_surge_upgrade_objective
+                key: mcrpg:verdant_surge_upgrade_obj
                 type: mcrpg:block_break
                 required-progress: "20*(tier^2)"
                 config:
-                  blocks: [WHEAT, CARROTS, POTATOES, BEETROOTS, NETHER_WART]
+                  blocks: [WHEAT, CARROTS, POTATOES, BEETROOTS, MELON, PUMPKIN, NETHER_WART, COCOA]
 
   mcrpg:mass_harvest_upgrade:
     scope: mcrpg:single_player
@@ -288,8 +302,9 @@ quests:
             key: mcrpg:mass_harvest_upgrade_stage
             objectives:
               objective:
-                key: mcrpg:mass_harvest_upgrade_objective
+                key: mcrpg:mass_harvest_upgrade_obj
                 type: mcrpg:block_break
                 required-progress: "20*(tier^2)"
                 config:
-                  blocks: [WHEAT, CARROTS, POTATOES, BEETROOTS, NETHER_WART]
+                  blocks: [WHEAT, POTATOES, BEETROOTS, SUGAR_CANE, SWEET_BERRY_BUSH,
+                           NETHER_WART, CHORUS_PLANT]

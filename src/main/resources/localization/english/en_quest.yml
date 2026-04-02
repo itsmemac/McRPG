@@ -102,3 +102,46 @@ quest-reward-types:
   scalable-command:
     fallback-display: "Scaled Reward"
     amount-suffix: " (x<amount>)"
+  item:
+    fallback-display: "Item Reward"
+    amount-suffix: " (x<amount>)"
+
+# Display names for quest templates.
+# These are resolved via the 'display-name-route' field on each template definition.
+quest-templates:
+  # Combat
+  mob-slayer: "Mob Slayer"
+  undead-purge: "Undead Purge"
+  nether-warrior: "Nether Warrior"
+  trial-contender: "Trial Contender"
+  # Mining
+  mining-gather: "Mining Gather"
+  deepslate-miner: "Deepslate Miner"
+  ore-hunter: "Ore Hunter"
+  # Woodcutting
+  lumberjack: "Lumberjack"
+  deforestation: "Deforestation"
+  # Herbalism
+  crop-harvester: "Crop Harvester"
+  botanical-collector: "Botanical Collector"
+  # Mixed / Advanced
+  mine-and-fight: "Mine & Fight"
+  choose-path: "Choose Your Path"
+  lucky-strike: "Lucky Strike"
+  veteran-miner: "Veteran Miner"
+  daily-variety: "Daily Variety"
+  champion-challenge: "Champion Challenge"
+  # Weekly Expeditions
+  weekly-mining-operation: "Mining Operation"
+  weekly-combat-campaign: "Combat Campaign"
+  weekly-survivalist: "Survivalist"
+  # Legendary
+  legendary-master-prospector: "Master Prospector"
+  legendary-apex-predator: "Apex Predator"
+  legendary-jack-of-all-trades: "Jack of All Trades"
+  # Land
+  land-mining-effort: "Land Mining Effort"
+  land-defense: "Land Defense"
+  land-resource-drive: "Land Resource Drive"
+  land-weekly-excavation: "Land Weekly Excavation"
+  land-weekly-crusade: "Land Weekly Crusade"

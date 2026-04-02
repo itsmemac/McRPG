@@ -111,14 +111,26 @@ public class QuestBoardManager extends Manager<McRPG> {
     }
 
     private static final String[] DEFAULT_CATEGORY_RESOURCES = {
+            "quest-board/categories/shared-daily.yml",
+            "quest-board/categories/shared-weekly.yml",
             "quest-board/categories/personal-daily.yml",
-            "quest-board/categories/personal-weekly.yml"
+            "quest-board/categories/personal-weekly.yml",
+            "quest-board/categories/land-daily.yml",
+            "quest-board/categories/land-weekly.yml"
     };
 
     private static final String[] DEFAULT_TEMPLATE_RESOURCES = {
-            "quest-board/templates/daily_mining_templates.yml",
-            "quest-board/templates/daily_combat_templates.yml",
-            "quest-board/templates/mixed_templates.yml"
+            "quest-board/templates/combat/mob_slayer.yml",
+            "quest-board/templates/combat/nether_combat.yml",
+            "quest-board/templates/mining/ore_mining.yml",
+            "quest-board/templates/mining/precision_mining.yml",
+            "quest-board/templates/woodcutting/lumber.yml",
+            "quest-board/templates/herbalism/farming.yml",
+            "quest-board/templates/mixed/multi_skill.yml",
+            "quest-board/templates/mixed/advanced.yml",
+            "quest-board/templates/mixed/weekly_expeditions.yml",
+            "quest-board/templates/legendary/legendary_personal.yml",
+            "quest-board/templates/land/land_cooperative.yml"
     };
 
     public void initialize(@NotNull McRPG plugin) {
@@ -241,9 +253,12 @@ public class QuestBoardManager extends Manager<McRPG> {
         if (!categoriesDir.exists()) {
             categoriesDir.mkdirs();
         }
-        File templatesDir = new File(plugin.getDataFolder(), "quest-board/templates");
-        if (!templatesDir.exists()) {
-            templatesDir.mkdirs();
+        File templatesBaseDir = new File(plugin.getDataFolder(), "quest-board/templates");
+        for (String sub : new String[]{"combat", "mining", "woodcutting", "herbalism", "mixed", "legendary", "land"}) {
+            File dir = new File(templatesBaseDir, sub);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
         }
 
         for (String resource : DEFAULT_CATEGORY_RESOURCES) {
@@ -447,7 +462,7 @@ public class QuestBoardManager extends Manager<McRPG> {
 
                 Optional<SlotSelection> selection = questPool.selectForSlot(
                         rarity.getKey(), random, templateEngine, hcWeight, tmplWeight,
-                        refreshType, usedKeys);
+                        refreshType, usedKeys, category.getScopeProviderKey());
 
                 selection.ifPresent(sel -> {
                     NamespacedKey defKey = switch (sel) {

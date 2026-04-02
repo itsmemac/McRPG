@@ -75,6 +75,16 @@ Rarities define tiers of quest offerings with different weights, difficulty mult
 | `difficultyMultiplier` | Scales template variable ranges |
 | `rewardMultiplier` | Scales template reward amounts |
 
+**Default 5-tier system:**
+
+| Rarity | Weight | Difficulty | Reward | Display Material | Color |
+|--------|--------|-----------|--------|-----------------|-------|
+| Common | 50 | 1.0x | 1.0x | Paper | white |
+| Uncommon | 29 | 1.25x | 1.5x | Writable Book | green |
+| Rare | 15 | 1.75x | 2.5x | Enchanted Book (glowing) | aqua |
+| Epic | 5 | 2.5x | 4.0x | Amethyst Shard (glowing) | dark_purple |
+| Legendary | 1 | 3.5x | 6.0x | Nether Star (glowing) | gold |
+
 Rarities are configured in `quest-board/board.yml` under the `rarities` route and loaded by `ReloadableRarityConfig`. The registry also supports programmatic registration via `QuestRarityContentPack`.
 
 **Rarity rolling:** `QuestRarityRegistry.rollRarity(Random)` performs weighted random selection.
@@ -147,7 +157,23 @@ VISIBLE → ACCEPTED → COMPLETED
 
 ## 8. Board Categories
 
-Board slot categories control how offering slots are allocated across the board:
+Board slot categories control how offering slots are allocated across the board. Each category is configured in its own file under `quest-board/categories/` (one file per category).
+
+**Default 6 categories:**
+
+| Category | Visibility | Refresh | Description |
+|----------|-----------|---------|-------------|
+| `shared-daily` | `SHARED` | `DAILY` | Same daily quests visible to all players |
+| `shared-weekly` | `SHARED` | `WEEKLY` | Same weekly quests visible to all players |
+| `personal-daily` | `PERSONAL` | `DAILY` | Unique daily quests per player |
+| `personal-weekly` | `PERSONAL` | `WEEKLY` | Unique weekly quests per player |
+| `land-daily` | `SCOPED` | `DAILY` | Daily quests scoped to a Lands territory |
+| `land-weekly` | `SCOPED` | `WEEKLY` | Weekly quests scoped to a Lands territory |
+
+**Three visibility types:**
+- `SHARED` — all players see the same offerings (shared-daily, shared-weekly)
+- `PERSONAL` — each player gets unique offerings generated from a player-specific seed (personal-daily, personal-weekly)
+- `SCOPED` — offerings are generated per scope entity such as a Lands territory (land-daily, land-weekly)
 
 **`BoardSlotCategory` fields:**
 
@@ -162,7 +188,7 @@ Board slot categories control how offering slots are allocated across the board:
 | `requiredPermission` | Optional permission check for visibility |
 | `maxActivePerEntity` | Cap on active quests from this category per scope entity |
 
-Categories are configured in `quest-board/categories.yml` and managed by `BoardSlotCategoryRegistry`.
+Categories are managed by `BoardSlotCategoryRegistry`.
 
 ---
 
@@ -181,6 +207,10 @@ Categories are configured in `quest-board/categories.yml` and managed by `BoardS
 7. Duplicate definition keys within a rotation are excluded
 
 **Personal offerings:** Same process but with player-specific `Random` seed (`computeSeed(playerUUID, rotationEpoch, slotIndex)`) and `forPersonalGeneration` condition context.
+
+**Scope-aware filtering:** Templates are filtered by their `scope` field to match the board category's `scope-provider`. This prevents land-scoped templates from appearing on personal boards and vice versa.
+
+**Prerequisite evaluation:** Template-level prerequisites (e.g. `min-completions`) are checked during selection. Templates with player-dependent prerequisites are excluded from shared boards where no player context is available.
 
 ---
 
@@ -268,9 +298,10 @@ To add board offerings for a new group system (e.g. guilds):
 | File | Purpose |
 |------|---------|
 | `quest-board/board.yml` | Board settings, rarity definitions, rotation config, source weights |
-| `quest-board/categories.yml` | Board slot category definitions |
-| `quest-board/templates/*.yml` | Quest template definitions |
-| `quests/**/*.yml` | Hand-crafted quest definitions (board-eligible via `board-metadata`) |
+| `quest-board/categories/*.yml` | Board slot category definitions (one file per category) |
+| `quest-board/templates/{combat,mining,woodcutting,herbalism,mixed,legendary,land}/*.yml` | Quest template definitions organized in subdirectories |
+| `quest-board/quests/{daily,weekly,land,legendary}/*.yml` | Hand-crafted board quests |
+| `quests/**/*.yml` | Non-board quest definitions (upgrades, examples, etc.) |
 
 ---
 

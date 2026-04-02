@@ -97,15 +97,21 @@ gui:
     board-slot:
       display-item:
         material: OAK_SIGN
-        name: '<gold>Quest Board'
+        name: "<red>Quest Board"
         lore:
-          - '<gray>Browse and accept daily'
-          - '<gray>and weekly quests.'
-          - ''
-          - '<yellow>Click to open'
+          - '<gray>Click to browse and accept'
+          - '<gray>daily and weekly quests.'
   # This GUI shows the quest board offerings.
   quest-board:
     title: '<gold>Quest Board'
+    # Configure the slot players click to go back to the home gui.
+    # Remove this to use the common previous gui button instead.
+    previous-gui-button:
+      display-item:
+        name: "<red>Return to Home Menu</red>"
+        material: BARRIER
+        lore:
+          - '<gray>Click to return to the Home Menu</gray>'
     offering-lore:
       - '<gray>Rarity: <gold><rarity>'
       - '<gray>Category: <gold><category>'
@@ -261,12 +267,26 @@ gui:
   # This GUI shows the detailed breakdown of a quest's phases, stages and objectives.
   quest-detail-gui:
     title: '<gold>Quest Details'
+    # Context-specific back labels (sub-menu style: full title + sentence lore, like quest-history-gui).
     previous-gui-button:
-      display-item:
-        name: "<red>Back</red>"
-        material: BARRIER
-        lore:
-          - '<gray>Click to go back</gray>'
+      from-board:
+        display-item:
+          name: "<red>Return to Quest Board</red>"
+          material: BARRIER
+          lore:
+            - '<gray>Click to return to the quest board.</gray>'
+      from-history:
+        display-item:
+          name: "<red>Back to Quest History</red>"
+          material: BARRIER
+          lore:
+            - '<gray>Click to return to quest history.</gray>'
+      from-active:
+        display-item:
+          name: "<red>Back to Active Quests</red>"
+          material: BARRIER
+          lore:
+            - '<gray>Click to return to active quests.</gray>'
     # Overview header slot. Placeholders: <quest_name>, <quest_state>, <start_time>,
     # <end_time>, <expiration_time>, <completed_date>, <phase_total>
     overview-slot:

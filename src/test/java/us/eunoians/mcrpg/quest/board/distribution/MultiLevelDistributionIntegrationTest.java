@@ -14,7 +14,6 @@ import us.eunoians.mcrpg.util.McRPGMethods;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
@@ -160,12 +159,12 @@ public class MultiLevelDistributionIntegrationTest extends McRPGBaseTest {
 
             // Each level has its own contribution scope and reward
             QuestRewardType[] rewards = new QuestRewardType[4];
-            Map<UUID, Long>[] contributions = new Map[]{
+            List<Map<UUID, Long>> contributions = List.of(
                     Map.of(p1, 100L),             // objective: only p1
                     Map.of(p1, 60L, p2, 40L),     // stage: both
                     Map.of(p1, 70L, p2, 30L),     // phase: both
                     Map.of(p1, 50L, p2, 50L)      // quest: both
-            };
+            );
 
             for (int i = 0; i < 4; i++) {
                 rewards[i] = scalableReward();
@@ -178,7 +177,7 @@ public class MultiLevelDistributionIntegrationTest extends McRPGBaseTest {
                 RewardDistributionConfig config = new RewardDistributionConfig(
                         List.of(trackingTier(rewards[i])));
                 ContributionSnapshot snapshot = QuestContributionAggregator.toSnapshot(
-                        contributions[i], new HashSet<>(contributions[i].keySet()));
+                        contributions.get(i), new HashSet<>(contributions.get(i).keySet()));
                 var result = new QuestRewardDistributionResolver().resolve(
                         config, snapshot, null, rarityRegistry, typeRegistry);
 

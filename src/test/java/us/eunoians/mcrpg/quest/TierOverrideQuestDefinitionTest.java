@@ -58,10 +58,10 @@ public class TierOverrideQuestDefinitionTest extends McRPGBaseTest {
         }
     }
 
-    @DisplayName("Given tier override quest YAML, when loaded, then rewards use fixed-tier ability_upgrade")
+    @DisplayName("Given swords upgrade quest YAML, when loaded, then rewards use fixed-tier ability_upgrade")
     @Test
     public void tierOverrideQuests_useFixedTierReward() throws IOException {
-        String resourcePath = "quests/upgrades/tier_override_ability_upgrades.yml";
+        String resourcePath = "quests/upgrades/swords_upgrades.yml";
         try (InputStream in = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
             assertNotNull(in, "Missing classpath resource: " + resourcePath);
             String yaml = new String(in.readAllBytes(), StandardCharsets.UTF_8);
@@ -69,7 +69,7 @@ public class TierOverrideQuestDefinitionTest extends McRPGBaseTest {
             Path tempDir = Files.createTempDirectory("tier_override_test");
             tempDir.toFile().deleteOnExit();
             try {
-                File yamlFile = tempDir.resolve("tier_override.yml").toFile();
+                File yamlFile = tempDir.resolve("swords_upgrades.yml").toFile();
                 yamlFile.deleteOnExit();
                 Files.writeString(yamlFile.toPath(), yaml, StandardCharsets.UTF_8);
 
@@ -86,6 +86,37 @@ public class TierOverrideQuestDefinitionTest extends McRPGBaseTest {
                 Map<String, Object> cfg = reward.serializeConfig();
                 assertEquals("mcrpg:enhanced_bleed", cfg.get("ability"));
                 assertEquals(3, ((Number) cfg.get("tier")).intValue());
+            } finally {
+                deleteRecursively(tempDir.toFile());
+            }
+        }
+    }
+
+    @DisplayName("Given swords upgrade YAML, when T4 quest loaded, then stage has two independent objectives")
+    @Test
+    public void tierOverrideQuests_t4HasTwoObjectives() throws IOException {
+        String resourcePath = "quests/upgrades/swords_upgrades.yml";
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream(resourcePath)) {
+            assertNotNull(in, "Missing classpath resource: " + resourcePath);
+            String yaml = new String(in.readAllBytes(), StandardCharsets.UTF_8);
+
+            Path tempDir = Files.createTempDirectory("tier_override_t4_test");
+            tempDir.toFile().deleteOnExit();
+            try {
+                File yamlFile = tempDir.resolve("swords_upgrades.yml").toFile();
+                yamlFile.deleteOnExit();
+                Files.writeString(yamlFile.toPath(), yaml, StandardCharsets.UTF_8);
+
+                Map<NamespacedKey, QuestDefinition> defs = loader.loadQuestsFromDirectory(tempDir.toFile());
+
+                QuestDefinition def = defs.get(NamespacedKey.fromString("mcrpg:enhanced_bleed_tier4"));
+                assertNotNull(def);
+                assertEquals(1, def.getPhases().size());
+
+                var stages = def.getPhases().get(0).getStages();
+                assertEquals(1, stages.size());
+                assertEquals(2, stages.get(0).getObjectives().size(),
+                        "T4 quest stage should have two independent objectives");
             } finally {
                 deleteRecursively(tempDir.toFile());
             }

@@ -33,24 +33,38 @@ This guide walks you through creating and configuring quests for your server. No
 
 ```
 plugins/McRPG/
-├── quests/                          ← Your quest files go here
-│   ├── example_quest.yml            ← Shipped with the plugin
-│   ├── board/                       ← Hand-crafted board quests
-│   │   ├── daily_mining_quests.yml
-│   │   ├── daily_combat_quests.yml
-│   │   └── weekly_quests.yml
-│   └── upgrades/                    ← Ability upgrade quests (system-managed)
+├── quests/                              ← Non-board quest files
+│   ├── example_quest.yml
+│   └── upgrades/                        ← Ability upgrade quests (system-managed)
 ├── quest-board/
-│   ├── board.yml                    ← Board settings (rarities, rotation, limits)
-│   ├── categories/                  ← Slot categories (daily, weekly, etc.)
-│   └── templates/                   ← Template quest blueprints
+│   ├── board.yml                        ← Board settings (rarities, rotation, limits)
+│   ├── categories/                      ← Slot categories (one file per category)
+│   │   ├── shared-daily.yml
+│   │   ├── shared-weekly.yml
+│   │   ├── personal-daily.yml
+│   │   ├── personal-weekly.yml
+│   │   ├── land-daily.yml
+│   │   └── land-weekly.yml
+│   ├── templates/                       ← Template quest blueprints
+│   │   ├── combat/                      ← Combat templates
+│   │   ├── mining/                      ← Mining templates
+│   │   ├── woodcutting/                 ← Woodcutting templates
+│   │   ├── herbalism/                   ← Herbalism templates
+│   │   ├── mixed/                       ← Multi-skill and advanced templates
+│   │   ├── legendary/                   ← Legendary templates
+│   │   └── land/                        ← Land-scoped templates
+│   └── quests/                          ← Hand-crafted board quests
+│       ├── daily/                       ← Daily board quests
+│       ├── weekly/                      ← Weekly board quests
+│       ├── land/                        ← Land-scoped board quests
+│       └── legendary/                   ← Legendary board quests
 ```
 
 **How to reload after making changes:**
 
 Run `/mcrpg quest admin reload` in-game or from the console. You do not need to restart the server.
 
-**File format:** All quest files use `.yml` extension (YAML). Any `.yml` or `.yaml` file placed anywhere inside the `quests/` folder (including subfolders) is loaded automatically. You can organize files however you want — create subfolders by theme, skill, difficulty, etc.
+**File format:** All quest files use `.yml` extension (YAML). Any `.yml` or `.yaml` file placed inside the `quests/` or `quest-board/quests/` folders (including subfolders) is loaded automatically. You can organize files however you want — create subfolders by theme, skill, difficulty, etc.
 
 ---
 
@@ -271,7 +285,52 @@ rewards:
     base-amount: 3
 ```
 
-For a Common rarity quest with `reward-multiplier: 1.0`, the player gets 3 diamonds. For a Rare quest with `reward-multiplier: 2.0`, the player gets 6 diamonds. This only matters for board quests with rarities.
+For a Common rarity quest with `reward-multiplier: 1.0`, the player gets 3 diamonds. For a Rare quest with `reward-multiplier: 2.5`, the player gets 8 diamonds. This only matters for board quests with rarities.
+
+### Item Reward — `mcrpg:item`
+
+Gives the player a custom item with optional enchantments, name, lore, and glowing effect.
+
+```yaml
+rewards:
+  enchanted_pick:
+    type: mcrpg:item
+    item:
+      material: DIAMOND_PICKAXE
+      amount: 1
+      name: "<gold>Miner's Pickaxe"
+      lore:
+        - "<gray>A reward for dedicated miners"
+      enchantments:
+        efficiency: 3
+        unbreaking: 2
+      glowing: true
+```
+
+**Item fields:**
+
+| Field | Required | Default | Description |
+|-------|----------|---------|-------------|
+| `material` | yes | — | Minecraft material name (e.g. `DIAMOND_PICKAXE`, `GOLDEN_APPLE`) |
+| `amount` | no | 1 | Stack size (not scaled by rarity) |
+| `name` | no | — | Custom display name (supports MiniMessage formatting) |
+| `lore` | no | — | List of lore lines (supports MiniMessage) |
+| `enchantments` | no | — | Map of enchantment name to level (e.g. `efficiency: 3`) |
+| `glowing` | no | false | Whether the item has an enchantment shimmer |
+| `custom-model-data` | no | — | Custom model data for resource packs |
+
+For template quests, you can add a top-level `amount` field that scales with rarity:
+
+```yaml
+rewards:
+  scaled_diamonds:
+    type: mcrpg:item
+    amount: 5
+    item:
+      material: DIAMOND
+```
+
+At Common rarity (1.0x reward), the player gets 5 diamonds. At Rare (2.5x), they get 13.
 
 ### Where Rewards Can Go
 
@@ -588,7 +647,7 @@ Rarities are tiers that affect how hard a quest is and how good the rewards are.
 ```yaml
 rarities:
   COMMON:
-    weight: 60                  # Very likely to appear
+    weight: 50                  # Most likely to appear
     difficulty-multiplier: 1.0  # Normal difficulty
     reward-multiplier: 1.0      # Normal rewards
     display:
@@ -596,7 +655,7 @@ rarities:
       name-color: "<white>"     # Name color
 
   UNCOMMON:
-    weight: 25
+    weight: 29
     difficulty-multiplier: 1.25 # 25% harder
     reward-multiplier: 1.5      # 50% better rewards
     display:
@@ -604,19 +663,29 @@ rarities:
       name-color: "<green>"
 
   RARE:
-    weight: 10                  # Uncommon
-    difficulty-multiplier: 1.5
-    reward-multiplier: 2.0      # Double rewards
+    weight: 15
+    difficulty-multiplier: 1.75 # 75% harder
+    reward-multiplier: 2.5      # 2.5x rewards
     display:
       material: ENCHANTED_BOOK
       name-color: "<aqua>"
       settings:
         glowing: true           # Enchantment shimmer on the item
 
+  EPIC:
+    weight: 5
+    difficulty-multiplier: 2.5  # 2.5x difficulty
+    reward-multiplier: 4.0      # 4x rewards
+    display:
+      material: AMETHYST_SHARD
+      name-color: "<dark_purple>"
+      settings:
+        glowing: true
+
   LEGENDARY:
-    weight: 5                   # Very rare
-    difficulty-multiplier: 2.0  # Double difficulty
-    reward-multiplier: 3.0      # Triple rewards
+    weight: 1                   # Extremely rare
+    difficulty-multiplier: 3.5  # 3.5x difficulty
+    reward-multiplier: 6.0      # 6x rewards
     display:
       material: NETHER_STAR
       name-color: "<gold>"
@@ -625,9 +694,9 @@ rarities:
 ```
 
 **What the multipliers do:**
-- `difficulty-multiplier` scales objective targets in template quests. A template that normally asks for 32 blocks will ask for 64 at `2.0` difficulty.
-- `reward-multiplier` scales reward amounts in template quests. A template that normally gives 100 XP will give 300 XP at `3.0` reward multiplier.
-- `weight` controls how likely each rarity is to be rolled. Higher number = more common. In the example above, ~60% of quests will be Common, ~5% will be Legendary.
+- `difficulty-multiplier` scales objective targets in template quests. A template that normally asks for 32 blocks will ask for 112 at `3.5` difficulty (Legendary).
+- `reward-multiplier` scales reward amounts in template quests. A template that normally gives 100 XP will give 600 XP at `6.0` reward multiplier (Legendary).
+- `weight` controls how likely each rarity is to be rolled. Higher number = more common. In the example above, ~50% of quests will be Common, ~1% will be Legendary.
 
 These multipliers only apply to **template** quests. Hand-crafted quests use their exact configured values regardless of rarity.
 
@@ -651,34 +720,56 @@ These multipliers only apply to **template** quests. Hand-crafted quests use the
 
 Categories control **how many slots** appear on the board and **what type** of quests fill them. They're configured in `plugins/McRPG/quest-board/categories/` (one file per category).
 
+**Default 6 categories:**
+
+There are three visibility types:
+- **SHARED** — all players see the same offerings (used by `shared-daily`, `shared-weekly`)
+- **PERSONAL** — each player gets unique offerings generated from a player-specific seed (used by `personal-daily`, `personal-weekly`)
+- **SCOPED** — offerings are generated per scope entity such as a Lands territory (used by `land-daily`, `land-weekly`)
+
+**Example: `shared-daily.yml`**
+
+```yaml
+shared-daily:
+  visibility: SHARED            # Everyone sees the same quests
+  refresh-type: DAILY           # Refreshes every day
+  refresh-interval: 1d
+  completion-time: 1d           # Players get 1 day to complete after accepting
+  scope-provider: mcrpg:single_player
+  min: 3                        # At least 3 daily quest slots
+  max: 5                        # Up to 5 daily quest slots
+  chance-per-slot: 1.0          # 100% chance each slot is filled
+  priority: 10                  # Higher priority fills first
+```
+
 **Example: `personal-daily.yml`**
 
 ```yaml
 personal-daily:
-  visibility: SHARED          # Everyone sees the same quests
-  refresh-type: DAILY         # Refreshes every day
+  visibility: PERSONAL          # Unique quests per player
+  refresh-type: DAILY
   refresh-interval: 1d
-  completion-time: 1d         # Players get 1 day to complete after accepting
+  completion-time: 1d
   scope-provider: mcrpg:single_player
-  min: 3                      # At least 3 daily quest slots
-  max: 5                      # Up to 5 daily quest slots
-  chance-per-slot: 1.0        # 100% chance each slot is filled
-  priority: 10                # Higher priority fills first
+  min: 2
+  max: 3
+  chance-per-slot: 1.0
+  priority: 8
 ```
 
-**Example: `personal-weekly.yml`**
+**Example: `land-weekly.yml`**
 
 ```yaml
-personal-weekly:
-  visibility: SHARED
+land-weekly:
+  visibility: SCOPED            # Per scope entity (e.g. per land/territory)
   refresh-type: WEEKLY
   refresh-interval: 7d
   completion-time: 7d
-  scope-provider: mcrpg:single_player
+  scope-provider: mcrpg:land_scope    # Quests scoped to Lands territories
   min: 1
-  max: 3
-  chance-per-slot: 0.8        # 80% chance per slot (so sometimes fewer weeklies)
-  priority: 5
+  max: 2
+  chance-per-slot: 0.8
+  priority: 3
 ```
 
 **Key settings:**
@@ -687,6 +778,7 @@ personal-weekly:
 |---------|-------------|
 | `visibility` | `SHARED` = same for everyone, `PERSONAL` = unique per player, `SCOPED` = per group (e.g. per land) |
 | `refresh-type` | `DAILY` or `WEEKLY` — which rotation schedule to follow |
+| `scope-provider` | Which scope provider to use. Land categories use `mcrpg:land_scope` |
 | `min` / `max` | Range of quest slots this category contributes |
 | `chance-per-slot` | 0.0 to 1.0 — probability each slot actually generates a quest |
 | `priority` | Higher priority categories get their slots first |
@@ -749,6 +841,24 @@ quests:
 | `acceptance-cooldown` | none | How long before the same player can accept this quest again (e.g. `12h`) |
 
 **Remember:** Hand-crafted board quests use their exact configured values. The rarity's difficulty/reward multipliers do NOT affect them — those only affect template quests. The rarity is used for display purposes (icon, color, slot filtering).
+
+### Legendary One-Time Quests
+
+For special quests that should only be completable once per player and have a server-wide cooldown before they can appear again, combine `repeat-mode: ONCE` with a global acceptance cooldown:
+
+```yaml
+quests:
+  mcrpg:legendary_dragon_slayer:
+    repeat-mode: ONCE                    # One-time per player
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - legendary
+      acceptance-cooldown: 14d           # 14-day cooldown before anyone can accept again
+      cooldown-scope: GLOBAL             # Server-wide — once someone accepts, ALL players wait 14 days
+```
+
+This pattern is ideal for rare, prestigious quests on the legendary board — once a player completes it they can never accept it again, and the `GLOBAL` cooldown prevents it from being claimed by another player for 14 days.
 
 ---
 
@@ -965,6 +1075,8 @@ quest-templates:
       min-completions: 5    # Player must have completed 5+ quests first
     # ...
 ```
+
+**Board interaction:** Prerequisite gating is wired into the board system. Templates with prerequisites like `min-completions: 15` will only appear for players who have completed 15+ quests on the **personal** board (where player context is available). They will **never** appear on the shared board because there is no player context to evaluate the prerequisite against.
 
 ### Random Objective Selection
 

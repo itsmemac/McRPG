@@ -3,6 +3,7 @@ package us.eunoians.mcrpg.quest.board.template;
 import com.diamonddagger590.mccore.registry.Registry;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -96,6 +97,29 @@ public class QuestTemplateRegistry implements Registry<QuestTemplate> {
         return templates.values().stream()
                 .filter(QuestTemplate::isBoardEligible)
                 .filter(t -> t.getSupportedRarities().contains(rarityKey))
+                .toList();
+    }
+
+    /**
+     * Returns templates that are board-eligible, support the given rarity, and match
+     * the specified scope provider. When {@code scopeProviderKey} is {@code null}, no
+     * scope filtering is applied (all scopes are eligible).
+     * <p>
+     * This prevents land-scoped templates from being selected for personal/shared boards
+     * and vice versa.
+     *
+     * @param rarityKey        the rarity to filter by
+     * @param scopeProviderKey the scope provider key to filter by, or {@code null} to skip scope filtering
+     * @return an unmodifiable list of eligible templates matching scope and rarity
+     */
+    @NotNull
+    public List<QuestTemplate> getEligibleTemplates(@NotNull NamespacedKey rarityKey,
+                                                     @Nullable NamespacedKey scopeProviderKey) {
+        return templates.values().stream()
+                .filter(QuestTemplate::isBoardEligible)
+                .filter(t -> t.getSupportedRarities().contains(rarityKey))
+                .filter(t -> scopeProviderKey == null
+                        || t.getScopeProviderKey().equals(scopeProviderKey))
                 .toList();
     }
 

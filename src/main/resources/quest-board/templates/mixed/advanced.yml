@@ -1,40 +1,10 @@
-# Advanced templates demonstrating prerequisite gating, weighted objective
-# selection, and reward fallbacks (Phase 4 features).
+# Advanced templates — prerequisite gating, weighted objective selection,
+# and reward fallbacks.
 #
-# -----------------------------------------------------------------------
-# TEMPLATE AUTHORING GUIDE
-# -----------------------------------------------------------------------
+# VARIABLE NAMES use underscores (not hyphens) — the expression parser
+# treats '-' as subtraction.
 #
-# VARIABLE NAMES
-#   Declare variables under the 'variables' key. Variable names must use
-#   underscores (not hyphens) because the expression parser treats '-' as
-#   subtraction. Example: ore_count, not ore-count.
-#
-# EXPRESSION SYNTAX (required-progress and reward amount fields)
-#   Use bare variable names directly in expressions. Do NOT wrap them in
-#   curly braces or quotes — just write the variable name:
-#     required-progress: ore_count
-#     amount: ore_count * 8
-#   Supported operators: +  -  *  /  ^  %  ( )
-#   Results are rounded to the nearest whole number.
-#
-# VARIABLE SUBSTITUTION IN CONFIG BLOCKS
-#   To substitute a pool variable (e.g. a list of block/mob types) into an
-#   objective config, write the bare variable name as the value with no
-#   quotes and no braces:
-#     config:
-#       blocks: target_blocks     <- correct
-#       blocks: "{target_blocks}" <- WRONG — breaks substitution
-#
-# RANGE VARIABLE SCALING
-#   RANGE variables are scaled by: pool difficulty * rarity difficulty-multiplier.
-#   Higher rarity = larger difficulty multiplier = higher counts.
-#
-# VALID SKILL VALUES (for mcrpg:experience rewards)
-#   MINING, SWORDS, WOODCUTTING, HERBALISM
-#   (Plus any skills registered by third-party expansions.)
-#
-# -----------------------------------------------------------------------
+# RANGE variables are scaled by: pool difficulty * rarity difficulty-multiplier.
 
 quest-templates:
   # -------------------------------------------------------------------
@@ -49,6 +19,7 @@ quest-templates:
     scope: mcrpg:single_player
     supported-rarities:
       - mcrpg:rare
+      - mcrpg:epic
       - mcrpg:legendary
     prerequisite:
       min-completions: 5
@@ -76,7 +47,7 @@ quest-templates:
       mining_xp:
         type: mcrpg:experience
         skill: MINING
-        amount: ore_count * 8
+        amount: ore_count * 30
 
   # -------------------------------------------------------------------
   # Weighted objective selection: randomly selects 2 of 4 possible tasks
@@ -92,6 +63,7 @@ quest-templates:
       - mcrpg:common
       - mcrpg:uncommon
       - mcrpg:rare
+      - mcrpg:epic
     variables:
       amount:
         type: RANGE
@@ -105,7 +77,8 @@ quest-templates:
           random_tasks:
             objective-selection:
               mode: WEIGHTED_RANDOM
-              count: 2
+              min-count: 2
+              max-count: 2
             objectives:
               mine_stone:
                 type: mcrpg:block_break
@@ -143,7 +116,7 @@ quest-templates:
       variety_xp:
         type: mcrpg:experience
         skill: MINING
-        amount: amount * 5
+        amount: amount * 20
 
   # -------------------------------------------------------------------
   # Reward fallback: title command with XP fallback if already owned
@@ -157,6 +130,7 @@ quest-templates:
     scope: mcrpg:single_player
     supported-rarities:
       - mcrpg:rare
+      - mcrpg:epic
       - mcrpg:legendary
     variables:
       kill_count:
@@ -182,15 +156,11 @@ quest-templates:
                     - ENDERMAN
     rewards:
       champion_title:
-        # Commands run as console. Use {player} for the accepting player's name.
-        # The fallback reward is granted instead if the condition evaluates to true at grant time.
         type: mcrpg:command
         display: "Champion Title"
         commands:
           - "title grant {player} champion"
         fallback:
-          # If the condition evaluates to true at grant time, the fallback reward is granted instead.
-          # Here: if the player already has the champion permission, grant XP instead of the title.
           condition:
             permission: "mcrpg.title.champion"
           reward:
@@ -200,4 +170,4 @@ quest-templates:
       combat_xp:
         type: mcrpg:experience
         skill: SWORDS
-        amount: kill_count * 10
+        amount: kill_count * 40

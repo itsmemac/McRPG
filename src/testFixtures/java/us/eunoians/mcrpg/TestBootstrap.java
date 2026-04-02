@@ -5,8 +5,11 @@ import com.diamonddagger590.mccore.bootstrap.StartupProfile;
 import com.diamonddagger590.mccore.registry.RegistryAccess;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.util.TimeProvider;
+import dev.dejvokep.boostedyaml.block.implementation.Section;
+import dev.dejvokep.boostedyaml.route.Route;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.configuration.FileManager;
+import us.eunoians.mcrpg.gui.McRPGGuiManager;
 import us.eunoians.mcrpg.localization.McRPGLocalizationManager;
 import us.eunoians.mcrpg.quest.QuestManager;
 import us.eunoians.mcrpg.quest.board.distribution.RewardDistributionTypeRegistry;
@@ -28,6 +31,11 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 
@@ -55,7 +63,8 @@ public class TestBootstrap extends CoreBootstrap<McRPG> {
     public void start(@NotNull StartupProfile startupProfile) {
         RegistryAccess registryAccess = RegistryAccess.registryAccess();
         registryAccess.registry(RegistryKey.MANAGER).register(mock(FileManager.class));
-        registryAccess.registry(RegistryKey.MANAGER).register(mock(McRPGLocalizationManager.class));
+        registryAccess.registry(RegistryKey.MANAGER).register(buildLocalizationManagerMock());
+        registryAccess.registry(RegistryKey.MANAGER).register(mock(McRPGGuiManager.class));
 
         registryAccess.register(new QuestDefinitionRegistry());
         QuestScopeProviderRegistry scopeProviderRegistry = new QuestScopeProviderRegistry();
@@ -73,6 +82,24 @@ public class TestBootstrap extends CoreBootstrap<McRPG> {
         distTypeRegistry.register(new ParticipatedDistributionType());
         distTypeRegistry.register(new MembershipDistributionType());
         registryAccess.registry(RegistryKey.MANAGER).register(mock(QuestManager.class));
+    }
+
+    /**
+     * Builds a {@link McRPGLocalizationManager} mock whose {@code getLocalizedSection} calls return a
+     * stub {@link Section} that always yields each argument's declared default value. This prevents
+     * {@link com.diamonddagger590.mccore.builder.item.impl.ItemBuilder#from(Section)} from NPE-ing
+     * when GUI slots are painted during tests that open inventories.
+     */
+    @NotNull
+    private McRPGLocalizationManager buildLocalizationManagerMock() {
+        Section mockSection = mock(Section.class);
+        lenient().when(mockSection.getString(anyString(), anyString())).thenAnswer(inv -> inv.getArgument(1));
+        lenient().when(mockSection.getBoolean(anyString(), anyBoolean())).thenAnswer(inv -> inv.getArgument(1));
+        lenient().when(mockSection.getInt(anyString(), anyInt())).thenAnswer(inv -> inv.getArgument(1));
+
+        McRPGLocalizationManager mockLocalization = mock(McRPGLocalizationManager.class);
+        lenient().when(mockLocalization.getLocalizedSection(any(), any(Route.class))).thenReturn(mockSection);
+        return mockLocalization;
     }
 
     @Override

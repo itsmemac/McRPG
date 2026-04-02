@@ -29,7 +29,7 @@ alwaysApply: false
 - `PermissionCondition` — player permission check (player-dependent)
 - `CompletionPrerequisiteCondition` — quest completion count gate (player-dependent)
 
-Player-dependent conditions require a `ConditionContext` built via `forPersonalGeneration()` (with player UUID + completion history). During shared offering generation, `forTemplateGeneration()` is used and player-dependent conditions return `true` (include by default).
+Player-dependent conditions require a `ConditionContext` built via `forPersonalGeneration()` (with player UUID + completion history). During shared offering generation, `forTemplateGeneration()` is used and player-dependent conditions return `false` when player fields are absent, causing gated elements to be excluded from shared generation. Template-level prerequisites are evaluated during personal offering generation via `QuestPool.getEligibleTemplates()` with a `ConditionContext.forPrerequisiteCheck()` context; templates with prerequisites are excluded from shared boards entirely.
 
 Third-party conditions are registered via `TemplateConditionContentPack`.
 

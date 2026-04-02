@@ -26,32 +26,41 @@ quest-source-weights:
 # reward-multiplier: scales reward amounts (e.g., 100 XP becomes 200 XP)
 rarities:
   COMMON:
-    weight: 60
+    weight: 50
     difficulty-multiplier: 1.0
     reward-multiplier: 1.0
     display:
       material: PAPER
       name-color: "<white>"
   UNCOMMON:
-    weight: 25
+    weight: 29
     difficulty-multiplier: 1.25
     reward-multiplier: 1.5
     display:
       material: WRITABLE_BOOK
       name-color: "<green>"
   RARE:
-    weight: 10
-    difficulty-multiplier: 1.5
-    reward-multiplier: 2.0
+    weight: 15
+    difficulty-multiplier: 1.6
+    reward-multiplier: 2.5
     display:
       material: ENCHANTED_BOOK
       name-color: "<aqua>"
       settings:
         glowing: true
-  LEGENDARY:
+  EPIC:
     weight: 5
     difficulty-multiplier: 2.0
-    reward-multiplier: 3.0
+    reward-multiplier: 4.0
+    display:
+      material: AMETHYST_SHARD
+      name-color: "<dark_purple>"
+      settings:
+        glowing: true
+  LEGENDARY:
+    weight: 1
+    difficulty-multiplier: 2.75
+    reward-multiplier: 6.0
     display:
       material: NETHER_STAR
       name-color: "<gold>"

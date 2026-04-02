@@ -1,0 +1,153 @@
+# Woodcutting quest templates — log chopping and deforestation.
+#
+# VARIABLE NAMES use underscores (not hyphens) — the expression parser
+# treats '-' as subtraction.
+#
+# RANGE variables are scaled by: pool difficulty * rarity difficulty-multiplier.
+
+quest-templates:
+  # -------------------------------------------------------------------
+  # Lumberjack — pool-based log chopping
+  # -------------------------------------------------------------------
+  mcrpg:template_lumberjack:
+    display:
+      name: "Lumberjack"
+      description: "Chop down trees and gather logs"
+    display-name-route: quest-templates.lumberjack
+    board-eligible: true
+    scope: mcrpg:single_player
+    supported-rarities:
+      - mcrpg:common
+      - mcrpg:uncommon
+      - mcrpg:rare
+      - mcrpg:epic
+    variables:
+      target_logs:
+        type: POOL
+        min-selections: 1
+        max-selections: 3
+        pools:
+          common_logs:
+            difficulty: 1.0
+            weight:
+              mcrpg:common: 70
+              mcrpg:uncommon: 45
+              mcrpg:rare: 15
+              mcrpg:epic: 5
+            values:
+              - OAK_LOG
+              - BIRCH_LOG
+              - SPRUCE_LOG
+          exotic_logs:
+            difficulty: 1.5
+            weight:
+              mcrpg:common: 25
+              mcrpg:uncommon: 40
+              mcrpg:rare: 50
+              mcrpg:epic: 35
+            values:
+              - JUNGLE_LOG
+              - DARK_OAK_LOG
+              - ACACIA_LOG
+          rare_logs:
+            difficulty: 2.5
+            weight:
+              mcrpg:common: 0
+              mcrpg:uncommon: 10
+              mcrpg:rare: 35
+              mcrpg:epic: 60
+            values:
+              - MANGROVE_LOG
+              - CHERRY_LOG
+              - CRIMSON_STEM
+              - WARPED_STEM
+      log_count:
+        type: RANGE
+        base:
+          min: 32
+          max: 96
+    phases:
+      chop:
+        completion-mode: ALL
+        stages:
+          chop_logs:
+            objectives:
+              break_logs:
+                type: mcrpg:block_break
+                required-progress: log_count
+                config:
+                  blocks: target_logs
+    rewards:
+      woodcutting_xp:
+        type: mcrpg:experience
+        skill: WOODCUTTING
+        amount: log_count * 20
+
+  # -------------------------------------------------------------------
+  # Deforestation — 2-phase: chop logs then break leaves
+  # -------------------------------------------------------------------
+  mcrpg:template_deforestation:
+    display:
+      name: "Deforestation"
+      description: "Clear an area of trees — logs and leaves alike"
+    display-name-route: quest-templates.deforestation
+    board-eligible: true
+    scope: mcrpg:single_player
+    supported-rarities:
+      - mcrpg:uncommon
+      - mcrpg:rare
+      - mcrpg:epic
+    variables:
+      log_count:
+        type: RANGE
+        base:
+          min: 48
+          max: 128
+      leaf_count:
+        type: RANGE
+        base:
+          min: 64
+          max: 192
+    phases:
+      chop_phase:
+        completion-mode: ALL
+        stages:
+          chop_logs:
+            objectives:
+              break_logs:
+                type: mcrpg:block_break
+                required-progress: log_count
+                config:
+                  blocks:
+                    - OAK_LOG
+                    - BIRCH_LOG
+                    - SPRUCE_LOG
+                    - JUNGLE_LOG
+                    - DARK_OAK_LOG
+                    - ACACIA_LOG
+      leaf_phase:
+        completion-mode: ALL
+        stages:
+          clear_leaves:
+            objectives:
+              break_leaves:
+                type: mcrpg:block_break
+                required-progress: leaf_count
+                config:
+                  blocks:
+                    - OAK_LEAVES
+                    - BIRCH_LEAVES
+                    - SPRUCE_LEAVES
+                    - JUNGLE_LEAVES
+                    - DARK_OAK_LEAVES
+                    - ACACIA_LEAVES
+    rewards:
+      woodcutting_xp:
+        type: mcrpg:experience
+        skill: WOODCUTTING
+        amount: log_count * 20
+      sticks:
+        type: mcrpg:item
+        item:
+          material: STICK
+        amount: 16

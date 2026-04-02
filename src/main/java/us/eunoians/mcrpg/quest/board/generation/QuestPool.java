@@ -4,6 +4,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import us.eunoians.mcrpg.quest.board.template.condition.ConditionContext;
 import us.eunoians.mcrpg.quest.board.template.condition.QuestCompletionHistory;
 import us.eunoians.mcrpg.event.board.TemplateQuestGenerateEvent;
 import us.eunoians.mcrpg.quest.board.BoardMetadata;
@@ -109,6 +110,45 @@ public class QuestPool {
     }
 
     /**
+     * Gets templates eligible for a specific rolled rarity and scope. When
+     * {@code scopeProviderKey} is non-null, only templates with that scope are included
+     * (prevents land-scoped templates from appearing on personal/shared boards).
+     *
+     * @param rolledRarity     the rarity to filter by
+     * @param scopeProviderKey the scope to filter by, or {@code null} to skip scope filtering
+     * @return the list of eligible templates
+     */
+    @NotNull
+    public List<QuestTemplate> getEligibleTemplates(@NotNull NamespacedKey rolledRarity,
+                                                     @Nullable NamespacedKey scopeProviderKey) {
+        return templateRegistry.getEligibleTemplates(rolledRarity, scopeProviderKey);
+    }
+
+    /**
+     * Gets templates eligible for a specific rolled rarity and scope, filtering by
+     * template-level prerequisite conditions. Templates without a prerequisite are
+     * always included. Templates with a prerequisite are included only if a non-null
+     * context is provided and the prerequisite evaluates to {@code true}; when the
+     * context is {@code null} (shared generation), prerequisite-gated templates are
+     * excluded.
+     *
+     * @param rolledRarity     the rarity to filter by
+     * @param scopeProviderKey the scope to filter by, or {@code null} to skip scope filtering
+     * @param context          the condition context for prerequisite evaluation, or {@code null} for shared generation
+     * @return the list of eligible templates passing both scope and prerequisite checks
+     */
+    @NotNull
+    public List<QuestTemplate> getEligibleTemplates(@NotNull NamespacedKey rolledRarity,
+                                                     @Nullable NamespacedKey scopeProviderKey,
+                                                     @Nullable ConditionContext context) {
+        return templateRegistry.getEligibleTemplates(rolledRarity, scopeProviderKey).stream()
+                .filter(t -> t.getPrerequisite()
+                        .map(prereq -> context != null && prereq.evaluate(context))
+                        .orElse(true))
+                .toList();
+    }
+
+    /**
      * Attempts to generate a quest from a randomly selected eligible template.
      * Template generation failures are logged and return empty rather than propagating,
      * so a single broken template does not break the entire board.
@@ -123,7 +163,28 @@ public class QuestPool {
             @NotNull NamespacedKey rolledRarity,
             @NotNull Random random,
             @NotNull QuestTemplateEngine templateEngine) {
-        List<QuestTemplate> eligible = getEligibleTemplates(rolledRarity);
+        return generateFromTemplate(rolledRarity, random, templateEngine, null);
+    }
+
+    /**
+     * Attempts to generate a quest from a randomly selected eligible template, filtered to
+     * templates that match the given scope provider. When {@code scopeProviderKey} is non-null,
+     * only templates whose declared scope matches it are considered, preventing land-scoped
+     * templates from appearing on personal or shared boards.
+     *
+     * @param rolledRarity     the rolled rarity
+     * @param random           the random source
+     * @param templateEngine   the template engine to use for generation
+     * @param scopeProviderKey the scope to filter by, or {@code null} to skip scope filtering
+     * @return the generated result, or empty if no eligible templates or generation failed
+     */
+    @NotNull
+    public Optional<GeneratedQuestResult> generateFromTemplate(
+            @NotNull NamespacedKey rolledRarity,
+            @NotNull Random random,
+            @NotNull QuestTemplateEngine templateEngine,
+            @Nullable NamespacedKey scopeProviderKey) {
+        List<QuestTemplate> eligible = getEligibleTemplates(rolledRarity, scopeProviderKey);
         if (eligible.isEmpty()) return Optional.empty();
 
         QuestTemplate selected = eligible.get(random.nextInt(eligible.size()));
@@ -168,9 +229,38 @@ public class QuestPool {
             int templateWeight,
             @Nullable String refreshType,
             @NotNull Set<NamespacedKey> excludeKeys) {
+        return selectForSlot(rolledRarity, random, templateEngine, hcWeight, templateWeight,
+                refreshType, excludeKeys, null);
+    }
+
+    /**
+     * Scope-aware overload of {@link #selectForSlot(NamespacedKey, Random, QuestTemplateEngine, int, int, String, Set)}.
+     * When {@code scopeProviderKey} is non-null, only templates whose declared scope matches it are
+     * considered, preventing land-scoped templates from appearing on personal or shared boards.
+     *
+     * @param rolledRarity     the rarity rolled for this slot
+     * @param random           the random source
+     * @param templateEngine   the template engine for generating from templates
+     * @param hcWeight         the configured weight for hand-crafted quest selection
+     * @param templateWeight   the configured weight for template quest selection
+     * @param refreshType      the refresh type string (e.g. "DAILY") for filtering, or {@code null} to skip
+     * @param excludeKeys      definition keys already selected this rotation to prevent duplicates
+     * @param scopeProviderKey the scope to filter templates by, or {@code null} to skip scope filtering
+     * @return the selection result, or empty if no quest could be produced for this slot
+     */
+    @NotNull
+    public Optional<SlotSelection> selectForSlot(
+            @NotNull NamespacedKey rolledRarity,
+            @NotNull Random random,
+            @NotNull QuestTemplateEngine templateEngine,
+            int hcWeight,
+            int templateWeight,
+            @Nullable String refreshType,
+            @NotNull Set<NamespacedKey> excludeKeys,
+            @Nullable NamespacedKey scopeProviderKey) {
 
         List<NamespacedKey> hcEligible = getEligibleDefinitions(rolledRarity, refreshType, excludeKeys);
-        List<QuestTemplate> tmplEligible = getEligibleTemplates(rolledRarity);
+        List<QuestTemplate> tmplEligible = getEligibleTemplates(rolledRarity, scopeProviderKey);
 
         boolean hasHc = !hcEligible.isEmpty();
         boolean hasTmpl = !tmplEligible.isEmpty();
@@ -185,7 +275,7 @@ public class QuestPool {
             NamespacedKey selected = hcEligible.get(random.nextInt(hcEligible.size()));
             return Optional.of(new SlotSelection.HandCrafted(selected, rolledRarity));
         } else {
-            Optional<GeneratedQuestResult> generated = generateFromTemplate(rolledRarity, random, templateEngine);
+            Optional<GeneratedQuestResult> generated = generateFromTemplate(rolledRarity, random, templateEngine, scopeProviderKey);
             if (generated.isPresent() && !fireTemplateEventCancelled(generated.get(), rolledRarity)) {
                 return Optional.of(new SlotSelection.TemplateGenerated(generated.get(), rolledRarity));
             }
@@ -207,7 +297,7 @@ public class QuestPool {
             @NotNull QuestTemplateEngine templateEngine,
             int hcWeight,
             int templateWeight) {
-        return selectForSlot(rolledRarity, random, templateEngine, hcWeight, templateWeight, null, Set.of());
+        return selectForSlot(rolledRarity, random, templateEngine, hcWeight, templateWeight, null, Set.of(), null);
     }
 
     /**
@@ -233,9 +323,41 @@ public class QuestPool {
             int templateWeight,
             @Nullable UUID playerUUID,
             @Nullable QuestCompletionHistory completionHistory) {
+        return selectForSlot(rolledRarity, random, templateEngine, hcWeight, templateWeight,
+                playerUUID, completionHistory, null);
+    }
+
+    /**
+     * Scope-aware overload of {@link #selectForSlot(NamespacedKey, Random, QuestTemplateEngine, int, int, UUID, QuestCompletionHistory)}.
+     * When {@code scopeProviderKey} is non-null, only templates whose declared scope matches it are
+     * considered, preventing land-scoped templates from appearing on personal boards.
+     *
+     * @param rolledRarity       the rarity rolled for this slot
+     * @param random             the random source
+     * @param templateEngine     the template engine
+     * @param hcWeight           hand-crafted weight
+     * @param templateWeight     template weight
+     * @param playerUUID         the player UUID, or {@code null} for shared generation
+     * @param completionHistory  the completion history, or {@code null}
+     * @param scopeProviderKey   the scope to filter templates by, or {@code null} to skip scope filtering
+     * @return the selection result, or empty
+     */
+    @NotNull
+    public Optional<SlotSelection> selectForSlot(
+            @NotNull NamespacedKey rolledRarity,
+            @NotNull Random random,
+            @NotNull QuestTemplateEngine templateEngine,
+            int hcWeight,
+            int templateWeight,
+            @Nullable UUID playerUUID,
+            @Nullable QuestCompletionHistory completionHistory,
+            @Nullable NamespacedKey scopeProviderKey) {
 
         List<NamespacedKey> hcEligible = getEligibleDefinitions(rolledRarity, null, Set.of());
-        List<QuestTemplate> tmplEligible = getEligibleTemplates(rolledRarity);
+        ConditionContext prereqContext = (playerUUID != null && completionHistory != null)
+                ? ConditionContext.forPrerequisiteCheck(playerUUID, completionHistory)
+                : null;
+        List<QuestTemplate> tmplEligible = getEligibleTemplates(rolledRarity, scopeProviderKey, prereqContext);
 
         boolean hasHc = !hcEligible.isEmpty();
         boolean hasTmpl = !tmplEligible.isEmpty();
@@ -251,7 +373,7 @@ public class QuestPool {
             return Optional.of(new SlotSelection.HandCrafted(selected, rolledRarity));
         } else {
             Optional<GeneratedQuestResult> generated = generateFromTemplate(
-                    rolledRarity, random, templateEngine, playerUUID, completionHistory);
+                    rolledRarity, random, templateEngine, playerUUID, completionHistory, scopeProviderKey);
             if (generated.isPresent() && !fireTemplateEventCancelled(generated.get(), rolledRarity)) {
                 return Optional.of(new SlotSelection.TemplateGenerated(generated.get(), rolledRarity));
             }
@@ -265,7 +387,8 @@ public class QuestPool {
 
     /**
      * Overload of {@link #generateFromTemplate} that passes player context through
-     * to the template engine for player-dependent condition evaluation.
+     * to the template engine for player-dependent condition evaluation. Also filters
+     * templates by prerequisite using the player's completion history.
      */
     @NotNull
     private Optional<GeneratedQuestResult> generateFromTemplate(
@@ -274,7 +397,25 @@ public class QuestPool {
             @NotNull QuestTemplateEngine templateEngine,
             @Nullable UUID playerUUID,
             @Nullable QuestCompletionHistory completionHistory) {
-        List<QuestTemplate> eligible = getEligibleTemplates(rolledRarity);
+        return generateFromTemplate(rolledRarity, random, templateEngine, playerUUID, completionHistory, null);
+    }
+
+    /**
+     * Scope-aware overload of the private {@code generateFromTemplate} that also filters
+     * templates by the given scope provider key.
+     */
+    @NotNull
+    private Optional<GeneratedQuestResult> generateFromTemplate(
+            @NotNull NamespacedKey rolledRarity,
+            @NotNull Random random,
+            @NotNull QuestTemplateEngine templateEngine,
+            @Nullable UUID playerUUID,
+            @Nullable QuestCompletionHistory completionHistory,
+            @Nullable NamespacedKey scopeProviderKey) {
+        ConditionContext prereqContext = (playerUUID != null && completionHistory != null)
+                ? ConditionContext.forPrerequisiteCheck(playerUUID, completionHistory)
+                : null;
+        List<QuestTemplate> eligible = getEligibleTemplates(rolledRarity, scopeProviderKey, prereqContext);
         if (eligible.isEmpty()) return Optional.empty();
 
         QuestTemplate selected = eligible.get(random.nextInt(eligible.size()));

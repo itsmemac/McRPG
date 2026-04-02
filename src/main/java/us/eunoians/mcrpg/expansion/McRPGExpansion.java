@@ -63,6 +63,7 @@ import us.eunoians.mcrpg.quest.source.builtin.ManualQuestSource;
 import us.eunoians.mcrpg.quest.reward.builtin.AbilityUpgradeRewardType;
 import us.eunoians.mcrpg.quest.reward.builtin.CommandRewardType;
 import us.eunoians.mcrpg.quest.reward.builtin.ExperienceRewardType;
+import us.eunoians.mcrpg.quest.reward.builtin.ItemRewardType;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 import us.eunoians.mcrpg.setting.impl.DisableBonusExperienceConsumptionSetting;
 import us.eunoians.mcrpg.setting.impl.ExperienceDisplaySetting;
@@ -220,6 +221,7 @@ public final class McRPGExpansion extends ContentExpansion {
         pack.addContent(new AbilityUpgradeRewardType());
         pack.addContent(new AbilityUpgradeNextTierRewardType());
         pack.addContent(new ScalableCommandRewardType());
+        pack.addContent(new ItemRewardType());
         return pack;
     }
 

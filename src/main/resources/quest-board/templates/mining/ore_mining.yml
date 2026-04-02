@@ -1,39 +1,9 @@
-# Template-generated mining quests.
+# Mining quest templates — ore gathering and deepslate mining.
 #
-# -----------------------------------------------------------------------
-# TEMPLATE AUTHORING GUIDE
-# -----------------------------------------------------------------------
+# VARIABLE NAMES use underscores (not hyphens) — the expression parser
+# treats '-' as subtraction.
 #
-# VARIABLE NAMES
-#   Declare variables under the 'variables' key. Variable names must use
-#   underscores (not hyphens) because the expression parser treats '-' as
-#   subtraction. Example: block_count, not block-count.
-#
-# EXPRESSION SYNTAX (required-progress and reward amount fields)
-#   Use bare variable names directly in expressions. Do NOT wrap them in
-#   curly braces or quotes — just write the variable name:
-#     required-progress: block_count
-#     amount: block_count * 3
-#   Supported operators: +  -  *  /  ^  %  ( )
-#   Results are rounded to the nearest whole number.
-#
-# VARIABLE SUBSTITUTION IN CONFIG BLOCKS
-#   To substitute a pool variable (e.g. a list of block types) into an
-#   objective config, write the bare variable name as the value with no
-#   quotes and no braces:
-#     config:
-#       blocks: target_blocks     <- correct
-#       blocks: "{target_blocks}" <- WRONG — breaks substitution
-#
-# RANGE VARIABLE SCALING
-#   RANGE variables are scaled by: pool difficulty * rarity difficulty-multiplier.
-#   Higher rarity = larger difficulty multiplier = higher counts.
-#
-# VALID SKILL VALUES (for mcrpg:experience rewards)
-#   MINING, SWORDS, WOODCUTTING, HERBALISM
-#   (Plus any skills registered by third-party expansions.)
-#
-# -----------------------------------------------------------------------
+# RANGE variables are scaled by: pool difficulty * rarity difficulty-multiplier.
 
 quest-templates:
   # -------------------------------------------------------------------
@@ -50,6 +20,7 @@ quest-templates:
       - mcrpg:common
       - mcrpg:uncommon
       - mcrpg:rare
+      - mcrpg:epic
     variables:
       target_blocks:
         type: POOL
@@ -62,6 +33,7 @@ quest-templates:
               mcrpg:common: 80
               mcrpg:uncommon: 40
               mcrpg:rare: 10
+              mcrpg:epic: 5
             values:
               - STONE
               - COBBLESTONE
@@ -74,6 +46,7 @@ quest-templates:
               mcrpg:common: 10
               mcrpg:uncommon: 50
               mcrpg:rare: 70
+              mcrpg:epic: 60
             values:
               - COAL_ORE
               - IRON_ORE
@@ -87,6 +60,7 @@ quest-templates:
               mcrpg:common: 0
               mcrpg:uncommon: 10
               mcrpg:rare: 40
+              mcrpg:epic: 35
             values:
               - GOLD_ORE
               - DEEPSLATE_GOLD_ORE
@@ -114,7 +88,7 @@ quest-templates:
       mining_xp:
         type: mcrpg:experience
         skill: MINING
-        amount: block_count * 3
+        amount: block_count * 15
 
   # -------------------------------------------------------------------
   # Deepslate specialist — always deep mining, count varies
@@ -129,6 +103,7 @@ quest-templates:
     supported-rarities:
       - mcrpg:uncommon
       - mcrpg:rare
+      - mcrpg:epic
       - mcrpg:legendary
     variables:
       deepslate_count:
@@ -155,4 +130,4 @@ quest-templates:
       mining_xp:
         type: mcrpg:experience
         skill: MINING
-        amount: deepslate_count * 2
+        amount: deepslate_count * 10

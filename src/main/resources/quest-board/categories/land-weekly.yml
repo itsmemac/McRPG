@@ -1,0 +1,15 @@
+# Category for Lands-scoped weekly quests.
+# Larger cooperative objectives with better rewards for the whole land.
+land-weekly:
+  # SCOPED categories generate offerings per scope entity (e.g., one set per land).
+  visibility: SCOPED
+  refresh-type: WEEKLY
+  refresh-interval: 7d
+  completion-time: 10d
+  scope-provider: mcrpg:land_scope
+  max-active-per-entity: 1
+  min: 0
+  max: 1
+  chance-per-slot: 0.15
+  appearance-cooldown: 14d
+  priority: 3

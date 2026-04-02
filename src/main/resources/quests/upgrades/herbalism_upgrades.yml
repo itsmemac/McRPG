@@ -1,0 +1,217 @@
+# Ability upgrade quests for Herbalism abilities (tiers 2–5).
+#
+# T2/T3: Single objective. Crop/plant targets escalate in variety per tier.
+# T4/T5: Two independent objectives in one stage — both must complete.
+#         Primary = the ability's established crop theme.
+#         Secondary = a more exotic or rare plant on its own progress bar.
+#
+# See docs/design-principles/upgrade-quest-design-principles.md for full rationale.
+
+quests:
+  # ────────────────────────────────────────────
+  #  Verdant Surge  (basic crop acceleration)
+  #  Theme: core farm crops → varied produce → exotic/nether crops
+  # ────────────────────────────────────────────
+  mcrpg:verdant_surge_tier2:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:verdant_surge
+        tier: 2
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:verdant_surge_tier2_stage
+            objectives:
+              objective:
+                key: mcrpg:verdant_surge_tier2_obj
+                type: mcrpg:block_break
+                required-progress: 80
+                config:
+                  blocks: [WHEAT, CARROTS, POTATOES]
+
+  mcrpg:verdant_surge_tier3:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:verdant_surge
+        tier: 3
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:verdant_surge_tier3_stage
+            objectives:
+              objective:
+                key: mcrpg:verdant_surge_tier3_obj
+                type: mcrpg:block_break
+                required-progress: 120
+                config:
+                  blocks: [WHEAT, CARROTS, POTATOES, BEETROOTS]
+
+  mcrpg:verdant_surge_tier4:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:verdant_surge
+        tier: 4
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:verdant_surge_tier4_stage
+            objectives:
+              primary:
+                key: mcrpg:verdant_surge_tier4_primary
+                type: mcrpg:block_break
+                required-progress: 160
+                config:
+                  blocks: [WHEAT, CARROTS, POTATOES, BEETROOTS]
+              secondary:
+                key: mcrpg:verdant_surge_tier4_secondary
+                type: mcrpg:block_break
+                required-progress: 40
+                config:
+                  blocks: [MELON, PUMPKIN]
+
+  mcrpg:verdant_surge_tier5:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:verdant_surge
+        tier: 5
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:verdant_surge_tier5_stage
+            objectives:
+              primary:
+                key: mcrpg:verdant_surge_tier5_primary
+                type: mcrpg:block_break
+                required-progress: 220
+                config:
+                  blocks: [WHEAT, CARROTS, POTATOES, BEETROOTS, MELON, PUMPKIN]
+              secondary:
+                key: mcrpg:verdant_surge_tier5_secondary
+                type: mcrpg:block_break
+                required-progress: 50
+                config:
+                  blocks: [NETHER_WART, COCOA]
+
+  # ────────────────────────────────────────────
+  #  Mass Harvest  (bulk variety harvesting)
+  #  Theme: wide variety of harvestable plants, escalating to unusual/rare ones
+  # ────────────────────────────────────────────
+  mcrpg:mass_harvest_tier2:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:mass_harvest
+        tier: 2
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:mass_harvest_tier2_stage
+            objectives:
+              objective:
+                key: mcrpg:mass_harvest_tier2_obj
+                type: mcrpg:block_break
+                required-progress: 80
+                config:
+                  blocks: [WHEAT, POTATOES, BEETROOTS]
+
+  mcrpg:mass_harvest_tier3:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:mass_harvest
+        tier: 3
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:mass_harvest_tier3_stage
+            objectives:
+              objective:
+                key: mcrpg:mass_harvest_tier3_obj
+                type: mcrpg:block_break
+                required-progress: 120
+                config:
+                  blocks: [WHEAT, POTATOES, BEETROOTS, SUGAR_CANE]
+
+  mcrpg:mass_harvest_tier4:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:mass_harvest
+        tier: 4
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:mass_harvest_tier4_stage
+            objectives:
+              primary:
+                key: mcrpg:mass_harvest_tier4_primary
+                type: mcrpg:block_break
+                required-progress: 160
+                config:
+                  blocks: [WHEAT, POTATOES, BEETROOTS, SUGAR_CANE]
+              secondary:
+                key: mcrpg:mass_harvest_tier4_secondary
+                type: mcrpg:block_break
+                required-progress: 45
+                config:
+                  blocks: [SWEET_BERRY_BUSH]
+
+  mcrpg:mass_harvest_tier5:
+    scope: mcrpg:single_player
+    repeat-mode: ONCE
+    rewards:
+      upgrade:
+        type: mcrpg:ability_upgrade
+        ability: mcrpg:mass_harvest
+        tier: 5
+    phases:
+      phase:
+        completion-mode: ALL
+        stages:
+          stage:
+            key: mcrpg:mass_harvest_tier5_stage
+            objectives:
+              primary:
+                key: mcrpg:mass_harvest_tier5_primary
+                type: mcrpg:block_break
+                required-progress: 220
+                config:
+                  blocks: [WHEAT, POTATOES, BEETROOTS, SUGAR_CANE, SWEET_BERRY_BUSH]
+              secondary:
+                key: mcrpg:mass_harvest_tier5_secondary
+                type: mcrpg:block_break
+                required-progress: 50
+                config:
+                  blocks: [NETHER_WART, CHORUS_PLANT]

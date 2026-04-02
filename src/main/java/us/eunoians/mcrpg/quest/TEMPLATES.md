@@ -10,7 +10,7 @@ This document explains how quest templates work in McRPG: the variable system, c
 
 A `QuestTemplate` is a blueprint that generates unique `QuestDefinition` instances each time the board rotates. Unlike hand-crafted definitions (see [`QUEST-DEFINITIONS.md`](QUEST-DEFINITIONS.md)), templates use **variables**, **conditions**, and **weighted selection** to produce variety.
 
-Templates are loaded from YAML files in `plugins/McRPG/quest-board/templates/` and stored in the `QuestTemplateRegistry`.
+Templates are loaded from YAML files in `plugins/McRPG/quest-board/templates/` and stored in the `QuestTemplateRegistry`. Templates are organized in skill-based subdirectories: `plugins/McRPG/quest-board/templates/{combat,mining,woodcutting,herbalism,mixed,legendary,land}/`.
 
 ---
 
@@ -39,8 +39,10 @@ quest-templates:
     scope: mcrpg:single_player
     supported-rarities:
       - common
+      - uncommon
       - rare
       - epic
+      - legendary
     rarity-overrides:
       epic:
         difficulty-multiplier: 2.0
@@ -184,6 +186,8 @@ config:
 
 Rewards in templates use the same format as hand-crafted quests, with one addition: numeric `amount` fields can be variable expressions, and amounts are scaled by the rarity's `reward-multiplier`.
 
+The template engine scales **both** `amount` and `base-amount` fields by the rarity's `reward-multiplier`. This means `mcrpg:scalable_command` rewards correctly have their `base-amount` scaled at higher rarities, and the `mcrpg:item` reward type's top-level `amount` is also scaled. See [`REWARDS.md`](REWARDS.md) section 6 for the full reward-side perspective.
+
 ```yaml
 rewards:
   mining_xp:
@@ -258,6 +262,9 @@ See [`CONDITIONS.md`](CONDITIONS.md) for the full condition reference. All built
 ```
 1. Load          QuestTemplateConfigLoader → QuestTemplateRegistry
 2. Select        QuestPool picks template + rarity (weighted random)
+                   → scope-aware filtering (templates filtered by scope-provider match)
+                   → prerequisite evaluation (personal: checked against ConditionContext;
+                     shared: templates with player-dependent prerequisites excluded)
 3. Resolve       QuestTemplateEngine.resolveVariables()
                    → POOL selections + RANGE scaling → ResolvedVariableContext
 4. Filter        filterPhases → filterStages → filterObjectives
@@ -272,6 +279,22 @@ See [`CONDITIONS.md`](CONDITIONS.md) for the full condition reference. All built
 **Synthetic key format:** `mcrpg:gen_<template_key_suffix>_<8 hex chars>`
 
 **Deterministic seeding:** Personal offerings use `computeSeed(playerUUID, rotationEpoch, slotIndex)` so the same player sees the same offerings within a rotation.
+
+### 9.1 Scope-Aware Template Filtering
+
+During step 2 of the generation lifecycle, `QuestPool` filters templates by their `scope` field to match the board category's `scope-provider`. This ensures that templates only appear in categories where their scope is valid:
+
+- **Land-scoped templates** (e.g., `scope: mcrpg:land`) only appear in land categories.
+- **Personal templates** (e.g., `scope: mcrpg:single_player`) only appear in personal or shared categories.
+
+Templates whose scope does not match the category's scope-provider are excluded before any rarity or weight selection occurs.
+
+### 9.2 Prerequisite Evaluation During Selection
+
+Template-level `prerequisite:` conditions are now evaluated during board offering selection in `QuestPool`, not just at display time.
+
+- **Personal boards:** The player's completion history is available. `ConditionContext.forPrerequisiteCheck(playerUUID, history)` is used, so player-dependent conditions like `min-completions` are evaluated accurately against the specific player's data.
+- **Shared boards:** No player context is available during generation (using `forTemplateGeneration`). Templates with player-dependent prerequisites (like `min-completions: 15`) are excluded because the player-dependent conditions return `false` when the player UUID and history fields are null. This is intentional — it prevents prerequisite-gated templates (e.g., legendary templates requiring 15+ quest completions) from appearing on shared boards where no specific player's history can be checked.
 
 ---
 
@@ -294,7 +317,7 @@ On deserialization, objective types use `parseConfig(Section)` via a BoostedYAML
 
 Templates can be loaded from YAML or registered programmatically:
 
-**YAML:** Place files in `plugins/McRPG/quest-board/templates/` with `quest-templates:` top-level key.
+**YAML:** Place files in `plugins/McRPG/quest-board/templates/{skill-subdirectory}/` with `quest-templates:` top-level key. Skill-based subdirectories include `combat/`, `mining/`, `woodcutting/`, `herbalism/`, `mixed/`, `legendary/`, and `land/`.
 
 **ContentExpansion:** Return a `QuestTemplateContentPack` from `getExpansionContent()`:
 

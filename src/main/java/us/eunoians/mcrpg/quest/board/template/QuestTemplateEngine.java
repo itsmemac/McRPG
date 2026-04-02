@@ -415,8 +415,9 @@ public final class QuestTemplateEngine {
     /**
      * Resolves a reward config map by substituting variable references and evaluating
      * expression strings through {@link Parser}. The rarity reward multiplier is applied
-     * to any entry with key {@code "amount"} that resolves to a numeric value, whether
-     * from a direct variable reference, an evaluated expression, or a raw numeric literal.
+     * to any entry with key {@code "amount"} or {@code "base-amount"} (case-insensitive)
+     * that resolves to a numeric value, whether from a direct variable reference, an
+     * evaluated expression, or a raw numeric literal.
      *
      * @param templateConfig   the raw config map from the template reward definition
      * @param context          the resolved variable context providing variable values
@@ -447,7 +448,7 @@ public final class QuestTemplateEngine {
                 } else {
                     resolved.put(key, s);
                 }
-            } else if (value instanceof Number n && "amount".equals(key)) {
+            } else if (value instanceof Number n && ("amount".equalsIgnoreCase(key) || "base-amount".equalsIgnoreCase(key))) {
                 resolved.put(key, Math.round(n.doubleValue() * rewardMultiplier));
             } else {
                 resolved.put(key, value);
@@ -457,8 +458,9 @@ public final class QuestTemplateEngine {
     }
 
     /**
-     * Applies the rarity reward multiplier if the config key is {@code "amount"} and
-     * the value is numeric. Non-amount keys or non-numeric values pass through unchanged.
+     * Applies the rarity reward multiplier if the config key is {@code "amount"} or
+     * {@code "base-amount"} and the value is numeric. Non-matching keys or non-numeric
+     * values pass through unchanged.
      *
      * @param key        the config entry key
      * @param value      the resolved config value
@@ -467,7 +469,7 @@ public final class QuestTemplateEngine {
      */
     @NotNull
     private Object applyRewardMultiplier(@NotNull String key, @NotNull Object value, double multiplier) {
-        if ("amount".equals(key) && value instanceof Number n) {
+        if (("amount".equalsIgnoreCase(key) || "base-amount".equalsIgnoreCase(key)) && value instanceof Number n) {
             return Math.round(n.doubleValue() * multiplier);
         }
         return value;

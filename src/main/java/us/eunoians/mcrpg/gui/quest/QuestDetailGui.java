@@ -253,7 +253,13 @@ public class QuestDetailGui extends McRPGPaginatedGui {
             @NotNull
             @Override
             public Route getSpecificDisplayItemRoute() {
-                return LocalizationKey.QUEST_DETAIL_GUI_PREVIOUS_GUI_BUTTON_DISPLAY_ITEM;
+                if (boardPreview) {
+                    return LocalizationKey.QUEST_DETAIL_GUI_PREVIOUS_FROM_BOARD_BUTTON_DISPLAY_ITEM;
+                }
+                if (fromHistory) {
+                    return LocalizationKey.QUEST_DETAIL_GUI_PREVIOUS_FROM_HISTORY_BUTTON_DISPLAY_ITEM;
+                }
+                return LocalizationKey.QUEST_DETAIL_GUI_PREVIOUS_FROM_ACTIVE_BUTTON_DISPLAY_ITEM;
             }
         };
     }

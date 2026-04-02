@@ -123,10 +123,11 @@ public final class QuestRarity implements McRPGContent {
      * Applies this rarity's icon configuration to the given {@link ItemBuilder}.
      * If no icon section is configured, the builder is returned unchanged.
      * <p>
-     * Uses {@link ItemBuilder#from(Section, ItemBuilder)} so any key from
-     * {@link com.diamonddagger590.mccore.builder.item.ItemBuilderConfigurationKeys}
-     * present in the display section (e.g. {@code material}, {@code custom-model-data},
-     * {@code settings.glowing}) will be applied.
+     * If the display section contains a {@code material} key, the builder is first
+     * re-created from {@link ItemBuilder#from(Section)} so the material is applied
+     * (the two-argument overload used otherwise does not read {@code material}).
+     * All remaining keys (name, lore, glowing, enchantments, etc.) are then applied
+     * via {@link ItemBuilder#from(Section, ItemBuilder)}.
      *
      * @param builder the builder to configure
      * @return the same builder, possibly with icon settings applied
@@ -134,6 +135,9 @@ public final class QuestRarity implements McRPGContent {
     @NotNull
     public ItemBuilder configureIcon(@NotNull ItemBuilder builder) {
         if (iconSection != null) {
+            if (iconSection.contains("material")) {
+                return ItemBuilder.from(iconSection, ItemBuilder.from(iconSection));
+            }
             return ItemBuilder.from(iconSection, builder);
         }
         return builder;

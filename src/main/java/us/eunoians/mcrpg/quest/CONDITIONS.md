@@ -71,6 +71,8 @@ Evaluates to `true` if the rolled rarity is at least as rare as the specified mi
 |-----------|-----------------|------|
 | `rarity-at-least: epic` | `min-rarity` | `NamespacedKey` (bare key defaults to `mcrpg:`) |
 
+Valid rarity values in the 5-tier system: `common`, `uncommon`, `rare`, `epic`, `legendary`.
+
 Note: the shorthand key (`rarity-at-least`) and the `fromConfig` key (`min-rarity`) differ. Both work — shorthand is for YAML convenience, `fromConfig` is for explicit `type:` syntax and JSON round-trips.
 
 ### `permission`
@@ -219,6 +221,8 @@ The `type:` value is a `NamespacedKey` (lowercased). The entire section (includi
 
 The pattern: generation-context conditions (`chance`, `rarity-at-least`, `variable`) default to `true` when their context is missing, so they don't accidentally exclude content in non-generation evaluation sites. Player-context conditions (`permission`, `min-completions`) default to `false`.
 
+**Impact on shared board generation:** During shared board generation (using `forTemplateGeneration`), no player UUID or completion history is available. This means player-dependent conditions like `permission` and `min-completions` return `false` — not `true`. Templates gated by these conditions as prerequisites are therefore excluded from shared boards. This is the correct behavior: it prevents prerequisite-gated templates (e.g., legendary templates requiring 15+ quest completions) from appearing on shared boards where no specific player's history can be checked.
+
 ---
 
 ## 6. Where Conditions Are Evaluated
@@ -229,7 +233,10 @@ The pattern: generation-context conditions (`chance`, `rarity-at-least`, `variab
 
 ### Template prerequisites
 
-[`QuestTemplate.getPrerequisite()`](board/template/QuestTemplate.java) stores the optional prerequisite condition. It is intended to be checked during board offering selection to determine whether a template is eligible for a specific player.
+[`QuestTemplate.getPrerequisite()`](board/template/QuestTemplate.java) stores the optional prerequisite condition. Prerequisites are now actively wired into the board offering selection pipeline via `QuestPool`.
+
+- **Personal offering generation:** `ConditionContext.forPrerequisiteCheck(playerUUID, history)` is used, providing the player's UUID and completion history. Player-dependent conditions like `min-completions` are evaluated accurately.
+- **Shared board generation:** `QuestPool` uses `forTemplateGeneration` which has no player UUID. Player-dependent conditions (`permission`, `min-completions`) return `false` in this context, so templates with those prerequisites are excluded from the shared board.
 
 ### Reward fallbacks
 

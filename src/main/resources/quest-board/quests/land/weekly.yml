@@ -1,0 +1,261 @@
+# Weekly land quests for the quest board (scope: land).
+
+quests:
+  # -------------------------------------------------------------------
+  # Hard: Massive excavation — stone + ores
+  # -------------------------------------------------------------------
+  mcrpg:land_weekly_grand_excavation:
+    display:
+      name: "Grand Excavation"
+      description: "Excavate mountains of stone and ore for your land"
+      objectives:
+        land_weekly_break_stone: "Mine stone blocks"
+        land_weekly_break_ores: "Mine ore blocks"
+      rewards:
+        mining_xp: "Mining XP"
+        diamond_bonus: "Diamonds"
+    scope: mcrpg:land_scope
+    expiration: 10d
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:rare
+        - mcrpg:epic
+      supported-refresh-types:
+        - WEEKLY
+    rewards:
+      mining_xp:
+        type: mcrpg:experience
+        skill: MINING
+        amount: 25000
+      diamond_bonus:
+        type: mcrpg:item
+        item:
+          material: DIAMOND
+        amount: 8
+    phases:
+      stone:
+        completion-mode: ALL
+        stages:
+          mine_stone:
+            key: mcrpg:land_weekly_mine_stone
+            objectives:
+              break_stone:
+                key: mcrpg:land_weekly_break_stone
+                type: mcrpg:block_break
+                required-progress: 512
+                config:
+                  blocks:
+                    - STONE
+                    - COBBLESTONE
+                    - ANDESITE
+                    - DIORITE
+                    - GRANITE
+                    - DEEPSLATE
+                    - COBBLED_DEEPSLATE
+      ores:
+        completion-mode: ALL
+        stages:
+          mine_ores:
+            key: mcrpg:land_weekly_mine_ores
+            objectives:
+              break_ores:
+                key: mcrpg:land_weekly_break_ores
+                type: mcrpg:block_break
+                required-progress: 96
+                config:
+                  blocks:
+                    - IRON_ORE
+                    - DEEPSLATE_IRON_ORE
+                    - COPPER_ORE
+                    - DEEPSLATE_COPPER_ORE
+                    - GOLD_ORE
+                    - DEEPSLATE_GOLD_ORE
+                    - COAL_ORE
+                    - DEEPSLATE_COAL_ORE
+
+  # -------------------------------------------------------------------
+  # Hard: Defend the stronghold
+  # -------------------------------------------------------------------
+  mcrpg:land_weekly_stronghold_defense:
+    display:
+      name: "Stronghold Defense"
+      description: "Defend your land from waves of hostile mobs"
+      objectives:
+        land_weekly_slay_hostiles: "Slay hostile mobs"
+      rewards:
+        swords_xp: "Swords XP"
+        xp_bottle_bonus: "Experience Bottles"
+    scope: mcrpg:land_scope
+    expiration: 10d
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:rare
+        - mcrpg:epic
+      supported-refresh-types:
+        - WEEKLY
+    rewards:
+      swords_xp:
+        type: mcrpg:experience
+        skill: SWORDS
+        amount: 25000
+      xp_bottle_bonus:
+        type: mcrpg:item
+        item:
+          material: EXPERIENCE_BOTTLE
+        amount: 16
+    phases:
+      defend:
+        completion-mode: ALL
+        stages:
+          kill_hostiles:
+            key: mcrpg:land_weekly_kill_hostiles
+            objectives:
+              slay_hostiles:
+                key: mcrpg:land_weekly_slay_hostiles
+                type: mcrpg:mob_kill
+                required-progress: 200
+                config:
+                  mobs:
+                    - ZOMBIE
+                    - SKELETON
+                    - SPIDER
+                    - CREEPER
+                    - WITCH
+                    - ENDERMAN
+
+  # -------------------------------------------------------------------
+  # Very Hard: Nether raid — blazes + wither skeletons
+  # -------------------------------------------------------------------
+  mcrpg:land_weekly_nether_raid:
+    display:
+      name: "Nether Raid"
+      description: "Launch a coordinated raid into the Nether"
+      objectives:
+        land_weekly_slay_blazes: "Slay blazes"
+        land_weekly_slay_wither_skeletons: "Slay wither skeletons"
+      rewards:
+        swords_xp: "Swords XP"
+        blaze_rod_bonus: "Blaze Rods"
+        wither_skull: "Wither Skeleton Skull"
+    scope: mcrpg:land_scope
+    expiration: 10d
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:epic
+        - mcrpg:legendary
+      supported-refresh-types:
+        - WEEKLY
+    rewards:
+      swords_xp:
+        type: mcrpg:experience
+        skill: SWORDS
+        amount: 50000
+      blaze_rod_bonus:
+        type: mcrpg:item
+        item:
+          material: BLAZE_ROD
+        amount: 8
+      wither_skull:
+        type: mcrpg:item
+        item:
+          material: WITHER_SKELETON_SKULL
+          amount: 1
+    phases:
+      blazes:
+        completion-mode: ALL
+        stages:
+          kill_blazes:
+            key: mcrpg:land_weekly_raid_kill_blazes
+            objectives:
+              slay_blazes:
+                key: mcrpg:land_weekly_slay_blazes
+                type: mcrpg:mob_kill
+                required-progress: 60
+                config:
+                  mobs:
+                    - BLAZE
+      wither_skeletons:
+        completion-mode: ALL
+        stages:
+          kill_wither_skeletons:
+            key: mcrpg:land_weekly_raid_kill_wither
+            objectives:
+              slay_wither_skeletons:
+                key: mcrpg:land_weekly_slay_wither_skeletons
+                type: mcrpg:mob_kill
+                required-progress: 40
+                config:
+                  mobs:
+                    - WITHER_SKELETON
+
+  # -------------------------------------------------------------------
+  # Hard: Resource stockpile — logs + crops
+  # -------------------------------------------------------------------
+  mcrpg:land_weekly_resource_stockpile:
+    display:
+      name: "Resource Stockpile"
+      description: "Stockpile lumber and crops for your land"
+      objectives:
+        land_weekly_chop_logs: "Chop mixed logs"
+        land_weekly_break_crops: "Harvest mixed crops"
+      rewards:
+        woodcutting_xp: "Woodcutting XP"
+        herbalism_xp: "Herbalism XP"
+    scope: mcrpg:land_scope
+    expiration: 10d
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:rare
+        - mcrpg:epic
+      supported-refresh-types:
+        - WEEKLY
+    rewards:
+      woodcutting_xp:
+        type: mcrpg:experience
+        skill: WOODCUTTING
+        amount: 12000
+      herbalism_xp:
+        type: mcrpg:experience
+        skill: HERBALISM
+        amount: 12000
+    phases:
+      lumber:
+        completion-mode: ALL
+        stages:
+          chop_logs:
+            key: mcrpg:land_weekly_chop_logs
+            objectives:
+              chop_mixed_logs:
+                key: mcrpg:land_weekly_chop_logs
+                type: mcrpg:block_break
+                required-progress: 256
+                config:
+                  blocks:
+                    - OAK_LOG
+                    - BIRCH_LOG
+                    - SPRUCE_LOG
+                    - JUNGLE_LOG
+                    - DARK_OAK_LOG
+                    - ACACIA_LOG
+      crops:
+        completion-mode: ALL
+        stages:
+          harvest_crops:
+            key: mcrpg:land_weekly_harvest_crops
+            objectives:
+              break_crops:
+                key: mcrpg:land_weekly_break_crops
+                type: mcrpg:block_break
+                required-progress: 192
+                config:
+                  blocks:
+                    - WHEAT
+                    - CARROTS
+                    - POTATOES
+                    - BEETROOTS
+                    - MELON
+                    - PUMPKIN

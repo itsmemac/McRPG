@@ -10,7 +10,7 @@ This document explains how quest definitions are structured in McRPG: the YAML f
 
 A `QuestDefinition` is an immutable frame describing a quest's structure, rewards, scope, and repeat rules. Multiple `QuestInstance`s can be created from the same definition — the definition holds no per-player state.
 
-Definitions are loaded from YAML files in the `plugins/McRPG/quests/` directory. Any `.yml` or `.yaml` file in that directory (including subdirectories) is scanned automatically. Quest identity comes from the YAML key under `quests:`, not the file name.
+Definitions are loaded from YAML files in two directories: `plugins/McRPG/quests/` (non-board quests) and `plugins/McRPG/quest-board/quests/` (hand-crafted board quests). Any `.yml` or `.yaml` file in either directory (including subdirectories) is scanned automatically. Quest identity comes from the YAML key under `quests:`, not the file name.
 
 ---
 
@@ -204,8 +204,10 @@ board-metadata:
   board-eligible: true
   supported-rarities:
     - common
+    - uncommon
     - rare
     - epic
+    - legendary
   supported-refresh-types:
     - DAILY
     - WEEKLY
@@ -216,10 +218,10 @@ board-metadata:
 | Field | Default | Description |
 |-------|---------|-------------|
 | `board-eligible` | `true` | Whether the board can select this definition as an offering |
-| `supported-rarities` | *(all registered)* | Which rarities this definition can appear under. Bare keys default to `mcrpg:` namespace |
+| `supported-rarities` | *(all registered)* | Which rarities this definition can appear under (5-tier default: common, uncommon, rare, epic, legendary). Bare keys default to `mcrpg:` namespace |
 | `supported-refresh-types` | *(all)* | Which rotation types can include this definition (e.g. `DAILY`, `WEEKLY`) |
 | `acceptance-cooldown` | — | Duration before the same player can accept this quest again from the board |
-| `cooldown-scope` | — | `GLOBAL`, `PLAYER`, or `SCOPE_ENTITY` |
+| `cooldown-scope` | — | `GLOBAL`, `PLAYER`, or `SCOPE_ENTITY`. `GLOBAL` makes the cooldown apply server-wide — useful for legendary quests where acceptance should be gated for all players |
 
 ---
 
@@ -253,7 +255,12 @@ Keys are lowercased during parsing. Use underscores, not hyphens, in key paths (
 
 ## 10. Loading and Registration
 
-Quest definitions are loaded by [`QuestConfigLoader`](../configuration/QuestConfigLoader.java) from all `.yml`/`.yaml` files in `plugins/McRPG/quests/` (recursive scan, sorted by path).
+Quest definitions are loaded by [`QuestConfigLoader`](../configuration/QuestConfigLoader.java) from all `.yml`/`.yaml` files in two directories:
+
+1. `plugins/McRPG/quests/` — non-board quests (upgrades, examples, manually granted quests)
+2. `plugins/McRPG/quest-board/quests/` — hand-crafted board quests
+
+Both directories are scanned recursively, sorted by path.
 
 **Loading rules:**
 - Each file must have a top-level `quests:` map

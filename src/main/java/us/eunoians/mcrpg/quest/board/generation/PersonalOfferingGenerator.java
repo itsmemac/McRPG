@@ -90,7 +90,7 @@ public final class PersonalOfferingGenerator {
 
                 Optional<SlotSelection> selection = questPool.selectForSlot(
                         rarity.getKey(), slotRandom, templateEngine, hcWeight, templateWeight,
-                        playerUUID, completionHistory);
+                        playerUUID, completionHistory, category.getScopeProviderKey());
 
                 final int currentSlot = slotIndex;
                 Optional<BoardOffering> offering = selection.map(

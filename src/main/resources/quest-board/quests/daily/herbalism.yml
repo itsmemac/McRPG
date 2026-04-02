@@ -1,0 +1,131 @@
+# Daily herbalism quests for the quest board.
+
+quests:
+  # -------------------------------------------------------------------
+  # Easy: Harvest crops
+  # -------------------------------------------------------------------
+  mcrpg:daily_garden_tender:
+    display:
+      name: "Garden Tender"
+      description: "Harvest crops from the fields"
+      objectives:
+        daily_break_crops: "Harvest crops"
+      rewards:
+        herbalism_xp: "Herbalism XP"
+    scope: mcrpg:single_player
+    expiration: 24h
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:common
+        - mcrpg:uncommon
+      supported-refresh-types:
+        - DAILY
+    rewards:
+      herbalism_xp:
+        type: mcrpg:experience
+        skill: HERBALISM
+        amount: 1500
+    phases:
+      harvest:
+        completion-mode: ALL
+        stages:
+          harvest_crops:
+            key: mcrpg:daily_harvest_crops
+            objectives:
+              break_crops:
+                key: mcrpg:daily_break_crops
+                type: mcrpg:block_break
+                required-progress: 48
+                config:
+                  blocks:
+                    - WHEAT
+                    - CARROTS
+                    - POTATOES
+
+  # -------------------------------------------------------------------
+  # Medium: Forage mushrooms
+  # -------------------------------------------------------------------
+  mcrpg:daily_mushroom_forager:
+    display:
+      name: "Mushroom Forager"
+      description: "Harvest mushroom blocks from dark forests"
+      objectives:
+        daily_break_mushrooms: "Break mushroom blocks"
+      rewards:
+        herbalism_xp: "Herbalism XP"
+        stew_bonus: "Mushroom Stew"
+    scope: mcrpg:single_player
+    expiration: 24h
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:uncommon
+        - mcrpg:rare
+      supported-refresh-types:
+        - DAILY
+    rewards:
+      herbalism_xp:
+        type: mcrpg:experience
+        skill: HERBALISM
+        amount: 3000
+      stew_bonus:
+        type: mcrpg:item
+        item:
+          material: MUSHROOM_STEW
+        amount: 4
+    phases:
+      forage:
+        completion-mode: ALL
+        stages:
+          forage_mushrooms:
+            key: mcrpg:daily_forage_mushrooms
+            objectives:
+              break_mushrooms:
+                key: mcrpg:daily_break_mushrooms
+                type: mcrpg:block_break
+                required-progress: 24
+                config:
+                  blocks:
+                    - RED_MUSHROOM_BLOCK
+                    - BROWN_MUSHROOM_BLOCK
+
+  # -------------------------------------------------------------------
+  # Hard: Harvest nether wart
+  # -------------------------------------------------------------------
+  mcrpg:daily_nether_farm:
+    display:
+      name: "Nether Farm"
+      description: "Harvest nether wart from soul sand gardens"
+      objectives:
+        daily_break_nether_wart: "Harvest nether wart"
+      rewards:
+        herbalism_xp: "Herbalism XP"
+    scope: mcrpg:single_player
+    expiration: 24h
+    board-metadata:
+      board-eligible: true
+      supported-rarities:
+        - mcrpg:rare
+        - mcrpg:epic
+      supported-refresh-types:
+        - DAILY
+    rewards:
+      herbalism_xp:
+        type: mcrpg:experience
+        skill: HERBALISM
+        amount: 6000
+    phases:
+      harvest:
+        completion-mode: ALL
+        stages:
+          harvest_nether_wart:
+            key: mcrpg:daily_harvest_nether_wart
+            objectives:
+              break_nether_wart:
+                key: mcrpg:daily_break_nether_wart
+                type: mcrpg:block_break
+                required-progress: 32
+                config:
+                  blocks:
+                    - NETHER_WART
