@@ -3,7 +3,6 @@ package us.eunoians.mcrpg.listener.statistic;
 import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.statistic.PlayerStatisticData;
 import com.diamonddagger590.mccore.statistic.StatisticRegistry;
-import org.bukkit.NamespacedKey;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -12,7 +11,10 @@ import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.event.skill.PostSkillGainLevelEvent;
 import us.eunoians.mcrpg.event.skill.SkillGainExpEvent;
+import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
+import us.eunoians.mcrpg.skill.Skill;
+import us.eunoians.mcrpg.skill.SkillRegistry;
 import us.eunoians.mcrpg.skill.experience.context.McRPGGainReason;
 import us.eunoians.mcrpg.skill.impl.herbalism.Herbalism;
 import us.eunoians.mcrpg.skill.impl.mining.Mining;
@@ -28,10 +30,10 @@ import java.util.Optional;
  * listeners have modified or cancelled the event.
  * <p>
  * Per-skill statistics (experience and max level) are only incremented if the
- * corresponding statistic is registered. Native McRPG skills have their statistics
- * registered statically in {@link McRPGStatistic}. Third-party
- * {@link us.eunoians.mcrpg.expansion.ContentExpansion} plugins that add custom skills
- * must register their own per-skill statistics to have them tracked here. The global
+ * corresponding statistic is registered. Native McRPG skills register their per-skill
+ * statistics via {@link us.eunoians.mcrpg.skill.impl.McRPGSkill#getDefaultStatistics()}.
+ * Third-party {@link us.eunoians.mcrpg.expansion.ContentExpansion} plugins that add custom
+ * skills must register their own per-skill statistics to have them tracked here. The global
  * statistics ({@link McRPGStatistic#TOTAL_SKILL_EXPERIENCE} and
  * {@link McRPGStatistic#TOTAL_SKILL_LEVELS_GAINED}) are always incremented regardless
  * of skill origin.
@@ -55,12 +57,13 @@ public class SkillStatisticListener implements Listener {
 
         PlayerStatisticData stats = playerOptional.get().getStatisticData();
         StatisticRegistry statisticRegistry = McRPG.getInstance().registryAccess().registry(RegistryKey.STATISTIC);
+        SkillRegistry skillRegistry = McRPG.getInstance().registryAccess().registry(McRPGRegistryKey.SKILL);
         int experience = event.getExperience();
 
         // Per-skill XP — only if the third-party skill registered its statistic
-        NamespacedKey skillExpKey = McRPGStatistic.getSkillExperienceKey(event.getSkillKey());
-        if (statisticRegistry.getStatistic(skillExpKey).isPresent()) {
-            stats.incrementLong(skillExpKey, experience);
+        Skill skill = skillRegistry.getRegisteredSkill(event.getSkillKey());
+        if (statisticRegistry.getStatistic(skill.getExperienceStatisticKey()).isPresent()) {
+            stats.incrementLong(skill.getExperienceStatisticKey(), experience);
         }
 
         // Total XP across all skills (always tracked)
@@ -96,11 +99,12 @@ public class SkillStatisticListener implements Listener {
 
         PlayerStatisticData stats = playerOptional.get().getStatisticData();
         StatisticRegistry statisticRegistry = McRPG.getInstance().registryAccess().registry(RegistryKey.STATISTIC);
+        Skill skill = McRPG.getInstance().registryAccess().registry(McRPGRegistryKey.SKILL)
+                .getRegisteredSkill(event.getSkillKey());
 
         // Update per-skill max level — only if the third-party skill registered its statistic
-        NamespacedKey skillMaxLevelKey = McRPGStatistic.getSkillMaxLevelKey(event.getSkillKey());
-        if (statisticRegistry.getStatistic(skillMaxLevelKey).isPresent()) {
-            stats.setMaxInt(skillMaxLevelKey, event.getAfterLevel());
+        if (statisticRegistry.getStatistic(skill.getMaxLevelStatisticKey()).isPresent()) {
+            stats.setMaxInt(skill.getMaxLevelStatisticKey(), event.getAfterLevel());
         }
 
         // Increment total levels gained (always tracked)

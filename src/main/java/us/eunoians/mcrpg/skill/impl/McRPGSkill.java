@@ -1,11 +1,12 @@
 package us.eunoians.mcrpg.skill.impl;
 
+import com.diamonddagger590.mccore.statistic.SimpleStatistic;
 import com.diamonddagger590.mccore.statistic.Statistic;
+import com.diamonddagger590.mccore.statistic.StatisticType;
 import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.expansion.McRPGExpansion;
 import us.eunoians.mcrpg.skill.BaseSkill;
-import us.eunoians.mcrpg.statistic.McRPGStatistic;
 
 import java.util.Optional;
 import java.util.Set;
@@ -35,8 +36,10 @@ public abstract class McRPGSkill extends BaseSkill {
     @NotNull
     public Set<Statistic> getDefaultStatistics() {
         return Set.of(
-                McRPGStatistic.createSkillExperienceStatistic(getSkillKey(), getName()),
-                McRPGStatistic.createSkillMaxLevelStatistic(getSkillKey(), getName())
+                new SimpleStatistic(getExperienceStatisticKey(), StatisticType.LONG, 0L,
+                        getName() + " Experience", "Total " + getName() + " XP earned"),
+                new SimpleStatistic(getMaxLevelStatisticKey(), StatisticType.INT, 0,
+                        getName() + " Max Level", "Highest " + getName() + " level reached")
         );
     }
 }

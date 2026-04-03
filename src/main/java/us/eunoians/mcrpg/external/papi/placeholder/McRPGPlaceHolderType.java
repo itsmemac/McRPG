@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.ability.AbilityRegistry;
 import us.eunoians.mcrpg.ability.attribute.AbilityAttributeRegistry;
+import us.eunoians.mcrpg.ability.impl.type.ActiveAbility;
 import us.eunoians.mcrpg.external.papi.McRPGPapiExpansion;
 import us.eunoians.mcrpg.external.papi.placeholder.ability.AbilityTierPlaceholder;
 import us.eunoians.mcrpg.external.papi.placeholder.experience.BoostedExperiencePlaceholder;
@@ -15,6 +16,7 @@ import us.eunoians.mcrpg.external.papi.placeholder.skill.SkillCurrentLevelPlaceh
 import us.eunoians.mcrpg.external.papi.placeholder.skill.SkillRemainingExperiencePlaceholder;
 import us.eunoians.mcrpg.external.papi.placeholder.statistic.StatisticPlaceholder;
 import us.eunoians.mcrpg.registry.McRPGRegistryKey;
+import us.eunoians.mcrpg.skill.Skill;
 import us.eunoians.mcrpg.statistic.McRPGStatistic;
 
 /**
@@ -85,26 +87,27 @@ public enum McRPGPlaceHolderType {
 
         // Per-skill dynamic stats (XP + max level)
         mcRPG.registryAccess().registry(McRPGRegistryKey.SKILL)
-                .getRegisteredSkillKeys()
-                .forEach(skillKey -> {
-                    String skillName = skillKey.getKey();
+                .getRegisteredSkills()
+                .forEach((Skill skill) -> {
+                    String skillName = skill.getSkillKey().getKey();
                     mcRPGPapiExpansion.registerPlaceholder(
                             new StatisticPlaceholder("stat_" + skillName + "_xp",
-                                    McRPGStatistic.getSkillExperienceKey(skillKey)));
+                                    skill.getExperienceStatisticKey()));
                     mcRPGPapiExpansion.registerPlaceholder(
                             new StatisticPlaceholder("stat_" + skillName + "_max_level",
-                                    McRPGStatistic.getSkillMaxLevelKey(skillKey)));
+                                    skill.getMaxLevelStatisticKey()));
                 });
 
-        // Per-ability dynamic stats (activation count)
-        mcRPG.registryAccess().registry(McRPGRegistryKey.ABILITY)
-                .getAllAbilities()
-                .forEach(abilityKey -> {
-                    String abilityName = abilityKey.getKey();
-                    mcRPGPapiExpansion.registerPlaceholder(
-                            new StatisticPlaceholder("stat_" + abilityName + "_activations",
-                                    McRPGStatistic.getAbilityActivationKey(abilityKey)));
-                });
+        // Per-ability dynamic stats (activation count) — only registered for active abilities
+        AbilityRegistry abilityRegistry = mcRPG.registryAccess().registry(McRPGRegistryKey.ABILITY);
+        abilityRegistry.getAllAbilities().forEach(abilityKey -> {
+            if (abilityRegistry.getRegisteredAbility(abilityKey) instanceof ActiveAbility activeAbility) {
+                String abilityName = abilityKey.getKey();
+                mcRPGPapiExpansion.registerPlaceholder(
+                        new StatisticPlaceholder("stat_" + abilityName + "_activations",
+                                activeAbility.getActivationStatisticKey()));
+            }
+        });
     }),
     ;
 

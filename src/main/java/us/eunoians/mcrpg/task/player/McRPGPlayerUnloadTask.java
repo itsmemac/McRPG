@@ -53,7 +53,7 @@ public final class McRPGPlayerUnloadTask extends PlayerUnloadTask {
 
                 return true;
             } catch (SQLException e) {
-                e.printStackTrace();
+                getPlugin().getLogger().log(java.util.logging.Level.SEVERE, "Failed to save and unload player " + getCorePlayer().getUUID(), e);
                 return false;
             }
         }

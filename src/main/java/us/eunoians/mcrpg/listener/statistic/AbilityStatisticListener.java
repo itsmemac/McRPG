@@ -9,6 +9,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.McRPG;
+import us.eunoians.mcrpg.ability.impl.type.ActiveAbility;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.event.ability.AbilityActivateEvent;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
@@ -45,10 +46,12 @@ public class AbilityStatisticListener implements Listener {
         // Increment global ability activation count
         stats.incrementLong(McRPGStatistic.ABILITIES_ACTIVATED.getStatisticKey(), 1);
 
-        // Increment per-ability activation count — only if the expansion registered the statistic
-        NamespacedKey activationKey = McRPGStatistic.getAbilityActivationKey(event.getAbility().getAbilityKey());
-        if (statisticRegistry.getStatistic(activationKey).isPresent()) {
-            stats.incrementLong(activationKey, 1);
+        // Increment per-ability activation count — only if the ability is active and the expansion registered the statistic
+        if (event.getAbility() instanceof ActiveAbility activeAbility) {
+            NamespacedKey activationKey = activeAbility.getActivationStatisticKey();
+            if (statisticRegistry.getStatistic(activationKey).isPresent()) {
+                stats.incrementLong(activationKey, 1);
+            }
         }
     }
 }

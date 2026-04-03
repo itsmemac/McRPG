@@ -161,11 +161,34 @@ public interface Skill extends McRPGContent {
     boolean canEventLevelSkill(@NotNull Event event);
 
     /**
+     * Gets the {@link NamespacedKey} for the experience {@link Statistic} tracked for this skill.
+     * <p>
+     * The key follows the convention {@code <namespace>:<skill_key>_experience}, e.g.
+     * {@code mcrpg:mining_experience}.
+     *
+     * @return The {@link NamespacedKey} for this skill's experience statistic.
+     */
+    @NotNull
+    default NamespacedKey getExperienceStatisticKey() {
+        return new NamespacedKey(getPlugin(), getSkillKey().getKey() + "_experience");
+    }
+
+    /**
+     * Gets the {@link NamespacedKey} for the max level {@link Statistic} tracked for this skill.
+     * <p>
+     * The key follows the convention {@code <namespace>:<skill_key>_max_level}, e.g.
+     * {@code mcrpg:mining_max_level}.
+     *
+     * @return The {@link NamespacedKey} for this skill's max level statistic.
+     */
+    @NotNull
+    default NamespacedKey getMaxLevelStatisticKey() {
+        return new NamespacedKey(getPlugin(), getSkillKey().getKey() + "_max_level");
+    }
+
+    /**
      * Gets the default {@link Statistic} definitions that should be tracked for this skill.
      * <p>
-     * By default, this returns per-skill experience and max level statistics created via
-     * {@link us.eunoians.mcrpg.statistic.McRPGStatistic#createSkillExperienceStatistic(NamespacedKey, String)}
-     * and {@link us.eunoians.mcrpg.statistic.McRPGStatistic#createSkillMaxLevelStatistic(NamespacedKey, String)}.
      * Concrete skill implementations can override to add additional custom statistics.
      * <p>
      * <b>Important:</b> This method is a convenience helper — the returned statistics are

@@ -12,8 +12,18 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * All McRPG-tracked statistics, defined as constants. Follows the same pattern
- * as {@link us.eunoians.mcrpg.entity.player.McRPGSetting} for player settings.
+ * Global McRPG statistics defined as constants. These represent gameplay-wide
+ * totals that are not tied to a specific skill or ability.
+ * <p>
+ * Per-skill statistics (experience, max level) are derived from the {@link us.eunoians.mcrpg.skill.Skill}
+ * interface via {@link us.eunoians.mcrpg.skill.Skill#getExperienceStatisticKey()} and
+ * {@link us.eunoians.mcrpg.skill.Skill#getMaxLevelStatisticKey()}, and constructed in
+ * {@link us.eunoians.mcrpg.skill.impl.McRPGSkill#getDefaultStatistics()}.
+ * <p>
+ * Per-ability activation statistics are derived from the
+ * {@link us.eunoians.mcrpg.ability.impl.type.ActiveAbility} interface via
+ * {@link us.eunoians.mcrpg.ability.impl.type.ActiveAbility#getActivationStatisticKey()}, and
+ * constructed in {@link us.eunoians.mcrpg.ability.impl.type.ActiveAbility#getDefaultStatistics()}.
  * <p>
  * Statistics are registered during bootstrap via
  * {@link us.eunoians.mcrpg.expansion.content.StatisticContentPack} in the
@@ -106,101 +116,6 @@ public final class McRPGStatistic {
     }
 
     /**
-     * Gets the per-skill experience statistic key for a given skill key.
-     * <p>
-     * Example: {@code getSkillExperienceKey(Mining.MINING_KEY)} returns
-     * the key {@code mcrpg:mining_experience}.
-     *
-     * @param skillKey The skill's {@link NamespacedKey}.
-     * @return The experience statistic key for the given skill.
-     */
-    @NotNull
-    public static NamespacedKey getSkillExperienceKey(@NotNull NamespacedKey skillKey) {
-        return key(skillKey.getKey() + "_experience");
-    }
-
-    /**
-     * Gets the per-skill max level statistic key for a given skill key.
-     * <p>
-     * Example: {@code getSkillMaxLevelKey(Mining.MINING_KEY)} returns
-     * the key {@code mcrpg:mining_max_level}.
-     *
-     * @param skillKey The skill's {@link NamespacedKey}.
-     * @return The max level statistic key for the given skill.
-     */
-    @NotNull
-    public static NamespacedKey getSkillMaxLevelKey(@NotNull NamespacedKey skillKey) {
-        return key(skillKey.getKey() + "_max_level");
-    }
-
-    /**
-     * Gets the per-ability activation count statistic key for a given ability key.
-     * <p>
-     * Example: {@code getAbilityActivationKey(Bleed.BLEED_KEY)} returns
-     * the key {@code mcrpg:bleed_activations}.
-     *
-     * @param abilityKey The ability's {@link NamespacedKey}.
-     * @return The activation count statistic key for the given ability.
-     */
-    @NotNull
-    public static NamespacedKey getAbilityActivationKey(@NotNull NamespacedKey abilityKey) {
-        return key(abilityKey.getKey() + "_activations");
-    }
-
-    /**
-     * Creates a per-ability activation {@link Statistic} definition for dynamic registration.
-     * <p>
-     * The generated display name and description are admin-facing metadata — see the class-level
-     * javadoc for why they are not localized.
-     *
-     * @param abilityKey   The ability's {@link NamespacedKey}.
-     * @param displayName  The human-readable ability name (used for the statistic display name).
-     * @return A new {@link Statistic} for tracking the ability's activation count.
-     */
-    @NotNull
-    public static Statistic createAbilityActivationStatistic(@NotNull NamespacedKey abilityKey, @NotNull String displayName) {
-        return new SimpleStatistic(
-                getAbilityActivationKey(abilityKey),
-                StatisticType.LONG,
-                0L,
-                displayName + " Activations",
-                "Times " + displayName + " has been activated"
-        );
-    }
-
-    /**
-     * Creates a per-skill experience {@link Statistic} definition for dynamic registration.
-     * <p>
-     * The generated display name and description are admin-facing metadata — see the class-level
-     * javadoc for why they are not localized.
-     *
-     * @param skillKey    The skill's {@link NamespacedKey}.
-     * @param displayName The human-readable skill name (used for the statistic display name).
-     * @return A new {@link Statistic} for tracking the skill's total experience earned.
-     */
-    @NotNull
-    public static Statistic createSkillExperienceStatistic(@NotNull NamespacedKey skillKey, @NotNull String displayName) {
-        return longStat(skillKey.getKey() + "_experience",
-                displayName + " Experience", "Total " + displayName + " XP earned");
-    }
-
-    /**
-     * Creates a per-skill max level {@link Statistic} definition for dynamic registration.
-     * <p>
-     * The generated display name and description are admin-facing metadata — see the class-level
-     * javadoc for why they are not localized.
-     *
-     * @param skillKey    The skill's {@link NamespacedKey}.
-     * @param displayName The human-readable skill name (used for the statistic display name).
-     * @return A new {@link Statistic} for tracking the skill's highest level reached.
-     */
-    @NotNull
-    public static Statistic createSkillMaxLevelStatistic(@NotNull NamespacedKey skillKey, @NotNull String displayName) {
-        return intStat(skillKey.getKey() + "_max_level",
-                displayName + " Max Level", "Highest " + displayName + " level reached");
-    }
-
-    /**
      * Creates a {@link NamespacedKey} under the McRPG namespace. Uses the deprecated
      * {@code NamespacedKey(String, String)} constructor because these are static constants
      * initialized before a {@link org.bukkit.plugin.Plugin} instance is available.
@@ -224,21 +139,7 @@ public final class McRPGStatistic {
      * @return A new {@link Statistic} of type {@link StatisticType#LONG}.
      */
     @NotNull
-    static Statistic longStat(@NotNull String key, @NotNull String displayName, @NotNull String description) {
+    private static Statistic longStat(@NotNull String key, @NotNull String displayName, @NotNull String description) {
         return new SimpleStatistic(key(key), StatisticType.LONG, 0L, displayName, description);
-    }
-
-    /**
-     * Creates a {@link StatisticType#INT INT} statistic with a default value of {@code 0}
-     * under the McRPG namespace.
-     *
-     * @param key         The key portion of the {@link NamespacedKey}.
-     * @param displayName The admin-facing display name.
-     * @param description The admin-facing description.
-     * @return A new {@link Statistic} of type {@link StatisticType#INT}.
-     */
-    @NotNull
-    static Statistic intStat(@NotNull String key, @NotNull String displayName, @NotNull String description) {
-        return new SimpleStatistic(key(key), StatisticType.INT, 0, displayName, description);
     }
 }

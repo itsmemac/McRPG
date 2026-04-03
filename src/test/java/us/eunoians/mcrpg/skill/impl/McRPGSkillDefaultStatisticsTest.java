@@ -5,6 +5,7 @@ import com.diamonddagger590.mccore.registry.RegistryKey;
 import com.diamonddagger590.mccore.statistic.Statistic;
 import com.diamonddagger590.mccore.statistic.StatisticType;
 import dev.dejvokep.boostedyaml.YamlDocument;
+import org.bukkit.NamespacedKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,6 @@ import us.eunoians.mcrpg.configuration.file.skill.MiningConfigFile;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 import us.eunoians.mcrpg.skill.SkillRegistry;
 import us.eunoians.mcrpg.skill.impl.mining.Mining;
-import us.eunoians.mcrpg.statistic.McRPGStatistic;
 
 import java.util.List;
 import java.util.Set;
@@ -56,7 +56,7 @@ public class McRPGSkillDefaultStatisticsTest extends McRPGBaseTest {
         Set<Statistic> stats = mining.getDefaultStatistics();
 
         boolean hasExperience = stats.stream().anyMatch(s ->
-                s.getStatisticKey().equals(McRPGStatistic.getSkillExperienceKey(mining.getSkillKey()))
+                s.getStatisticKey().equals(mining.getExperienceStatisticKey())
                         && s.getStatisticType() == StatisticType.LONG
         );
         assertTrue(hasExperience, "Expected an experience statistic for the mining skill");
@@ -68,10 +68,22 @@ public class McRPGSkillDefaultStatisticsTest extends McRPGBaseTest {
         Set<Statistic> stats = mining.getDefaultStatistics();
 
         boolean hasMaxLevel = stats.stream().anyMatch(s ->
-                s.getStatisticKey().equals(McRPGStatistic.getSkillMaxLevelKey(mining.getSkillKey()))
+                s.getStatisticKey().equals(mining.getMaxLevelStatisticKey())
                         && s.getStatisticType() == StatisticType.INT
         );
         assertTrue(hasMaxLevel, "Expected a max level statistic for the mining skill");
+    }
+
+    @DisplayName("Given a McRPGSkill (Mining), when calling getExperienceStatisticKey, then the key follows the expected format")
+    @Test
+    public void getExperienceStatisticKey_returnsCorrectFormat() {
+        assertEquals(new NamespacedKey(mining.getPlugin(), "mining_experience"), mining.getExperienceStatisticKey());
+    }
+
+    @DisplayName("Given a McRPGSkill (Mining), when calling getMaxLevelStatisticKey, then the key follows the expected format")
+    @Test
+    public void getMaxLevelStatisticKey_returnsCorrectFormat() {
+        assertEquals(new NamespacedKey(mining.getPlugin(), "mining_max_level"), mining.getMaxLevelStatisticKey());
     }
 
     @DisplayName("Given a plain Skill (MockSkill), when getting default statistics, then it returns empty")

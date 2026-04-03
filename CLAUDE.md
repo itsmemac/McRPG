@@ -86,7 +86,7 @@ src/main/java/us/eunoians/mcrpg/
 │   └── player/
 │       └── McRPGPlayer.java            # Concrete player (extends CorePlayer)
 ├── statistic/
-│   └── McRPGStatistic.java             # Global statistic constants and per-skill/ability factories
+│   └── McRPGStatistic.java             # Global statistic constants only (blocks mined, damage dealt, etc.)
 ├── expansion/
 │   ├── ContentExpansion.java           # Base class for content modules
 │   ├── McRPGExpansion.java             # Native content registration (all built-in content)
@@ -212,7 +212,7 @@ src/main/java/us/eunoians/mcrpg/
 | **ContentExpansion** | A module that bundles skills, abilities, statistics, player settings, and localization into a single registration unit. |
 | **StatisticContent** | Wrapper that pairs a McCore `Statistic` with an expansion's `NamespacedKey` for content-pack registration. |
 | **StatisticContentPack** | A `McRPGContentPack` that collects `StatisticContent` entries — one per expansion. Registered alongside skill/ability packs in `ContentExpansion.getExpansionContent()`. |
-| **McRPGStatistic** | Utility class holding all global statistic constants (blocks mined, damage dealt, etc.) and factory methods for per-skill/per-ability statistics. |
+| **McRPGStatistic** | Constants-only class holding global statistic definitions (blocks mined, damage dealt, etc.). Per-skill keys come from `Skill.getExperienceStatisticKey()` / `getMaxLevelStatisticKey()`; per-ability keys come from `ActiveAbility.getActivationStatisticKey()`. |
 | **DAO** | Data Access Object — static JDBC methods for reading/writing ability and skill data. |
 
 ### Quest System
@@ -372,7 +372,7 @@ Statistics are automatically composed from three sources in `getStatisticContent
 
 Third-party expansions should follow the same pattern — include their own `StatisticContentPack` in `getExpansionContent()` with global, per-skill, and per-ability statistics.
 
-New global statistics go in `McRPGStatistic` as `static final` constants. Per-skill and per-ability statistics are generated dynamically via `McRPGStatistic.createSkillExperienceStatistic()`, `createSkillMaxLevelStatistic()`, and `createAbilityActivationStatistic()`.
+New global statistics go in `McRPGStatistic` as `static final` constants. Per-skill statistics are constructed in `McRPGSkill.getDefaultStatistics()` using the key-derivation methods `Skill.getExperienceStatisticKey()` and `Skill.getMaxLevelStatisticKey()`. Per-ability activation statistics are constructed in `ActiveAbility.getDefaultStatistics()` using `ActiveAbility.getActivationStatisticKey()`. Third-party skills and abilities should override these default methods if they need custom key conventions.
 
 ### DAO Pattern
 

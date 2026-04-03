@@ -149,7 +149,7 @@ public class McRPGBootstrap extends CoreBootstrap<McRPG> {
                         lunarClientHook.ifPresent(pluginHook -> pluginHook.clearCooldowns(mcRPGPlayer.getUUID()));
                     }
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    getPlugin().getLogger().log(java.util.logging.Level.SEVERE, "Failed to save player data during shutdown", e);
                 }
                 if (registryAccess.registry(RegistryKey.MANAGER).registered(McRPGManagerKey.QUEST)) {
                     try (Connection connection = database.getConnection()) {
@@ -159,7 +159,7 @@ public class McRPGBootstrap extends CoreBootstrap<McRPG> {
                         }
                         questBatch.executeTransaction();
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        getPlugin().getLogger().log(java.util.logging.Level.SEVERE, "Failed to save quest data during shutdown", e);
                     }
                 }
                 database.shutdown();

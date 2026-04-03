@@ -66,7 +66,7 @@ public final class McRPGPlayerSaveTask extends CancelableCoreTask {
             });
             lastSeenTimeTransaction.executeTransaction();
         } catch (SQLException e) {
-            e.printStackTrace();
+            getPlugin().getLogger().log(java.util.logging.Level.SEVERE, "Failed to save player data during periodic save task", e);
         }
     }
 
