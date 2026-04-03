@@ -1,18 +1,25 @@
 # Ability upgrade quests for Mining abilities (tiers 2–5).
 #
-# T2/T3: Single objective. Ore targets escalate in rarity per tier.
+# T2/T3: Single objective. Ore tier escalates per tier.
 # T4/T5: Two independent objectives in one stage — both must complete.
-#         Primary = the ability's established ore theme.
-#         Secondary = a harder/rarer ore group on its own progress bar.
+#         Primary = the established ore group.
+#         Secondary = a harder/rarer ore category on its own progress bar.
 #
 # See docs/design-principles/upgrade-quest-design-principles.md for full rationale.
 
 quests:
   # ────────────────────────────────────────────
-  #  It's A Triple  (common ore multiplication)
-  #  Theme: climbs from the most common ores up through mid-tier and into rare ores
+  #  It's A Triple  (multi-drop)
+  #  Theme: common → precious → rare ores, unlocking triple drops at each tier
   # ────────────────────────────────────────────
   mcrpg:its_a_triple_tier2:
+    display:
+      name: "Common Extraction"
+      description: "Mine coal and copper to practice your triple strike"
+      objectives:
+        its_a_triple_tier2_obj: "Mine coal and copper ores"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -35,6 +42,13 @@ quests:
                   blocks: [COAL_ORE, DEEPSLATE_COAL_ORE, COPPER_ORE, DEEPSLATE_COPPER_ORE]
 
   mcrpg:its_a_triple_tier3:
+    display:
+      name: "Iron Frenzy"
+      description: "Extract iron ore to sharpen your triple-drop technique"
+      objectives:
+        its_a_triple_tier3_obj: "Mine iron ores"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -57,6 +71,14 @@ quests:
                   blocks: [IRON_ORE, DEEPSLATE_IRON_ORE]
 
   mcrpg:its_a_triple_tier4:
+    display:
+      name: "Precious Veins"
+      description: "Mine precious ores and seek rare secondary deposits"
+      objectives:
+        its_a_triple_tier4_primary: "Mine iron and gold ores"
+        its_a_triple_tier4_secondary: "Mine redstone and lapis ores"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -80,11 +102,19 @@ quests:
               secondary:
                 key: mcrpg:its_a_triple_tier4_secondary
                 type: mcrpg:block_break
-                required-progress: 45
+                required-progress: 60
                 config:
                   blocks: [REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE, LAPIS_ORE, DEEPSLATE_LAPIS_ORE]
 
   mcrpg:its_a_triple_tier5:
+    display:
+      name: "Legendary Triples"
+      description: "Achieve mastery by tripling the rarest ores"
+      objectives:
+        its_a_triple_tier5_primary: "Mine iron, gold, and redstone ores"
+        its_a_triple_tier5_secondary: "Mine diamond and emerald ores"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -109,15 +139,22 @@ quests:
               secondary:
                 key: mcrpg:its_a_triple_tier5_secondary
                 type: mcrpg:block_break
-                required-progress: 50
+                required-progress: 30
                 config:
                   blocks: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE]
 
   # ────────────────────────────────────────────
-  #  Remote Transfer  (precious metal pipeline)
-  #  Theme: iron → gold → nether gold → lapis/redstone → diamond
+  #  Remote Transfer  (item teleport)
+  #  Theme: metal ores across dimensions, ultimately reaching diamonds
   # ────────────────────────────────────────────
   mcrpg:remote_transfer_tier2:
+    display:
+      name: "Metal Pipeline"
+      description: "Mine iron to fuel your remote transfer ability"
+      objectives:
+        remote_transfer_tier2_obj: "Mine iron ores"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -140,6 +177,13 @@ quests:
                   blocks: [IRON_ORE, DEEPSLATE_IRON_ORE]
 
   mcrpg:remote_transfer_tier3:
+    display:
+      name: "Golden Network"
+      description: "Extract gold from the Overworld and Nether"
+      objectives:
+        remote_transfer_tier3_obj: "Mine gold and Nether gold ores"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -162,6 +206,14 @@ quests:
                   blocks: [GOLD_ORE, DEEPSLATE_GOLD_ORE, NETHER_GOLD_ORE]
 
   mcrpg:remote_transfer_tier4:
+    display:
+      name: "Precious Transit"
+      description: "Transport gold and Nether gold, then branch into utility ores"
+      objectives:
+        remote_transfer_tier4_primary: "Mine gold and Nether gold ores"
+        remote_transfer_tier4_secondary: "Mine lapis and redstone ores"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -185,11 +237,19 @@ quests:
               secondary:
                 key: mcrpg:remote_transfer_tier4_secondary
                 type: mcrpg:block_break
-                required-progress: 40
+                required-progress: 60
                 config:
                   blocks: [LAPIS_ORE, DEEPSLATE_LAPIS_ORE, REDSTONE_ORE, DEEPSLATE_REDSTONE_ORE]
 
   mcrpg:remote_transfer_tier5:
+    display:
+      name: "Masterwork Pipeline"
+      description: "Complete the precious metal pipeline and reach diamonds"
+      objectives:
+        remote_transfer_tier5_primary: "Mine gold, Nether gold, and lapis ores"
+        remote_transfer_tier5_secondary: "Mine diamond ores"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -214,15 +274,22 @@ quests:
               secondary:
                 key: mcrpg:remote_transfer_tier5_secondary
                 type: mcrpg:block_break
-                required-progress: 50
+                required-progress: 25
                 config:
                   blocks: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE]
 
   # ────────────────────────────────────────────
-  #  Ore Scanner  (rare ore detection)
-  #  Theme: starts at diamond/emerald and escalates to the rarest ore in the game
+  #  Ore Scanner  (detection / revelation)
+  #  Theme: rare and exotic ores, culminating in Ancient Debris
   # ────────────────────────────────────────────
   mcrpg:ore_scanner_tier2:
+    display:
+      name: "Rare Earth Survey"
+      description: "Scan for and mine the rarest Overworld ores"
+      objectives:
+        ore_scanner_tier2_obj: "Mine diamond and emerald ores"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -240,11 +307,18 @@ quests:
               objective:
                 key: mcrpg:ore_scanner_tier2_obj
                 type: mcrpg:block_break
-                required-progress: 80
+                required-progress: 30
                 config:
                   blocks: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE]
 
   mcrpg:ore_scanner_tier3:
+    display:
+      name: "Nether Seeker"
+      description: "Extend your scanning range into Nether quartz deposits"
+      objectives:
+        ore_scanner_tier3_obj: "Mine diamond, emerald, and Nether quartz ores"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -262,12 +336,20 @@ quests:
               objective:
                 key: mcrpg:ore_scanner_tier3_obj
                 type: mcrpg:block_break
-                required-progress: 120
+                required-progress: 60
                 config:
-                  blocks: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE,
-                           NETHER_QUARTZ_ORE]
+                  blocks: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE,
+                           DEEPSLATE_EMERALD_ORE, NETHER_QUARTZ_ORE]
 
   mcrpg:ore_scanner_tier4:
+    display:
+      name: "Deep Scan"
+      description: "Mine rare Overworld ores and probe Nether ore deposits"
+      objectives:
+        ore_scanner_tier4_primary: "Mine diamond and emerald ores"
+        ore_scanner_tier4_secondary: "Mine Nether quartz and Nether gold ores"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -285,17 +367,25 @@ quests:
               primary:
                 key: mcrpg:ore_scanner_tier4_primary
                 type: mcrpg:block_break
-                required-progress: 150
+                required-progress: 80
                 config:
                   blocks: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE]
               secondary:
                 key: mcrpg:ore_scanner_tier4_secondary
                 type: mcrpg:block_break
-                required-progress: 45
+                required-progress: 60
                 config:
                   blocks: [NETHER_QUARTZ_ORE, NETHER_GOLD_ORE]
 
   mcrpg:ore_scanner_tier5:
+    display:
+      name: "Ancient Discovery"
+      description: "Track down the most elusive ore in the game"
+      objectives:
+        ore_scanner_tier5_primary: "Mine diamond, emerald, and Nether quartz ores"
+        ore_scanner_tier5_secondary: "Mine ancient debris"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -313,13 +403,13 @@ quests:
               primary:
                 key: mcrpg:ore_scanner_tier5_primary
                 type: mcrpg:block_break
-                required-progress: 200
+                required-progress: 100
                 config:
-                  blocks: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE, DEEPSLATE_EMERALD_ORE,
-                           NETHER_QUARTZ_ORE]
+                  blocks: [DIAMOND_ORE, DEEPSLATE_DIAMOND_ORE, EMERALD_ORE,
+                           DEEPSLATE_EMERALD_ORE, NETHER_QUARTZ_ORE]
               secondary:
                 key: mcrpg:ore_scanner_tier5_secondary
                 type: mcrpg:block_break
-                required-progress: 45
+                required-progress: 10
                 config:
                   blocks: [ANCIENT_DEBRIS]

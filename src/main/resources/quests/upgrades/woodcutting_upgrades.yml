@@ -1,18 +1,25 @@
 # Ability upgrade quests for Woodcutting abilities (tiers 2–5).
 #
-# T2/T3: Single objective. Log types escalate in rarity/biome per tier.
+# T2/T3: Single objective. Wood types escalate by biome rarity.
 # T4/T5: Two independent objectives in one stage — both must complete.
-#         Primary = the ability's established log family.
-#         Secondary = an exotic or otherworldly wood type on its own progress bar.
+#         Primary = the established wood group.
+#         Secondary = rarer or more exotic logs/stems on their own progress bar.
 #
 # See docs/design-principles/upgrade-quest-design-principles.md for full rationale.
 
 quests:
   # ────────────────────────────────────────────
-  #  Heavy Swing  (raw power / hardwood deforestation)
-  #  Theme: common temperate logs → dense canopy logs → exotic woods → nether stems
+  #  Heavy Swing  (cleaving / AoE chop)
+  #  Theme: common → dense canopy → exotic wood, culminating in Nether stems
   # ────────────────────────────────────────────
   mcrpg:heavy_swing_tier2:
+    display:
+      name: "Temperate Lumberjack"
+      description: "Fell temperate forest trees with your heavy swing"
+      objectives:
+        heavy_swing_tier2_obj: "Chop oak, spruce, and birch logs"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -30,11 +37,18 @@ quests:
               objective:
                 key: mcrpg:heavy_swing_tier2_obj
                 type: mcrpg:block_break
-                required-progress: 80
+                required-progress: 100
                 config:
                   blocks: [OAK_LOG, SPRUCE_LOG, BIRCH_LOG]
 
   mcrpg:heavy_swing_tier3:
+    display:
+      name: "Dense Canopy Cutter"
+      description: "Clear dark and jungle canopy trees with powerful swings"
+      objectives:
+        heavy_swing_tier3_obj: "Chop dark oak, jungle, and acacia logs"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -52,11 +66,19 @@ quests:
               objective:
                 key: mcrpg:heavy_swing_tier3_obj
                 type: mcrpg:block_break
-                required-progress: 120
+                required-progress: 150
                 config:
                   blocks: [DARK_OAK_LOG, JUNGLE_LOG, ACACIA_LOG]
 
   mcrpg:heavy_swing_tier4:
+    display:
+      name: "Exotic Timber"
+      description: "Cut dense canopy logs and seek out rare exotic trees"
+      objectives:
+        heavy_swing_tier4_primary: "Chop dark oak, jungle, and acacia logs"
+        heavy_swing_tier4_secondary: "Chop mangrove and cherry logs"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -74,17 +96,25 @@ quests:
               primary:
                 key: mcrpg:heavy_swing_tier4_primary
                 type: mcrpg:block_break
-                required-progress: 150
+                required-progress: 200
                 config:
                   blocks: [DARK_OAK_LOG, JUNGLE_LOG, ACACIA_LOG]
               secondary:
                 key: mcrpg:heavy_swing_tier4_secondary
                 type: mcrpg:block_break
-                required-progress: 40
+                required-progress: 80
                 config:
                   blocks: [MANGROVE_LOG, CHERRY_LOG]
 
   mcrpg:heavy_swing_tier5:
+    display:
+      name: "Otherworldly Harvest"
+      description: "Fell the most exotic wood including Nether fungal stems"
+      objectives:
+        heavy_swing_tier5_primary: "Chop dense canopy and mangrove logs"
+        heavy_swing_tier5_secondary: "Chop crimson and warped stems"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -102,21 +132,28 @@ quests:
               primary:
                 key: mcrpg:heavy_swing_tier5_primary
                 type: mcrpg:block_break
-                required-progress: 200
+                required-progress: 250
                 config:
-                  blocks: [DARK_OAK_LOG, JUNGLE_LOG, ACACIA_LOG, MANGROVE_LOG]
+                  blocks: [DARK_OAK_LOG, JUNGLE_LOG, ACACIA_LOG, MANGROVE_LOG, CHERRY_LOG]
               secondary:
                 key: mcrpg:heavy_swing_tier5_secondary
                 type: mcrpg:block_break
-                required-progress: 50
+                required-progress: 80
                 config:
                   blocks: [CRIMSON_STEM, WARPED_STEM]
 
   # ────────────────────────────────────────────
-  #  Dryad's Gift  (tropical / nature attunement)
-  #  Theme: warm and lush biome woods, culminating in delicate or rare plants
+  #  Dryad's Gift  (warm biome / nature bond)
+  #  Theme: tropical and warm biome logs, culminating in bamboo
   # ────────────────────────────────────────────
   mcrpg:dryads_gift_tier2:
+    display:
+      name: "Tropical Grove"
+      description: "Harvest warm biome logs to attune with nature"
+      objectives:
+        dryads_gift_tier2_obj: "Chop jungle and acacia logs"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -134,11 +171,18 @@ quests:
               objective:
                 key: mcrpg:dryads_gift_tier2_obj
                 type: mcrpg:block_break
-                required-progress: 80
+                required-progress: 100
                 config:
                   blocks: [JUNGLE_LOG, ACACIA_LOG]
 
   mcrpg:dryads_gift_tier3:
+    display:
+      name: "Wetland Harvest"
+      description: "Fell jungle, acacia, and mangrove trees for nature's gift"
+      objectives:
+        dryads_gift_tier3_obj: "Chop jungle, acacia, and mangrove logs"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -156,11 +200,19 @@ quests:
               objective:
                 key: mcrpg:dryads_gift_tier3_obj
                 type: mcrpg:block_break
-                required-progress: 120
+                required-progress: 150
                 config:
                   blocks: [JUNGLE_LOG, ACACIA_LOG, MANGROVE_LOG]
 
   mcrpg:dryads_gift_tier4:
+    display:
+      name: "Blossom and Bamboo"
+      description: "Harvest tropical woods and seek delicate flowering trees"
+      objectives:
+        dryads_gift_tier4_primary: "Chop jungle, acacia, and mangrove logs"
+        dryads_gift_tier4_secondary: "Chop cherry logs and bamboo blocks"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -178,17 +230,25 @@ quests:
               primary:
                 key: mcrpg:dryads_gift_tier4_primary
                 type: mcrpg:block_break
-                required-progress: 150
+                required-progress: 200
                 config:
                   blocks: [JUNGLE_LOG, ACACIA_LOG, MANGROVE_LOG]
               secondary:
                 key: mcrpg:dryads_gift_tier4_secondary
                 type: mcrpg:block_break
-                required-progress: 40
+                required-progress: 80
                 config:
                   blocks: [CHERRY_LOG, BAMBOO_BLOCK]
 
   mcrpg:dryads_gift_tier5:
+    display:
+      name: "Nature's Bounty"
+      description: "Achieve mastery by harvesting nature's most vibrant woods"
+      objectives:
+        dryads_gift_tier5_primary: "Chop jungle, acacia, mangrove, and cherry logs"
+        dryads_gift_tier5_secondary: "Chop bamboo blocks"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -206,21 +266,28 @@ quests:
               primary:
                 key: mcrpg:dryads_gift_tier5_primary
                 type: mcrpg:block_break
-                required-progress: 220
+                required-progress: 250
                 config:
                   blocks: [JUNGLE_LOG, ACACIA_LOG, MANGROVE_LOG, CHERRY_LOG]
               secondary:
                 key: mcrpg:dryads_gift_tier5_secondary
                 type: mcrpg:block_break
-                required-progress: 60
+                required-progress: 100
                 config:
                   blocks: [BAMBOO_BLOCK]
 
   # ────────────────────────────────────────────
-  #  Nymph's Vitality  (cold / mystic forests)
-  #  Theme: cool-climate woods, deepening into dark and otherworldly growth
+  #  Nymph's Vitality  (regeneration / cool biomes)
+  #  Theme: cool-climate and deep forest logs, culminating in Nether stems
   # ────────────────────────────────────────────
   mcrpg:nymphs_vitality_tier2:
+    display:
+      name: "Cold Forest Walk"
+      description: "Harvest cool-climate logs to channel the nymph's power"
+      objectives:
+        nymphs_vitality_tier2_obj: "Chop birch and spruce logs"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -238,11 +305,18 @@ quests:
               objective:
                 key: mcrpg:nymphs_vitality_tier2_obj
                 type: mcrpg:block_break
-                required-progress: 80
+                required-progress: 100
                 config:
                   blocks: [BIRCH_LOG, SPRUCE_LOG]
 
   mcrpg:nymphs_vitality_tier3:
+    display:
+      name: "Dark Grove"
+      description: "Fell cool-climate and deep forest logs to strengthen your vitality"
+      objectives:
+        nymphs_vitality_tier3_obj: "Chop birch, spruce, and dark oak logs"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -260,11 +334,19 @@ quests:
               objective:
                 key: mcrpg:nymphs_vitality_tier3_obj
                 type: mcrpg:block_break
-                required-progress: 120
+                required-progress: 150
                 config:
                   blocks: [BIRCH_LOG, SPRUCE_LOG, DARK_OAK_LOG]
 
   mcrpg:nymphs_vitality_tier4:
+    display:
+      name: "Mystic Wetland"
+      description: "Harvest cool-climate and deep forest woods, then seek marshy timber"
+      objectives:
+        nymphs_vitality_tier4_primary: "Chop birch, spruce, and dark oak logs"
+        nymphs_vitality_tier4_secondary: "Chop mangrove logs"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -282,17 +364,25 @@ quests:
               primary:
                 key: mcrpg:nymphs_vitality_tier4_primary
                 type: mcrpg:block_break
-                required-progress: 150
+                required-progress: 200
                 config:
                   blocks: [BIRCH_LOG, SPRUCE_LOG, DARK_OAK_LOG]
               secondary:
                 key: mcrpg:nymphs_vitality_tier4_secondary
                 type: mcrpg:block_break
-                required-progress: 40
+                required-progress: 80
                 config:
                   blocks: [MANGROVE_LOG]
 
   mcrpg:nymphs_vitality_tier5:
+    display:
+      name: "Otherworldly Attunement"
+      description: "Complete your vitality mastery with otherworldly fungal growth"
+      objectives:
+        nymphs_vitality_tier5_primary: "Chop birch, spruce, dark oak, and mangrove logs"
+        nymphs_vitality_tier5_secondary: "Chop crimson and warped stems"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -310,12 +400,12 @@ quests:
               primary:
                 key: mcrpg:nymphs_vitality_tier5_primary
                 type: mcrpg:block_break
-                required-progress: 200
+                required-progress: 250
                 config:
                   blocks: [BIRCH_LOG, SPRUCE_LOG, DARK_OAK_LOG, MANGROVE_LOG]
               secondary:
                 key: mcrpg:nymphs_vitality_tier5_secondary
                 type: mcrpg:block_break
-                required-progress: 50
+                required-progress: 80
                 config:
                   blocks: [CRIMSON_STEM, WARPED_STEM]

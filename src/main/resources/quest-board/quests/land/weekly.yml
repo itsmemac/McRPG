@@ -1,4 +1,15 @@
 # Weekly land quests for the quest board (scope: land).
+#
+# XP rewards are in the top-level 'rewards:' section — all scope members receive
+# them on completion regardless of individual contribution.
+#
+# Item rewards use 'reward-distribution':
+#   mcrpg:participated  — every player who made at least one contribution receives
+#                         the item (e.g. blaze rods, diamonds, XP bottles).
+#   mcrpg:quest_acceptor — only the player who accepted the quest on behalf of the
+#                          land receives the item. Reserved for rare/unique rewards
+#                          (e.g. wither skulls) where giving one to every member
+#                          would be excessive.
 
 quests:
   # -------------------------------------------------------------------
@@ -13,7 +24,6 @@ quests:
         land_weekly_break_ores: "Mine ore blocks"
       rewards:
         mining_xp: "Mining XP"
-        diamond_bonus: "Diamonds"
     scope: mcrpg:land_scope
     expiration: 10d
     board-metadata:
@@ -28,11 +38,16 @@ quests:
         type: mcrpg:experience
         skill: MINING
         amount: 25000
-      diamond_bonus:
-        type: mcrpg:item
-        item:
-          material: DIAMOND
-        amount: 8
+    reward-distribution:
+      contributors:
+        type: mcrpg:participated
+        split-mode: INDIVIDUAL
+        rewards:
+          diamond_bonus:
+            type: mcrpg:item
+            item:
+              material: DIAMOND
+            amount: 8
     phases:
       stone:
         completion-mode: ALL
@@ -85,7 +100,6 @@ quests:
         land_weekly_slay_hostiles: "Slay hostile mobs"
       rewards:
         swords_xp: "Swords XP"
-        xp_bottle_bonus: "Experience Bottles"
     scope: mcrpg:land_scope
     expiration: 10d
     board-metadata:
@@ -100,11 +114,16 @@ quests:
         type: mcrpg:experience
         skill: SWORDS
         amount: 25000
-      xp_bottle_bonus:
-        type: mcrpg:item
-        item:
-          material: EXPERIENCE_BOTTLE
-        amount: 16
+    reward-distribution:
+      contributors:
+        type: mcrpg:participated
+        split-mode: INDIVIDUAL
+        rewards:
+          xp_bottle_bonus:
+            type: mcrpg:item
+            item:
+              material: EXPERIENCE_BOTTLE
+            amount: 16
     phases:
       defend:
         completion-mode: ALL
@@ -137,8 +156,6 @@ quests:
         land_weekly_slay_wither_skeletons: "Slay wither skeletons"
       rewards:
         swords_xp: "Swords XP"
-        blaze_rod_bonus: "Blaze Rods"
-        wither_skull: "Wither Skeleton Skull"
     scope: mcrpg:land_scope
     expiration: 10d
     board-metadata:
@@ -153,16 +170,25 @@ quests:
         type: mcrpg:experience
         skill: SWORDS
         amount: 50000
-      blaze_rod_bonus:
-        type: mcrpg:item
-        item:
-          material: BLAZE_ROD
-        amount: 8
-      wither_skull:
-        type: mcrpg:item
-        item:
-          material: WITHER_SKELETON_SKULL
-          amount: 1
+    reward-distribution:
+      contributors:
+        type: mcrpg:participated
+        split-mode: INDIVIDUAL
+        rewards:
+          blaze_rod_bonus:
+            type: mcrpg:item
+            item:
+              material: BLAZE_ROD
+            amount: 8
+      acceptor_bonus:
+        type: mcrpg:quest_acceptor
+        split-mode: INDIVIDUAL
+        rewards:
+          wither_skull:
+            type: mcrpg:item
+            item:
+              material: WITHER_SKELETON_SKULL
+              amount: 3
     phases:
       blazes:
         completion-mode: ALL
@@ -193,6 +219,7 @@ quests:
 
   # -------------------------------------------------------------------
   # Hard: Resource stockpile — logs + crops
+  # Only XP rewards — no item bonuses to distribute.
   # -------------------------------------------------------------------
   mcrpg:land_weekly_resource_stockpile:
     display:

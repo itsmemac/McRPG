@@ -145,3 +145,791 @@ quest-templates:
   land-resource-drive: "Land Resource Drive"
   land-weekly-excavation: "Land Weekly Excavation"
   land-weekly-crusade: "Land Weekly Crusade"
+
+# -----------------------------------------------------------------------
+# QUEST DISPLAY NAMES AND OBJECTIVE DESCRIPTIONS
+# -----------------------------------------------------------------------
+#
+# These entries are the canonical localization routes for hand-crafted quests.
+# They are checked BEFORE inline 'display:' fields in the quest YAML files.
+#
+# Quest display name route:
+#   quests.<namespace>.<quest_key>.display-name
+#
+# Objective description route:
+#   quests.<namespace>.<quest_key>.objectives.<objective_key>.description
+#
+# For multi-line objective descriptions (e.g. mob type lists), use \n as a separator.
+# Translators: add the same routes in a DynamicLocale file under
+#   plugins/McRPG/localization/<language>/ to override these English strings.
+# -----------------------------------------------------------------------
+
+quests:
+  mcrpg:
+
+    # ================================================================
+    #  ABILITY UPGRADE QUESTS — SWORDS
+    # ================================================================
+
+    # Enhanced Bleed
+    enhanced_bleed_tier2:
+      display-name: "Arachnid Training"
+      objectives:
+        enhanced_bleed_tier2_obj:
+          description: "Slay spiders and cave spiders"
+
+    enhanced_bleed_tier3:
+      display-name: "Witch Hunt"
+      objectives:
+        enhanced_bleed_tier3_obj:
+          description: "Slay spiders, cave spiders, and witches"
+
+    enhanced_bleed_tier4:
+      display-name: "Venom and Decay"
+      objectives:
+        enhanced_bleed_tier4_primary:
+          description: "Slay spiders, cave spiders, and witches"
+        enhanced_bleed_tier4_secondary:
+          description: "Slay wither skeletons"
+
+    enhanced_bleed_tier5:
+      display-name: "Master of Hemorrhage"
+      objectives:
+        enhanced_bleed_tier5_primary:
+          description: "Slay venomous mobs"
+        enhanced_bleed_tier5_secondary:
+          description: "Slay wither skeletons"
+
+    enhanced_bleed_upgrade:
+      display-name: "Enhanced Bleed Mastery"
+      objectives:
+        enhanced_bleed_upgrade_obj:
+          description: "Slay spiders, witches, and wither skeletons"
+
+    # Deeper Wound
+    deeper_wound_tier2:
+      display-name: "Bone Piercer"
+      objectives:
+        deeper_wound_tier2_obj:
+          description: "Slay skeletons and strays"
+
+    deeper_wound_tier3:
+      display-name: "The Mossy Threat"
+      objectives:
+        deeper_wound_tier3_obj:
+          description: "Slay skeletons, strays, and bogged"
+
+    deeper_wound_tier4:
+      display-name: "Arrows and Rot"
+      objectives:
+        deeper_wound_tier4_primary:
+          description: "Slay skeletons and strays"
+        deeper_wound_tier4_secondary:
+          description: "Slay bogged"
+
+    deeper_wound_tier5:
+      display-name: "Bone Shatterer"
+      objectives:
+        deeper_wound_tier5_primary:
+          description: "Slay skeletons, strays, and bogged"
+        deeper_wound_tier5_secondary:
+          description: "Slay wither skeletons"
+
+    deeper_wound_upgrade:
+      display-name: "Deeper Wound Mastery"
+      objectives:
+        deeper_wound_upgrade_obj:
+          description: "Slay skeletons, strays, bogged, and wither skeletons"
+
+    # Vampire
+    vampire_tier2:
+      display-name: "Undead Feast"
+      objectives:
+        vampire_tier2_obj:
+          description: "Slay zombies and drowned"
+
+    vampire_tier3:
+      display-name: "Desert Hunger"
+      objectives:
+        vampire_tier3_obj:
+          description: "Slay zombies, drowned, and husks"
+
+    vampire_tier4:
+      display-name: "Condemned Harvest"
+      objectives:
+        vampire_tier4_primary:
+          description: "Slay zombies, drowned, and husks"
+        vampire_tier4_secondary:
+          description: "Slay zombie villagers and phantoms"
+
+    vampire_tier5:
+      display-name: "Apex Predator"
+      objectives:
+        vampire_tier5_primary:
+          description: "Slay core undead mobs"
+        vampire_tier5_secondary:
+          description: "Slay phantoms and zoglins"
+
+    vampire_upgrade:
+      display-name: "Vampire Mastery"
+      objectives:
+        vampire_upgrade_obj:
+          description: "Slay zombies, drowned, husks, zombie villagers, phantoms, and zoglins"
+
+    # Serrated Strikes
+    serrated_strikes_tier2:
+      display-name: "Explosive Practice"
+      objectives:
+        serrated_strikes_tier2_obj:
+          description: "Slay creepers and slimes"
+
+    serrated_strikes_tier3:
+      display-name: "Volatile Encounters"
+      objectives:
+        serrated_strikes_tier3_obj:
+          description: "Slay creepers, slimes, and magma cubes"
+
+    serrated_strikes_tier4:
+      display-name: "Fire and Gel"
+      objectives:
+        serrated_strikes_tier4_primary:
+          description: "Slay creepers and slimes"
+        serrated_strikes_tier4_secondary:
+          description: "Slay magma cubes and blazes"
+
+    serrated_strikes_tier5:
+      display-name: "Infernal Carnage"
+      objectives:
+        serrated_strikes_tier5_primary:
+          description: "Slay creepers, slimes, and magma cubes"
+        serrated_strikes_tier5_secondary:
+          description: "Slay blazes and ghasts"
+
+    serrated_strikes_upgrade:
+      display-name: "Serrated Strikes Mastery"
+      objectives:
+        serrated_strikes_upgrade_obj:
+          description: "Slay creepers, slimes, magma cubes, blazes, and ghasts"
+
+    # Rage Spike
+    rage_spike_tier2:
+      display-name: "Provoked Fury"
+      objectives:
+        rage_spike_tier2_obj:
+          description: "Slay endermen and piglins"
+
+    rage_spike_tier3:
+      display-name: "Nether Patrol"
+      objectives:
+        rage_spike_tier3_obj:
+          description: "Slay endermen, piglins, and zombified piglins"
+
+    rage_spike_tier4:
+      display-name: "Into the Warped"
+      objectives:
+        rage_spike_tier4_primary:
+          description: "Slay endermen and piglins"
+        rage_spike_tier4_secondary:
+          description: "Slay hoglins and zombified piglins"
+
+    rage_spike_tier5:
+      display-name: "Nether Warlord"
+      objectives:
+        rage_spike_tier5_primary:
+          description: "Slay endermen, piglins, and zombified piglins"
+        rage_spike_tier5_secondary:
+          description: "Slay hoglins and ghasts"
+
+    rage_spike_upgrade:
+      display-name: "Rage Spike Mastery"
+      objectives:
+        rage_spike_upgrade_obj:
+          description: "Slay endermen, piglins, zombified piglins, hoglins, and ghasts"
+
+    # ================================================================
+    #  ABILITY UPGRADE QUESTS — MINING
+    # ================================================================
+
+    # It's A Triple
+    its_a_triple_tier2:
+      display-name: "Common Extraction"
+      objectives:
+        its_a_triple_tier2_obj:
+          description: "Mine coal and copper ores"
+
+    its_a_triple_tier3:
+      display-name: "Iron Frenzy"
+      objectives:
+        its_a_triple_tier3_obj:
+          description: "Mine iron ores"
+
+    its_a_triple_tier4:
+      display-name: "Precious Veins"
+      objectives:
+        its_a_triple_tier4_primary:
+          description: "Mine iron and gold ores"
+        its_a_triple_tier4_secondary:
+          description: "Mine redstone and lapis ores"
+
+    its_a_triple_tier5:
+      display-name: "Legendary Triples"
+      objectives:
+        its_a_triple_tier5_primary:
+          description: "Mine iron, gold, and redstone ores"
+        its_a_triple_tier5_secondary:
+          description: "Mine diamond and emerald ores"
+
+    its_a_triple_upgrade:
+      display-name: "It's A Triple Mastery"
+      objectives:
+        its_a_triple_upgrade_obj:
+          description: "Mine coal, copper, iron, gold, redstone, and diamond ores"
+
+    # Remote Transfer
+    remote_transfer_tier2:
+      display-name: "Metal Pipeline"
+      objectives:
+        remote_transfer_tier2_obj:
+          description: "Mine iron ores"
+
+    remote_transfer_tier3:
+      display-name: "Golden Network"
+      objectives:
+        remote_transfer_tier3_obj:
+          description: "Mine gold and Nether gold ores"
+
+    remote_transfer_tier4:
+      display-name: "Precious Transit"
+      objectives:
+        remote_transfer_tier4_primary:
+          description: "Mine gold and Nether gold ores"
+        remote_transfer_tier4_secondary:
+          description: "Mine lapis and redstone ores"
+
+    remote_transfer_tier5:
+      display-name: "Masterwork Pipeline"
+      objectives:
+        remote_transfer_tier5_primary:
+          description: "Mine gold, Nether gold, and lapis ores"
+        remote_transfer_tier5_secondary:
+          description: "Mine diamond ores"
+
+    remote_transfer_upgrade:
+      display-name: "Remote Transfer Mastery"
+      objectives:
+        remote_transfer_upgrade_obj:
+          description: "Mine iron, gold, Nether gold, lapis, redstone, and diamond ores"
+
+    # Ore Scanner
+    ore_scanner_tier2:
+      display-name: "Rare Earth Survey"
+      objectives:
+        ore_scanner_tier2_obj:
+          description: "Mine diamond and emerald ores"
+
+    ore_scanner_tier3:
+      display-name: "Nether Seeker"
+      objectives:
+        ore_scanner_tier3_obj:
+          description: "Mine diamond, emerald, and Nether quartz ores"
+
+    ore_scanner_tier4:
+      display-name: "Deep Scan"
+      objectives:
+        ore_scanner_tier4_primary:
+          description: "Mine diamond and emerald ores"
+        ore_scanner_tier4_secondary:
+          description: "Mine Nether quartz and Nether gold ores"
+
+    ore_scanner_tier5:
+      display-name: "Ancient Discovery"
+      objectives:
+        ore_scanner_tier5_primary:
+          description: "Mine diamond, emerald, and Nether quartz ores"
+        ore_scanner_tier5_secondary:
+          description: "Mine ancient debris"
+
+    ore_scanner_upgrade:
+      display-name: "Ore Scanner Mastery"
+      objectives:
+        ore_scanner_upgrade_obj:
+          description: "Mine diamonds, emeralds, Nether ores, and ancient debris"
+
+    # ================================================================
+    #  ABILITY UPGRADE QUESTS — WOODCUTTING
+    # ================================================================
+
+    # Heavy Swing
+    heavy_swing_tier2:
+      display-name: "Temperate Lumberjack"
+      objectives:
+        heavy_swing_tier2_obj:
+          description: "Chop oak, spruce, and birch logs"
+
+    heavy_swing_tier3:
+      display-name: "Dense Canopy Cutter"
+      objectives:
+        heavy_swing_tier3_obj:
+          description: "Chop dark oak, jungle, and acacia logs"
+
+    heavy_swing_tier4:
+      display-name: "Exotic Timber"
+      objectives:
+        heavy_swing_tier4_primary:
+          description: "Chop dark oak, jungle, and acacia logs"
+        heavy_swing_tier4_secondary:
+          description: "Chop mangrove and cherry logs"
+
+    heavy_swing_tier5:
+      display-name: "Otherworldly Harvest"
+      objectives:
+        heavy_swing_tier5_primary:
+          description: "Chop dense canopy and mangrove logs"
+        heavy_swing_tier5_secondary:
+          description: "Chop crimson and warped stems"
+
+    heavy_swing_upgrade:
+      display-name: "Heavy Swing Mastery"
+      objectives:
+        heavy_swing_upgrade_obj:
+          description: "Chop logs from any biome including Nether stems"
+
+    # Dryad's Gift
+    dryads_gift_tier2:
+      display-name: "Tropical Grove"
+      objectives:
+        dryads_gift_tier2_obj:
+          description: "Chop jungle and acacia logs"
+
+    dryads_gift_tier3:
+      display-name: "Wetland Harvest"
+      objectives:
+        dryads_gift_tier3_obj:
+          description: "Chop jungle, acacia, and mangrove logs"
+
+    dryads_gift_tier4:
+      display-name: "Blossom and Bamboo"
+      objectives:
+        dryads_gift_tier4_primary:
+          description: "Chop jungle, acacia, and mangrove logs"
+        dryads_gift_tier4_secondary:
+          description: "Chop cherry logs and bamboo blocks"
+
+    dryads_gift_tier5:
+      display-name: "Nature's Bounty"
+      objectives:
+        dryads_gift_tier5_primary:
+          description: "Chop jungle, acacia, mangrove, and cherry logs"
+        dryads_gift_tier5_secondary:
+          description: "Chop bamboo blocks"
+
+    dryads_gift_upgrade:
+      display-name: "Dryad's Gift Mastery"
+      objectives:
+        dryads_gift_upgrade_obj:
+          description: "Chop jungle, acacia, mangrove, cherry logs, and bamboo"
+
+    # Nymph's Vitality
+    nymphs_vitality_tier2:
+      display-name: "Cold Forest Walk"
+      objectives:
+        nymphs_vitality_tier2_obj:
+          description: "Chop birch and spruce logs"
+
+    nymphs_vitality_tier3:
+      display-name: "Dark Grove"
+      objectives:
+        nymphs_vitality_tier3_obj:
+          description: "Chop birch, spruce, and dark oak logs"
+
+    nymphs_vitality_tier4:
+      display-name: "Mystic Wetland"
+      objectives:
+        nymphs_vitality_tier4_primary:
+          description: "Chop birch, spruce, and dark oak logs"
+        nymphs_vitality_tier4_secondary:
+          description: "Chop mangrove logs"
+
+    nymphs_vitality_tier5:
+      display-name: "Otherworldly Attunement"
+      objectives:
+        nymphs_vitality_tier5_primary:
+          description: "Chop birch, spruce, dark oak, and mangrove logs"
+        nymphs_vitality_tier5_secondary:
+          description: "Chop crimson and warped stems"
+
+    nymphs_vitality_upgrade:
+      display-name: "Nymph's Vitality Mastery"
+      objectives:
+        nymphs_vitality_upgrade_obj:
+          description: "Chop birch, spruce, dark oak, mangrove logs, and Nether stems"
+
+    # ================================================================
+    #  ABILITY UPGRADE QUESTS — HERBALISM
+    # ================================================================
+
+    # Verdant Surge
+    verdant_surge_tier2:
+      display-name: "First Harvest"
+      objectives:
+        verdant_surge_tier2_obj:
+          description: "Harvest wheat and carrots"
+
+    verdant_surge_tier3:
+      display-name: "Root Harvest"
+      objectives:
+        verdant_surge_tier3_obj:
+          description: "Harvest wheat, carrots, potatoes, and beetroots"
+
+    verdant_surge_tier4:
+      display-name: "Garden Expansion"
+      objectives:
+        verdant_surge_tier4_primary:
+          description: "Harvest wheat, carrots, potatoes, and beetroots"
+        verdant_surge_tier4_secondary:
+          description: "Harvest melons and pumpkins"
+
+    verdant_surge_tier5:
+      display-name: "Exotic Garden"
+      objectives:
+        verdant_surge_tier5_primary:
+          description: "Harvest core Overworld crops"
+        verdant_surge_tier5_secondary:
+          description: "Harvest nether wart and cocoa beans"
+
+    verdant_surge_upgrade:
+      display-name: "Verdant Surge Mastery"
+      objectives:
+        verdant_surge_upgrade_obj:
+          description: "Harvest wheat, carrots, potatoes, beetroots, gourds, and exotic crops"
+
+    # Mass Harvest
+    mass_harvest_tier2:
+      display-name: "Bulk Harvest"
+      objectives:
+        mass_harvest_tier2_obj:
+          description: "Harvest wheat and potatoes"
+
+    mass_harvest_tier3:
+      display-name: "Sugar Rush"
+      objectives:
+        mass_harvest_tier3_obj:
+          description: "Harvest wheat, potatoes, beetroots, and sugar cane"
+
+    mass_harvest_tier4:
+      display-name: "Berry and Grain"
+      objectives:
+        mass_harvest_tier4_primary:
+          description: "Harvest wheat, potatoes, beetroots, and sugar cane"
+        mass_harvest_tier4_secondary:
+          description: "Harvest sweet berry bushes"
+
+    mass_harvest_tier5:
+      display-name: "Master Harvester"
+      objectives:
+        mass_harvest_tier5_primary:
+          description: "Harvest crops and sweet berry bushes"
+        mass_harvest_tier5_secondary:
+          description: "Harvest nether wart and chorus plants"
+
+    mass_harvest_upgrade:
+      display-name: "Mass Harvest Mastery"
+      objectives:
+        mass_harvest_upgrade_obj:
+          description: "Harvest crops, sweet berries, nether wart, and chorus plants"
+
+    # ================================================================
+    #  BOARD QUESTS — DAILY COMBAT
+    # ================================================================
+
+    daily_pest_control:
+      display-name: "Pest Control"
+      objectives:
+        daily_slay_zombies:
+          description: "Slay zombies and their variants"
+
+    daily_dungeon_sweep:
+      display-name: "Dungeon Sweep"
+      objectives:
+        daily_slay_skeletons:
+          description: "Slay skeletons"
+        daily_slay_spiders:
+          description: "Slay spiders"
+
+    daily_nether_hunt:
+      display-name: "Nether Hunt"
+      objectives:
+        daily_slay_blazes:
+          description: "Slay blazes"
+        daily_slay_piglins:
+          description: "Slay piglin brutes and zombified piglins"
+
+    daily_creeper_culling:
+      display-name: "Creeper Culling"
+      objectives:
+        daily_slay_creepers:
+          description: "Slay creepers"
+
+    daily_spider_hunt:
+      display-name: "Spider Hunt"
+      objectives:
+        daily_slay_all_spiders:
+          description: "Slay spiders and cave spiders"
+
+    daily_arena_combatant:
+      display-name: "Arena Combatant"
+      objectives:
+        daily_slay_mixed_hostiles:
+          description: "Slay overworld hostile mobs"
+
+    # ================================================================
+    #  BOARD QUESTS — DAILY MINING
+    # ================================================================
+
+    daily_stone_haul:
+      display-name: "Stone Haul"
+      objectives:
+        daily_break_stone:
+          description: "Mine stone blocks"
+
+    daily_deepslate_delver:
+      display-name: "Deepslate Delver"
+      objectives:
+        daily_break_deepslate:
+          description: "Mine deepslate blocks"
+
+    daily_ore_rush:
+      display-name: "Ore Rush"
+      objectives:
+        daily_break_gold:
+          description: "Mine gold ore"
+        daily_break_diamond:
+          description: "Mine diamond ore"
+
+    daily_copper_collector:
+      display-name: "Copper Collector"
+      objectives:
+        daily_break_copper:
+          description: "Mine copper ore"
+
+    # ================================================================
+    #  BOARD QUESTS — DAILY WOODCUTTING
+    # ================================================================
+
+    daily_timber_run:
+      display-name: "Timber Run"
+      objectives:
+        daily_chop_common_logs:
+          description: "Chop common logs"
+
+    daily_exotic_lumber:
+      display-name: "Exotic Lumber"
+      objectives:
+        daily_chop_exotic_logs:
+          description: "Chop exotic logs"
+
+    daily_leaf_clearing:
+      display-name: "Leaf Clearing"
+      objectives:
+        daily_break_leaves:
+          description: "Break leaves"
+
+    # ================================================================
+    #  BOARD QUESTS — DAILY HERBALISM
+    # ================================================================
+
+    daily_garden_tender:
+      display-name: "Garden Tender"
+      objectives:
+        daily_break_crops:
+          description: "Harvest crops"
+
+    daily_mushroom_forager:
+      display-name: "Mushroom Forager"
+      objectives:
+        daily_break_mushrooms:
+          description: "Break mushroom blocks"
+
+    daily_nether_farm:
+      display-name: "Nether Farm"
+      objectives:
+        daily_break_nether_wart:
+          description: "Harvest nether wart"
+
+    # ================================================================
+    #  BOARD QUESTS — WEEKLY COMBAT
+    # ================================================================
+
+    weekly_nether_conquest:
+      display-name: "Nether Conquest"
+      objectives:
+        weekly_slay_blazes:
+          description: "Slay blazes"
+        weekly_slay_wither_skeletons:
+          description: "Slay wither skeletons"
+
+    weekly_overworld_purge:
+      display-name: "Overworld Purge"
+      objectives:
+        weekly_slay_overworld_hostiles:
+          description: "Slay overworld hostile mobs"
+
+    weekly_vault_contender:
+      display-name: "Vault Contender"
+      objectives:
+        weekly_vault_overworld:
+          description: "Slay overworld hostile mobs"
+        weekly_vault_nether:
+          description: "Slay Nether hostile mobs"
+
+    weekly_ominous_contender:
+      display-name: "Ominous Contender"
+      objectives:
+        weekly_ominous_nether:
+          description: "Slay Nether hostile mobs"
+        weekly_ominous_endermen:
+          description: "Slay endermen"
+
+    # ================================================================
+    #  BOARD QUESTS — WEEKLY MINING
+    # ================================================================
+
+    weekly_deep_dive:
+      display-name: "Deep Dive"
+      objectives:
+        weekly_break_ancient_debris:
+          description: "Mine ancient debris"
+        weekly_break_diamonds:
+          description: "Mine diamond ore"
+
+    # ================================================================
+    #  BOARD QUESTS — WEEKLY WOODCUTTING
+    # ================================================================
+
+    weekly_lumber_contract:
+      display-name: "Lumber Contract"
+      objectives:
+        weekly_chop_mixed_logs:
+          description: "Chop mixed logs"
+
+    # ================================================================
+    #  BOARD QUESTS — WEEKLY HERBALISM
+    # ================================================================
+
+    weekly_harvest_festival:
+      display-name: "Harvest Festival"
+      objectives:
+        weekly_break_mixed_crops:
+          description: "Harvest mixed crops"
+
+    # ================================================================
+    #  BOARD QUESTS — WEEKLY MIXED
+    # ================================================================
+
+    weekly_all_rounder:
+      display-name: "All-Rounder"
+      objectives:
+        weekly_all_rounder_mine_stone:
+          description: "Mine stone blocks"
+        weekly_all_rounder_slay_mobs:
+          description: "Slay hostile mobs"
+
+    # ================================================================
+    #  BOARD QUESTS — LEGENDARY
+    # ================================================================
+
+    legendary_master_smith:
+      display-name: "Master Smith"
+      objectives:
+        legendary_break_diamond:
+          description: "Mine diamond ore"
+        legendary_break_debris:
+          description: "Mine ancient debris"
+
+    legendary_world_champion:
+      display-name: "World Champion"
+      objectives:
+        legendary_slay_endermen:
+          description: "Slay endermen"
+        legendary_slay_blazes:
+          description: "Slay blazes"
+        legendary_slay_wither_skeletons:
+          description: "Slay wither skeletons"
+
+    legendary_trial_master:
+      display-name: "Trial Master"
+      objectives:
+        legendary_trial_overworld:
+          description: "Slay overworld hostile mobs"
+        legendary_trial_nether:
+          description: "Slay Nether hostile mobs"
+        legendary_trial_endermen:
+          description: "Slay endermen"
+
+    # ================================================================
+    #  BOARD QUESTS — LAND DAILY
+    # ================================================================
+
+    land_daily_stone_quarry:
+      display-name: "Stone Quarry"
+      objectives:
+        land_daily_break_stone:
+          description: "Mine stone blocks"
+
+    land_daily_ore_collection:
+      display-name: "Ore Collection"
+      objectives:
+        land_daily_break_ores:
+          description: "Mine mixed ores"
+
+    land_daily_perimeter_patrol:
+      display-name: "Perimeter Patrol"
+      objectives:
+        land_daily_slay_hostiles:
+          description: "Slay hostile mobs"
+
+    land_daily_lumber_supply:
+      display-name: "Lumber Supply"
+      objectives:
+        land_daily_chop_logs:
+          description: "Chop mixed logs"
+
+    land_daily_crop_harvest:
+      display-name: "Crop Harvest"
+      objectives:
+        land_daily_break_crops:
+          description: "Harvest mixed crops"
+
+    # ================================================================
+    #  BOARD QUESTS — LAND WEEKLY
+    # ================================================================
+
+    land_weekly_grand_excavation:
+      display-name: "Grand Excavation"
+      objectives:
+        land_weekly_break_stone:
+          description: "Mine stone blocks"
+        land_weekly_break_ores:
+          description: "Mine ore blocks"
+
+    land_weekly_stronghold_defense:
+      display-name: "Stronghold Defense"
+      objectives:
+        land_weekly_slay_hostiles:
+          description: "Slay hostile mobs"
+
+    land_weekly_nether_raid:
+      display-name: "Nether Raid"
+      objectives:
+        land_weekly_slay_blazes:
+          description: "Slay blazes"
+        land_weekly_slay_wither_skeletons:
+          description: "Slay wither skeletons"
+
+    land_weekly_resource_stockpile:
+      display-name: "Resource Stockpile"
+      objectives:
+        land_weekly_chop_logs:
+          description: "Chop mixed logs"
+        land_weekly_break_crops:
+          description: "Harvest mixed crops"

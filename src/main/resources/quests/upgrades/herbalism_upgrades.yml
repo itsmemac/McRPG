@@ -1,18 +1,25 @@
 # Ability upgrade quests for Herbalism abilities (tiers 2–5).
 #
-# T2/T3: Single objective. Crop/plant targets escalate in variety per tier.
+# T2/T3: Single objective. Crop variety escalates per tier.
 # T4/T5: Two independent objectives in one stage — both must complete.
-#         Primary = the ability's established crop theme.
-#         Secondary = a more exotic or rare plant on its own progress bar.
+#         Primary = the established crop group.
+#         Secondary = rarer or exotic crops on their own progress bar.
 #
 # See docs/design-principles/upgrade-quest-design-principles.md for full rationale.
 
 quests:
   # ────────────────────────────────────────────
-  #  Verdant Surge  (basic crop acceleration)
-  #  Theme: core farm crops → varied produce → exotic/nether crops
+  #  Verdant Surge  (XP / growth burst)
+  #  Theme: common farm crops → gourds → exotic/Nether plants
   # ────────────────────────────────────────────
   mcrpg:verdant_surge_tier2:
+    display:
+      name: "First Harvest"
+      description: "Harvest basic farm crops to grow your verdant power"
+      objectives:
+        verdant_surge_tier2_obj: "Harvest wheat and carrots"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -30,11 +37,18 @@ quests:
               objective:
                 key: mcrpg:verdant_surge_tier2_obj
                 type: mcrpg:block_break
-                required-progress: 80
+                required-progress: 120
                 config:
-                  blocks: [WHEAT, CARROTS, POTATOES]
+                  blocks: [WHEAT, CARROTS]
 
   mcrpg:verdant_surge_tier3:
+    display:
+      name: "Root Harvest"
+      description: "Tend to a wider variety of farm crops"
+      objectives:
+        verdant_surge_tier3_obj: "Harvest wheat, carrots, potatoes, and beetroots"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -52,11 +66,19 @@ quests:
               objective:
                 key: mcrpg:verdant_surge_tier3_obj
                 type: mcrpg:block_break
-                required-progress: 120
+                required-progress: 200
                 config:
                   blocks: [WHEAT, CARROTS, POTATOES, BEETROOTS]
 
   mcrpg:verdant_surge_tier4:
+    display:
+      name: "Garden Expansion"
+      description: "Harvest core crops and seek out gourd produce"
+      objectives:
+        verdant_surge_tier4_primary: "Harvest wheat, carrots, potatoes, and beetroots"
+        verdant_surge_tier4_secondary: "Harvest melons and pumpkins"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -74,17 +96,25 @@ quests:
               primary:
                 key: mcrpg:verdant_surge_tier4_primary
                 type: mcrpg:block_break
-                required-progress: 160
+                required-progress: 300
                 config:
                   blocks: [WHEAT, CARROTS, POTATOES, BEETROOTS]
               secondary:
                 key: mcrpg:verdant_surge_tier4_secondary
                 type: mcrpg:block_break
-                required-progress: 40
+                required-progress: 80
                 config:
                   blocks: [MELON, PUMPKIN]
 
   mcrpg:verdant_surge_tier5:
+    display:
+      name: "Exotic Garden"
+      description: "Complete your mastery with rare and exotic crops"
+      objectives:
+        verdant_surge_tier5_primary: "Harvest core Overworld crops"
+        verdant_surge_tier5_secondary: "Harvest nether wart and cocoa beans"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -102,21 +132,28 @@ quests:
               primary:
                 key: mcrpg:verdant_surge_tier5_primary
                 type: mcrpg:block_break
-                required-progress: 220
+                required-progress: 400
                 config:
                   blocks: [WHEAT, CARROTS, POTATOES, BEETROOTS, MELON, PUMPKIN]
               secondary:
                 key: mcrpg:verdant_surge_tier5_secondary
                 type: mcrpg:block_break
-                required-progress: 50
+                required-progress: 60
                 config:
                   blocks: [NETHER_WART, COCOA]
 
   # ────────────────────────────────────────────
-  #  Mass Harvest  (bulk variety harvesting)
-  #  Theme: wide variety of harvestable plants, escalating to unusual/rare ones
+  #  Mass Harvest  (AoE harvest)
+  #  Theme: bulk staple crops → forageable plants → exotic end-game plants
   # ────────────────────────────────────────────
   mcrpg:mass_harvest_tier2:
+    display:
+      name: "Bulk Harvest"
+      description: "Gather large quantities of common crops"
+      objectives:
+        mass_harvest_tier2_obj: "Harvest wheat and potatoes"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -134,11 +171,18 @@ quests:
               objective:
                 key: mcrpg:mass_harvest_tier2_obj
                 type: mcrpg:block_break
-                required-progress: 80
+                required-progress: 120
                 config:
-                  blocks: [WHEAT, POTATOES, BEETROOTS]
+                  blocks: [WHEAT, POTATOES]
 
   mcrpg:mass_harvest_tier3:
+    display:
+      name: "Sugar Rush"
+      description: "Harvest crops and sugar cane in bulk"
+      objectives:
+        mass_harvest_tier3_obj: "Harvest wheat, potatoes, beetroots, and sugar cane"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -156,11 +200,19 @@ quests:
               objective:
                 key: mcrpg:mass_harvest_tier3_obj
                 type: mcrpg:block_break
-                required-progress: 120
+                required-progress: 200
                 config:
                   blocks: [WHEAT, POTATOES, BEETROOTS, SUGAR_CANE]
 
   mcrpg:mass_harvest_tier4:
+    display:
+      name: "Berry and Grain"
+      description: "Harvest staple crops and forage for sweet berry bushes"
+      objectives:
+        mass_harvest_tier4_primary: "Harvest wheat, potatoes, beetroots, and sugar cane"
+        mass_harvest_tier4_secondary: "Harvest sweet berry bushes"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -178,17 +230,25 @@ quests:
               primary:
                 key: mcrpg:mass_harvest_tier4_primary
                 type: mcrpg:block_break
-                required-progress: 160
+                required-progress: 300
                 config:
                   blocks: [WHEAT, POTATOES, BEETROOTS, SUGAR_CANE]
               secondary:
                 key: mcrpg:mass_harvest_tier4_secondary
                 type: mcrpg:block_break
-                required-progress: 45
+                required-progress: 80
                 config:
                   blocks: [SWEET_BERRY_BUSH]
 
   mcrpg:mass_harvest_tier5:
+    display:
+      name: "Master Harvester"
+      description: "Complete your bulk harvest mastery with the rarest plants"
+      objectives:
+        mass_harvest_tier5_primary: "Harvest crops and sweet berry bushes"
+        mass_harvest_tier5_secondary: "Harvest nether wart and chorus plants"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -206,12 +266,12 @@ quests:
               primary:
                 key: mcrpg:mass_harvest_tier5_primary
                 type: mcrpg:block_break
-                required-progress: 220
+                required-progress: 400
                 config:
                   blocks: [WHEAT, POTATOES, BEETROOTS, SUGAR_CANE, SWEET_BERRY_BUSH]
               secondary:
                 key: mcrpg:mass_harvest_tier5_secondary
                 type: mcrpg:block_break
-                required-progress: 50
+                required-progress: 60
                 config:
                   blocks: [NETHER_WART, CHORUS_PLANT]

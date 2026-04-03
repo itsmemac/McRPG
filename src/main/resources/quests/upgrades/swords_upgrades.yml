@@ -13,6 +13,13 @@ quests:
   #  Theme: venomous and poison-dealing mobs, culminating in Wither Skeletons
   # ────────────────────────────────────────────
   mcrpg:enhanced_bleed_tier2:
+    display:
+      name: "Arachnid Training"
+      description: "Hunt venomous spiders to sharpen your bleed"
+      objectives:
+        enhanced_bleed_tier2_obj: "Slay spiders and cave spiders"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -35,6 +42,13 @@ quests:
                   entities: [SPIDER, CAVE_SPIDER]
 
   mcrpg:enhanced_bleed_tier3:
+    display:
+      name: "Witch Hunt"
+      description: "Seek out venomous creatures and potion-wielding witches"
+      objectives:
+        enhanced_bleed_tier3_obj: "Slay spiders, cave spiders, and witches"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -57,6 +71,14 @@ quests:
                   entities: [SPIDER, CAVE_SPIDER, WITCH]
 
   mcrpg:enhanced_bleed_tier4:
+    display:
+      name: "Venom and Decay"
+      description: "Overcome venomous threats and face the Nether's wither servants"
+      objectives:
+        enhanced_bleed_tier4_primary: "Slay spiders, cave spiders, and witches"
+        enhanced_bleed_tier4_secondary: "Slay wither skeletons"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -85,6 +107,14 @@ quests:
                   entities: [WITHER_SKELETON]
 
   mcrpg:enhanced_bleed_tier5:
+    display:
+      name: "Master of Hemorrhage"
+      description: "Prove mastery over the deadliest venomous foes"
+      objectives:
+        enhanced_bleed_tier5_primary: "Slay venomous mobs"
+        enhanced_bleed_tier5_secondary: "Slay wither skeletons"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -117,6 +147,13 @@ quests:
   #  Theme: skeletal ranged enemies, culminating in Wither Skeletons
   # ────────────────────────────────────────────
   mcrpg:deeper_wound_tier2:
+    display:
+      name: "Bone Piercer"
+      description: "Hone your piercing strikes against skeletal archers"
+      objectives:
+        deeper_wound_tier2_obj: "Slay skeletons and strays"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -139,6 +176,13 @@ quests:
                   entities: [SKELETON, STRAY]
 
   mcrpg:deeper_wound_tier3:
+    display:
+      name: "The Mossy Threat"
+      description: "Hunt skeletal ranged enemies across swamp and tundra"
+      objectives:
+        deeper_wound_tier3_obj: "Slay skeletons, strays, and bogged"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -161,6 +205,14 @@ quests:
                   entities: [SKELETON, STRAY, BOGGED]
 
   mcrpg:deeper_wound_tier4:
+    display:
+      name: "Arrows and Rot"
+      description: "Pierce hardened ranged attackers and face the mossy fallen"
+      objectives:
+        deeper_wound_tier4_primary: "Slay skeletons and strays"
+        deeper_wound_tier4_secondary: "Slay bogged"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -189,6 +241,14 @@ quests:
                   entities: [BOGGED]
 
   mcrpg:deeper_wound_tier5:
+    display:
+      name: "Bone Shatterer"
+      description: "Prove your piercing mastery against the toughest skeletal foes"
+      objectives:
+        deeper_wound_tier5_primary: "Slay skeletons, strays, and bogged"
+        deeper_wound_tier5_secondary: "Slay wither skeletons"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -221,6 +281,13 @@ quests:
   #  Theme: core undead mobs, escalating to rare undead variants and Phantoms
   # ────────────────────────────────────────────
   mcrpg:vampire_tier2:
+    display:
+      name: "Undead Feast"
+      description: "Drain life from the walking dead"
+      objectives:
+        vampire_tier2_obj: "Slay zombies and drowned"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -243,6 +310,13 @@ quests:
                   entities: [ZOMBIE, DROWNED]
 
   mcrpg:vampire_tier3:
+    display:
+      name: "Desert Hunger"
+      description: "Devour undead mobs from overworld biomes"
+      objectives:
+        vampire_tier3_obj: "Slay zombies, drowned, and husks"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -265,6 +339,14 @@ quests:
                   entities: [ZOMBIE, DROWNED, HUSK]
 
   mcrpg:vampire_tier4:
+    display:
+      name: "Condemned Harvest"
+      description: "Drain life from the undead and hunt rare condemned variants"
+      objectives:
+        vampire_tier4_primary: "Slay zombies, drowned, and husks"
+        vampire_tier4_secondary: "Slay zombie villagers and phantoms"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -293,6 +375,14 @@ quests:
                   entities: [ZOMBIE_VILLAGER, PHANTOM]
 
   mcrpg:vampire_tier5:
+    display:
+      name: "Apex Predator"
+      description: "Feed on the rarest undead creatures"
+      objectives:
+        vampire_tier5_primary: "Slay core undead mobs"
+        vampire_tier5_secondary: "Slay phantoms and zoglins"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -325,6 +415,13 @@ quests:
   #  Theme: burst and splash-damage mobs, escalating into Nether AoE threats
   # ────────────────────────────────────────────
   mcrpg:serrated_strikes_tier2:
+    display:
+      name: "Explosive Practice"
+      description: "Strike down burst-damage foes that test your AoE"
+      objectives:
+        serrated_strikes_tier2_obj: "Slay creepers and slimes"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -347,6 +444,13 @@ quests:
                   entities: [CREEPER, SLIME]
 
   mcrpg:serrated_strikes_tier3:
+    display:
+      name: "Volatile Encounters"
+      description: "Hunt explosive and gelatinous creatures from multiple biomes"
+      objectives:
+        serrated_strikes_tier3_obj: "Slay creepers, slimes, and magma cubes"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -369,6 +473,14 @@ quests:
                   entities: [CREEPER, SLIME, MAGMA_CUBE]
 
   mcrpg:serrated_strikes_tier4:
+    display:
+      name: "Fire and Gel"
+      description: "Fight burst threats and push into the Nether's fiery hostiles"
+      objectives:
+        serrated_strikes_tier4_primary: "Slay creepers and slimes"
+        serrated_strikes_tier4_secondary: "Slay magma cubes and blazes"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -397,6 +509,14 @@ quests:
                   entities: [MAGMA_CUBE, BLAZE]
 
   mcrpg:serrated_strikes_tier5:
+    display:
+      name: "Infernal Carnage"
+      description: "Conquer the most explosive threats in the Overworld and Nether"
+      objectives:
+        serrated_strikes_tier5_primary: "Slay creepers, slimes, and magma cubes"
+        serrated_strikes_tier5_secondary: "Slay blazes and ghasts"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -429,6 +549,13 @@ quests:
   #  Theme: provocation-aggressive mobs, escalating deep into the Nether
   # ────────────────────────────────────────────
   mcrpg:rage_spike_tier2:
+    display:
+      name: "Provoked Fury"
+      description: "Unleash your rage spike against aggressive Nether mobs"
+      objectives:
+        rage_spike_tier2_obj: "Slay endermen and piglins"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -451,6 +578,13 @@ quests:
                   entities: [ENDERMAN, PIGLIN]
 
   mcrpg:rage_spike_tier3:
+    display:
+      name: "Nether Patrol"
+      description: "Hunt provocation-driven mobs through the Nether"
+      objectives:
+        rage_spike_tier3_obj: "Slay endermen, piglins, and zombified piglins"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -473,6 +607,14 @@ quests:
                   entities: [ENDERMAN, PIGLIN, ZOMBIFIED_PIGLIN]
 
   mcrpg:rage_spike_tier4:
+    display:
+      name: "Into the Warped"
+      description: "Battle the most aggressive Nether dwellers"
+      objectives:
+        rage_spike_tier4_primary: "Slay endermen and piglins"
+        rage_spike_tier4_secondary: "Slay hoglins and zombified piglins"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
@@ -501,6 +643,14 @@ quests:
                   entities: [HOGLIN, ZOMBIFIED_PIGLIN]
 
   mcrpg:rage_spike_tier5:
+    display:
+      name: "Nether Warlord"
+      description: "Dominate the Nether's most dangerous and aggressive threats"
+      objectives:
+        rage_spike_tier5_primary: "Slay endermen, piglins, and zombified piglins"
+        rage_spike_tier5_secondary: "Slay hoglins and ghasts"
+      rewards:
+        upgrade: "Ability Upgrade"
     scope: mcrpg:single_player
     repeat-mode: ONCE
     rewards:
