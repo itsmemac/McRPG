@@ -1,4 +1,4 @@
-config-version: 1
+config-version: 2
 ##################################
 ### Main Config For McRPG ###
 ##################################
@@ -187,6 +187,20 @@ configuration:
     # An example is if we set a player to have the permission 'mcrpg.swords.500'. This player would gain no exp past level 500 in swords
     # Use mcrpg.%skill%.%level% as the perm
     enable-level-up-permissions: false
+
+  # Configure the offline statistics cache used by PAPI placeholders and commands
+  # Requires server restart to take effect.
+  statistics:
+    cache:
+      # Whether to cache offline stat queries (used by PAPI placeholders)
+      # Requires server restart to take effect.
+      enabled: true
+      # Maximum number of entries in the cache
+      # Requires server restart to take effect.
+      max-size: 1000
+      # How long cached entries live before being re-fetched from the database (seconds)
+      # Requires server restart to take effect.
+      ttl: 300
 
 # Configure McMMO integration
 mcmmo:

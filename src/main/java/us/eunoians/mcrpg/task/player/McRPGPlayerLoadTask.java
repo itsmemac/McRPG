@@ -1,6 +1,8 @@
 package us.eunoians.mcrpg.task.player;
 
 import com.diamonddagger590.mccore.database.table.impl.PlayerSettingDAO;
+import com.diamonddagger590.mccore.database.table.impl.PlayerStatisticDAO;
+import com.diamonddagger590.mccore.statistic.StatisticEntry;
 import com.diamonddagger590.mccore.database.transaction.FailSafeTransaction;
 import com.diamonddagger590.mccore.pair.ImmutablePair;
 import com.diamonddagger590.mccore.pair.Pair;
@@ -36,6 +38,7 @@ import us.eunoians.mcrpg.loadout.Loadout;
 import us.eunoians.mcrpg.loadout.LoadoutDisplay;
 import us.eunoians.mcrpg.registry.McRPGRegistryKey;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
+import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
 import us.eunoians.mcrpg.skill.Skill;
 import us.eunoians.mcrpg.skill.SkillRegistry;
 import us.eunoians.mcrpg.skill.experience.rested.RestedExperienceAccumulationType;
@@ -97,6 +100,7 @@ public final class McRPGPlayerLoadTask extends PlayerLoadTask {
             updatePlayerDataSyncFunctions.add(loadPlayerLoadouts(connection));
             updatePlayerDataSyncFunctions.add(loadPlayerSettings(connection));
             updatePlayerDataSyncFunctions.add(loadPlayerExperienceExtras(connection));
+            updatePlayerDataSyncFunctions.add(loadPlayerStatistics(connection));
             updatePlayerDataSyncFunctions.add(awardRestedExperience(connection));
             updatePlayerDataSyncFunctions.add(loadBoardQuestCount(connection));
             updatePlayerLoginTimes(connection, loginTime);
@@ -125,6 +129,12 @@ public final class McRPGPlayerLoadTask extends PlayerLoadTask {
         getPlugin().registryAccess().registry(RegistryKey.MANAGER).manager(McRPGManagerKey.ENTITY).trackQuestHolder(getCorePlayer().asQuestHolder());
         getPlugin().registryAccess().registry(RegistryKey.MANAGER).manager(McRPGManagerKey.QUEST)
                 .rescopePlayer(getCorePlayer().getUUID());
+
+        // Invalidate offline stat cache — live data takes over
+        ManagerRegistry managerRegistry = getPlugin().registryAccess().registry(RegistryKey.MANAGER);
+        if (managerRegistry.registered(McRPGManagerKey.STATISTIC_CACHE)) {
+            managerRegistry.manager(McRPGManagerKey.STATISTIC_CACHE).getCache().invalidate(getCorePlayer().getUUID());
+        }
 
         // Fire event
         super.onPlayerLoadSuccessfully();
@@ -399,6 +409,21 @@ public final class McRPGPlayerLoadTask extends PlayerLoadTask {
         Set<PlayerSetting> playerSettings = PlayerSettingDAO.getPlayerSettings(connection, uuid);
         return () -> {
             playerSettings.forEach(playerSetting -> getCorePlayer().setPlayerSetting(playerSetting));
+        };
+    }
+
+    /**
+     * Loads the player's statistics from the database.
+     *
+     * @param connection The {@link Connection} to use when loading a player's statistics.
+     * @return The {@link UpdatePlayerDataSyncFunction} to run on the main thread to populate statistic data.
+     */
+    @NotNull
+    private UpdatePlayerDataSyncFunction loadPlayerStatistics(@NotNull Connection connection) {
+        UUID uuid = getCorePlayer().getUUID();
+        Map<NamespacedKey, StatisticEntry> entries = PlayerStatisticDAO.getAllPlayerStatistics(connection, uuid);
+        return () -> {
+            getCorePlayer().getStatisticData().populateFromEntries(entries);
         };
     }
 
