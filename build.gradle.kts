@@ -24,7 +24,7 @@ apply {
 }
 
 //RECODE.RELEASE.PATCH.DEVELOPMENT
-version = "2.0.0.5-SNAPSHOT"
+version = "2.0.0.6-SNAPSHOT"
 group = "us.eunoians"
 
 java {
