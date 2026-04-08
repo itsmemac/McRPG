@@ -1,6 +1,7 @@
 package us.eunoians.mcrpg.event.quest;
 
 import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
 
@@ -9,6 +10,8 @@ import us.eunoians.mcrpg.quest.impl.QuestInstance;
  * that the event pertains to.
  */
 public abstract class QuestEvent extends Event {
+
+    private static final HandlerList HANDLERS = new HandlerList();
 
     private final QuestInstance questInstance;
 
@@ -29,5 +32,16 @@ public abstract class QuestEvent extends Event {
     @NotNull
     public QuestInstance getQuestInstance() {
         return questInstance;
+    }
+
+    @NotNull
+    @Override
+    public HandlerList getHandlers() {
+        return HANDLERS;
+    }
+
+    @NotNull
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
     }
 }

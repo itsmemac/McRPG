@@ -1,6 +1,5 @@
 package us.eunoians.mcrpg.event.quest;
 
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.quest.definition.QuestPhaseDefinition;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
@@ -12,8 +11,6 @@ import us.eunoians.mcrpg.quest.impl.QuestInstance;
  * Internal listeners use this to activate the next phase or complete the quest.
  */
 public class QuestPhaseCompleteEvent extends QuestEvent {
-
-    private static final HandlerList handlers = new HandlerList();
 
     private final QuestPhaseDefinition phaseDefinition;
     private final int completedPhaseIndex;
@@ -50,21 +47,5 @@ public class QuestPhaseCompleteEvent extends QuestEvent {
      */
     public int getCompletedPhaseIndex() {
         return completedPhaseIndex;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    /**
-     * Gets the handler list for this event type.
-     *
-     * @return the handler list
-     */
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

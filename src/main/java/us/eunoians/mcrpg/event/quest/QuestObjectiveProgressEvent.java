@@ -1,7 +1,6 @@
 package us.eunoians.mcrpg.event.quest;
 
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
@@ -17,8 +16,6 @@ import java.util.UUID;
  * The progress delta can also be modified before the event completes.
  */
 public class QuestObjectiveProgressEvent extends QuestEvent implements Cancellable {
-
-    private static final HandlerList handlers = new HandlerList();
 
     private final QuestStageInstance stageInstance;
     private final QuestObjectiveInstance objectiveInstance;
@@ -110,21 +107,5 @@ public class QuestObjectiveProgressEvent extends QuestEvent implements Cancellab
     @Override
     public void setCancelled(boolean cancel) {
         this.cancelled = cancel;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    /**
-     * Gets the handler list for this event type.
-     *
-     * @return the handler list
-     */
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

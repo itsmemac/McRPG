@@ -2,7 +2,6 @@ package us.eunoians.mcrpg.event.ability.swords;
 
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.ability.Ability;
@@ -16,7 +15,6 @@ import us.eunoians.mcrpg.registry.McRPGRegistryKey;
  */
 public class VampireActivateEvent extends AbilityActivateEvent implements Cancellable {
 
-    private static final HandlerList handlers = new HandlerList();
     private static final Ability VAMPIRE = McRPG.getInstance().registryAccess().registry(McRPGRegistryKey.ABILITY).getRegisteredAbility(Vampire.VAMPIRE_KEY);
 
     private final LivingEntity entity;
@@ -75,16 +73,5 @@ public class VampireActivateEvent extends AbilityActivateEvent implements Cancel
     @Override
     public void setCancelled(boolean cancel) {
         this.cancelled = cancel;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

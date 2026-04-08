@@ -1,18 +1,12 @@
 package us.eunoians.mcrpg.command.statistic;
 
-import com.diamonddagger590.mccore.database.Database;
-import com.diamonddagger590.mccore.database.table.impl.PlayerStatisticDAO;
-import com.diamonddagger590.mccore.database.transaction.FailSafeTransaction;
 import com.diamonddagger590.mccore.registry.RegistryKey;
-import com.diamonddagger590.mccore.registry.manager.ManagerRegistry;
 import com.diamonddagger590.mccore.statistic.Statistic;
-import com.diamonddagger590.mccore.statistic.StatisticEntry;
-import com.diamonddagger590.mccore.task.core.CoreTask;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import net.kyori.adventure.audience.Audience;
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import org.incendo.cloud.CommandManager;
+import org.incendo.cloud.bukkit.parser.PlayerParser;
 import org.incendo.cloud.key.CloudKey;
 import org.incendo.cloud.minecraft.extras.RichDescription;
 import org.incendo.cloud.parser.standard.StringParser;
@@ -26,17 +20,13 @@ import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 import us.eunoians.mcrpg.localization.McRPGLocalizationManager;
 import us.eunoians.mcrpg.registry.manager.McRPGManagerKey;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 /**
  * Command: {@code /mcrpg statistic set <player> <statistic> <value>}
  * <p>
- * Sets a statistic value for a player. Supports both online and offline targets.
- * Requires {@code /mcrpg confirm}.
+ * Sets a statistic value for a player. Requires {@code /mcrpg confirm}.
  */
 public class StatisticSetCommand extends StatisticCommandBase {
 
@@ -53,7 +43,7 @@ public class StatisticSetCommand extends StatisticCommandBase {
         commandManager.command(commandManager.commandBuilder("mcrpg")
                 .literal("statistic")
                 .literal("set")
-                .required("player", StringParser.stringParser(),
+                .required("player", PlayerParser.playerParser(),
                         RichDescription.richDescription(
                                 localizationManager.getLocalizedMessageAsComponent(LocalizationKey.COMMAND_DESCRIPTION_STATISTIC_SET_PLAYER)))
                 .required("statistic", StatisticParser.statisticParser(),
@@ -65,78 +55,34 @@ public class StatisticSetCommand extends StatisticCommandBase {
                 .permission(Permission.anyOf(ROOT_PERMISSION, ADMIN_BASE_PERMISSION, STATISTIC_COMMAND_ROOT_PERMISSION, SET_PERMISSION))
                 .meta(ConfirmationManager.META_CONFIRMATION_REQUIRED, true)
                 .handler(commandContext -> {
-                    String playerName = commandContext.get(CloudKey.of("player", String.class));
+                    Player target = commandContext.get(CloudKey.of("player", Player.class));
                     Statistic statistic = commandContext.get(CloudKey.of("statistic", Statistic.class));
                     String valueString = commandContext.get(CloudKey.of("value", String.class));
                     Audience sender = commandContext.sender().getSender();
 
-                    // Parse value based on statistic type
                     Object parsedValue;
                     try {
                         parsedValue = parseValue(statistic, valueString);
                     } catch (IllegalArgumentException e) {
-                        Map<String, String> placeholders = getStatisticPlaceholders(sender, sender, sender, statistic, null);
-                        placeholders.put("target", playerName);
+                        Map<String, String> placeholders = getStatisticPlaceholders(sender, sender, target, statistic, null);
+                        placeholders.put("target", target.getName());
                         placeholders.put("statistic-value", valueString);
                         sender.sendMessage(localizationManager.getLocalizedMessageAsComponent(
                                 sender, LocalizationKey.STATISTIC_INVALID_VALUE, placeholders));
                         return;
                     }
 
-                    @SuppressWarnings("deprecation")
-                    OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
-
-                    // Online player: set directly
-                    Optional<McRPGPlayer> onlineOptional = mcRPG.registryAccess()
+                    Optional<McRPGPlayer> mcRPGPlayerOptional = mcRPG.registryAccess()
                             .registry(RegistryKey.MANAGER).manager(McRPGManagerKey.PLAYER)
                             .getPlayer(target.getUniqueId());
-                    if (onlineOptional.isPresent()) {
-                        onlineOptional.get().getStatisticData().setValue(statistic.getStatisticKey(), parsedValue);
-                        Map<String, String> placeholders = getStatisticPlaceholders(sender, sender, sender, statistic, parsedValue);
-                        placeholders.put("target", playerName);
-                        sender.sendMessage(localizationManager.getLocalizedMessageAsComponent(
-                                sender, LocalizationKey.STATISTIC_SET_SUCCESS, placeholders));
-                        return;
+                    if (mcRPGPlayerOptional.isPresent()) {
+                        mcRPGPlayerOptional.get().getStatisticData().setValue(statistic.getStatisticKey(), parsedValue);
                     }
 
-                    // Offline player: async DB write
-                    Database database = mcRPG.registryAccess().registry(RegistryKey.MANAGER)
-                            .manager(McRPGManagerKey.DATABASE).getDatabase();
-                    database.getDatabaseExecutorService().submit(() -> {
-                        try (Connection connection = database.getConnection()) {
-                            StatisticEntry entry = new StatisticEntry(
-                                    statistic.getStatisticKey(), statistic.getStatisticType(), parsedValue);
-                            new FailSafeTransaction(connection,
-                                    List.of(PlayerStatisticDAO.savePlayerStatistic(connection, target.getUniqueId(), entry)))
-                                    .executeTransaction();
-
-                            // Invalidate cache
-                            ManagerRegistry managerRegistry = mcRPG.registryAccess().registry(RegistryKey.MANAGER);
-                            if (managerRegistry.registered(McRPGManagerKey.STATISTIC_CACHE)) {
-                                managerRegistry.manager(McRPGManagerKey.STATISTIC_CACHE)
-                                        .getCache().invalidate(target.getUniqueId(), statistic.getStatisticKey());
-                            }
-
-                            Map<String, String> placeholders = getStatisticPlaceholders(sender, sender, sender, statistic, parsedValue);
-                            placeholders.put("target", playerName);
-                            new CoreTask(mcRPG) {
-                                @Override
-                                public void run() {
-                                    sender.sendMessage(localizationManager.getLocalizedMessageAsComponent(
-                                            sender, LocalizationKey.STATISTIC_SET_SUCCESS, placeholders));
-                                }
-                            }.runTask();
-                        } catch (SQLException e) {
-                            new CoreTask(mcRPG) {
-                                @Override
-                                public void run() {
-                                    sender.sendMessage(localizationManager.getLocalizedMessageAsComponent(
-                                            sender, LocalizationKey.STATISTIC_LOOKUP_ERROR_MESSAGE));
-                                }
-                            }.runTask();
-                            mcRPG.getLogger().log(java.util.logging.Level.WARNING, "Failed to lookup statistic for offline player", e);
-                        }
-                    });
+                    Map<String, String> placeholders = getStatisticPlaceholders(sender, sender, target, statistic, parsedValue);
+                    placeholders.put("target", target.getName());
+                    sender.sendMessage(localizationManager.getLocalizedMessageAsComponent(
+                            sender, LocalizationKey.STATISTIC_SET_SUCCESS, placeholders));
                 }));
     }
 
@@ -146,7 +92,7 @@ public class StatisticSetCommand extends StatisticCommandBase {
      * @param statistic   The statistic to parse the value for.
      * @param valueString The string value to parse.
      * @return The parsed value.
-     * @throws NumberFormatException      If the value cannot be parsed as the expected numeric type.
+     * @throws NumberFormatException    If the value cannot be parsed as the expected numeric type.
      * @throws IllegalArgumentException If the statistic type does not support direct value setting.
      */
     @NotNull

@@ -1,6 +1,5 @@
 package us.eunoians.mcrpg.event.ability;
 
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.ability.Ability;
 import us.eunoians.mcrpg.entity.holder.AbilityHolder;
@@ -13,8 +12,6 @@ import us.eunoians.mcrpg.entity.holder.AbilityHolder;
  * manual means such as {@link AbilityHolder#cleanupHolder()}.
  */
 public class AbilityCooldownExpireEvent extends AbilityEvent {
-
-    private static final HandlerList handlers = new HandlerList();
 
     private final AbilityHolder abilityHolder;
 
@@ -31,16 +28,5 @@ public class AbilityCooldownExpireEvent extends AbilityEvent {
     @NotNull
     public AbilityHolder getAbilityHolder() {
         return abilityHolder;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

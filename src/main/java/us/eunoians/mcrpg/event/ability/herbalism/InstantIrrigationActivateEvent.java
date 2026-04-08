@@ -2,7 +2,6 @@ package us.eunoians.mcrpg.event.ability.herbalism;
 
 import org.bukkit.block.Block;
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.ability.Ability;
@@ -19,7 +18,6 @@ import us.eunoians.mcrpg.registry.McRPGRegistryKey;
  */
 public class InstantIrrigationActivateEvent extends AbilityActivateEvent implements Cancellable {
 
-    private static final HandlerList handlers = new HandlerList();
     private static final Ability INSTANT_IRRIGATION = McRPG.getInstance().registryAccess().registry(McRPGRegistryKey.ABILITY).getRegisteredAbility(InstantIrrigation.INSTANT_IRRIGATION_KEY);
 
     private final Block block;
@@ -50,9 +48,4 @@ public class InstantIrrigationActivateEvent extends AbilityActivateEvent impleme
         this.cancelled = cancelled;
     }
 
-
-    @Override
-    public @NotNull HandlerList getHandlers() {
-        return handlers;
-    }
 }

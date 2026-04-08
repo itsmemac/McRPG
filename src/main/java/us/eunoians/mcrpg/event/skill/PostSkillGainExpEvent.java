@@ -1,7 +1,6 @@
 package us.eunoians.mcrpg.event.skill;
 
 import org.bukkit.NamespacedKey;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.entity.holder.SkillHolder;
 import us.eunoians.mcrpg.skill.Skill;
@@ -21,8 +20,6 @@ import us.eunoians.mcrpg.skill.experience.context.McRPGGainReason;
  * @see SkillGainExpEvent
  */
 public class PostSkillGainExpEvent extends SkillEvent {
-
-    private static final HandlerList handlers = new HandlerList();
 
     private final SkillHolder skillHolder;
     private final int experience;
@@ -65,16 +62,5 @@ public class PostSkillGainExpEvent extends SkillEvent {
     @NotNull
     public GainReason getGainReason() {
         return gainReason;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

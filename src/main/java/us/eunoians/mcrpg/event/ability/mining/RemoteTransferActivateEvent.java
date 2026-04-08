@@ -2,7 +2,6 @@ package us.eunoians.mcrpg.event.ability.mining;
 
 import org.bukkit.Location;
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.ability.Ability;
@@ -17,7 +16,6 @@ import us.eunoians.mcrpg.registry.McRPGRegistryKey;
  */
 public class RemoteTransferActivateEvent extends AbilityActivateEvent implements Cancellable {
 
-    private static final HandlerList handlers = new HandlerList();
     private static final Ability REMOTE_TRANSFER = McRPG.getInstance().registryAccess().registry(McRPGRegistryKey.ABILITY).getRegisteredAbility(RemoteTransfer.REMOTE_TRANSFER_KEY);
     private final Location remoteTransferDestination;
     private boolean cancelled = false;
@@ -51,16 +49,5 @@ public class RemoteTransferActivateEvent extends AbilityActivateEvent implements
     @Override
     public void setCancelled(boolean cancel) {
         this.cancelled = cancel;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

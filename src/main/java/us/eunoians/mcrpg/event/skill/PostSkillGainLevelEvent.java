@@ -1,7 +1,6 @@
 package us.eunoians.mcrpg.event.skill;
 
 import org.bukkit.NamespacedKey;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.entity.holder.SkillHolder;
 
@@ -10,8 +9,6 @@ import us.eunoians.mcrpg.entity.holder.SkillHolder;
  * associated with a given {@link NamespacedKey}
  */
 public class PostSkillGainLevelEvent extends SkillEvent {
-
-    private static final HandlerList handlers = new HandlerList();
 
     private final SkillHolder skillHolder;
     private final int beforeLevel, afterLevel;
@@ -39,16 +36,5 @@ public class PostSkillGainLevelEvent extends SkillEvent {
 
     public int getAfterLevel() {
         return afterLevel;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

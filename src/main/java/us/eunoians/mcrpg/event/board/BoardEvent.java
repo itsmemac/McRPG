@@ -2,6 +2,7 @@ package us.eunoians.mcrpg.event.board;
 
 import org.bukkit.NamespacedKey;
 import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.quest.board.QuestBoard;
 
@@ -10,6 +11,8 @@ import us.eunoians.mcrpg.quest.board.QuestBoard;
  * {@link QuestBoard} that the event pertains to.
  */
 public abstract class BoardEvent extends Event {
+
+    private static final HandlerList HANDLERS = new HandlerList();
 
     private final QuestBoard board;
 
@@ -40,5 +43,16 @@ public abstract class BoardEvent extends Event {
     @NotNull
     public NamespacedKey getBoardKey() {
         return board.getBoardKey();
+    }
+
+    @NotNull
+    @Override
+    public HandlerList getHandlers() {
+        return HANDLERS;
+    }
+
+    @NotNull
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
     }
 }

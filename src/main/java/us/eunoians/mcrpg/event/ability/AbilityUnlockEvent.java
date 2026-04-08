@@ -1,6 +1,5 @@
 package us.eunoians.mcrpg.event.ability;
 
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.ability.impl.type.UnlockableAbility;
 import us.eunoians.mcrpg.entity.holder.AbilityHolder;
@@ -10,7 +9,6 @@ import us.eunoians.mcrpg.entity.holder.AbilityHolder;
  */
 public class AbilityUnlockEvent extends AbilityEvent {
 
-    private static final HandlerList handlers = new HandlerList();
     private final AbilityHolder abilityHolder;
 
     public AbilityUnlockEvent(@NotNull AbilityHolder abilityHolder, @NotNull UnlockableAbility ability) {
@@ -27,16 +25,5 @@ public class AbilityUnlockEvent extends AbilityEvent {
     @Override
     public UnlockableAbility getAbility() {
         return (UnlockableAbility) super.getAbility();
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

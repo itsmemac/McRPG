@@ -1,7 +1,6 @@
 package us.eunoians.mcrpg.event.ability.woodcutting;
 
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.ability.Ability;
@@ -15,7 +14,6 @@ import us.eunoians.mcrpg.registry.McRPGRegistryKey;
  */
 public class ExtraLumberActivateEvent extends AbilityActivateEvent implements Cancellable {
 
-    private static final HandlerList handlers = new HandlerList();
     private static final Ability EXTRA_LUMBER = McRPG.getInstance().registryAccess().registry(McRPGRegistryKey.ABILITY).getRegisteredAbility(ExtraLumber.EXTRA_LUMBER_KEY);
     private int dropMultiplier;
     private boolean cancelled = false;
@@ -59,14 +57,4 @@ public class ExtraLumberActivateEvent extends AbilityActivateEvent implements Ca
         this.cancelled = cancel;
     }
 
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
-    }
 }

@@ -1,7 +1,6 @@
 package us.eunoians.mcrpg.event.ability;
 
 import org.bukkit.NamespacedKey;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.ability.Ability;
 
@@ -11,20 +10,7 @@ import us.eunoians.mcrpg.ability.Ability;
  */
 public class AbilityUnregisterEvent extends AbilityEvent {
 
-    private static final HandlerList handlers = new HandlerList();
-
     public AbilityUnregisterEvent(@NotNull Ability ability) {
         super(ability);
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

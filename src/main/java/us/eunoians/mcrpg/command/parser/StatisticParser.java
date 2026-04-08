@@ -38,7 +38,7 @@ public class StatisticParser implements ArgumentParser<CommandSourceStack, Stati
         String input = commandInput.peekString();
         StatisticRegistry registry = RegistryAccess.registryAccess().registry(RegistryKey.STATISTIC);
         for (Statistic statistic : registry.getRegisteredStatistics()) {
-            if (statistic.getDisplayName().equalsIgnoreCase(input)) {
+            if (statistic.getStatisticKey().getKey().equalsIgnoreCase(input)) {
                 commandInput.readString();
                 return ArgumentParseResult.success(statistic);
             }
@@ -52,8 +52,7 @@ public class StatisticParser implements ArgumentParser<CommandSourceStack, Stati
             @NotNull CommandInput input) {
         StatisticRegistry registry = RegistryAccess.registryAccess().registry(RegistryKey.STATISTIC);
         return registry.getRegisteredStatistics().stream()
-                .map(Statistic::getDisplayName)
-                .map(String::toLowerCase)
+                .map(statistic -> statistic.getStatisticKey().getKey())
                 .toList();
     }
 

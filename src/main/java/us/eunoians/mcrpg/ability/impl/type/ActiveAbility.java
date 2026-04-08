@@ -7,7 +7,9 @@ import org.bukkit.NamespacedKey;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.ability.Ability;
 
+import java.util.Arrays;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * An interface that represents an {@link Ability} that requires some sort of
@@ -38,16 +40,35 @@ public interface ActiveAbility extends Ability {
      * <p>
      * Active abilities provide a default activation count statistic. Concrete abilities
      * can override this to add additional custom statistics alongside the default.
+     * <p>
+     * Display names are derived from the ability's {@link NamespacedKey} so this method is
+     * safe to call during bootstrap before the localization manager is registered.
      */
     @Override
     @NotNull
     default Set<Statistic> getDefaultStatistics() {
+        var displayName = titleCase(getAbilityKey().getKey());
         return Set.of(new SimpleStatistic(
                 getActivationStatisticKey(),
                 StatisticType.LONG,
                 0L,
-                getName() + " Activations",
-                "Times " + getName() + " has been activated"
+                displayName + " Activations",
+                "Times " + displayName + " has been activated"
         ));
+    }
+
+    /**
+     * Converts a snake_case {@link NamespacedKey} key segment into a title-cased display string
+     * without calling {@link #getName()}, making it safe to use before localization is loaded.
+     * <p>
+     * Example: {@code "mass_harvest"} → {@code "Mass Harvest"}.
+     *
+     * @param key The raw key segment (e.g. {@code "bleed"}, {@code "mass_harvest"}).
+     * @return A human-readable, title-cased string.
+     */
+    private static String titleCase(@NotNull String key) {
+        return Arrays.stream(key.split("_"))
+                .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1).toLowerCase())
+                .collect(Collectors.joining(" "));
     }
 }

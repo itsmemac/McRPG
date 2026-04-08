@@ -1,6 +1,5 @@
 package us.eunoians.mcrpg.event.board;
 
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.quest.board.BoardOffering;
 import us.eunoians.mcrpg.quest.board.BoardRotation;
@@ -17,8 +16,6 @@ import java.util.List;
  * This event is fired asynchronously from the database executor thread.
  */
 public class BoardOfferingGenerateEvent extends BoardEvent {
-
-    private static final HandlerList handlers = new HandlerList();
 
     private final BoardRotation rotation;
     private final List<BoardOffering> offerings;
@@ -57,16 +54,5 @@ public class BoardOfferingGenerateEvent extends BoardEvent {
     @NotNull
     public List<BoardOffering> getOfferings() {
         return offerings;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

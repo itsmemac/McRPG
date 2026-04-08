@@ -1,6 +1,5 @@
 package us.eunoians.mcrpg.event.board;
 
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.quest.board.BoardRotation;
 import us.eunoians.mcrpg.quest.board.QuestBoard;
@@ -13,8 +12,6 @@ import java.util.UUID;
  * executor thread.
  */
 public class BoardOfferingExpireEvent extends BoardEvent {
-
-    private static final HandlerList handlers = new HandlerList();
 
     private final BoardRotation expiredRotation;
 
@@ -48,16 +45,5 @@ public class BoardOfferingExpireEvent extends BoardEvent {
     @NotNull
     public UUID getExpiredRotationId() {
         return expiredRotation.getRotationId();
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

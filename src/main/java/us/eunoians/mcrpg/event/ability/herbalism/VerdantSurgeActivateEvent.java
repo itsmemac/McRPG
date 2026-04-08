@@ -1,7 +1,6 @@
 package us.eunoians.mcrpg.event.ability.herbalism;
 
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.ability.Ability;
@@ -16,7 +15,6 @@ import us.eunoians.mcrpg.registry.McRPGRegistryKey;
  */
 public class VerdantSurgeActivateEvent extends AbilityActivateEvent implements Cancellable {
 
-    private static final HandlerList handlers = new HandlerList();
     private static final Ability VERDANT_SURGE = McRPG.getInstance().registryAccess().registry(McRPGRegistryKey.ABILITY).getRegisteredAbility(VerdantSurge.VERDANT_SURGE_KEY);
 
     private int pulseCount;
@@ -85,8 +83,4 @@ public class VerdantSurgeActivateEvent extends AbilityActivateEvent implements C
         this.cancelled = cancel;
     }
 
-    @Override
-    public @NotNull HandlerList getHandlers() {
-        return handlers;
-    }
 }

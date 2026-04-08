@@ -1,7 +1,6 @@
 package us.eunoians.mcrpg.event.entity.player;
 
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 
@@ -11,7 +10,6 @@ import us.eunoians.mcrpg.entity.player.McRPGPlayer;
  */
 public class PlayerAwardedRestedExperienceEvent extends McRPGPlayerEvent implements Cancellable {
 
-    private static final HandlerList handlers = new HandlerList();
     private boolean cancelled = false;
     private float restedExperience;
     private final double maxAccumulation;
@@ -58,16 +56,5 @@ public class PlayerAwardedRestedExperienceEvent extends McRPGPlayerEvent impleme
     @Override
     public void setCancelled(boolean cancel) {
         this.cancelled = cancel;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

@@ -1,6 +1,5 @@
 package us.eunoians.mcrpg.event.quest;
 
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.quest.impl.QuestInstance;
 import us.eunoians.mcrpg.quest.impl.stage.QuestStageInstance;
@@ -11,8 +10,6 @@ import us.eunoians.mcrpg.quest.impl.stage.QuestStageInstance;
  * Internal listeners use this to check if the parent phase should advance.
  */
 public class QuestStageCompleteEvent extends QuestEvent {
-
-    private static final HandlerList handlers = new HandlerList();
 
     private final QuestStageInstance stageInstance;
 
@@ -36,21 +33,5 @@ public class QuestStageCompleteEvent extends QuestEvent {
     @NotNull
     public QuestStageInstance getStageInstance() {
         return stageInstance;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    /**
-     * Gets the handler list for this event type.
-     *
-     * @return the handler list
-     */
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

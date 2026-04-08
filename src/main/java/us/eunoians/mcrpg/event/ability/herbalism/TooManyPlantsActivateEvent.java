@@ -1,7 +1,6 @@
 package us.eunoians.mcrpg.event.ability.herbalism;
 
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.ability.Ability;
@@ -15,7 +14,6 @@ import us.eunoians.mcrpg.registry.McRPGRegistryKey;
  */
 public class TooManyPlantsActivateEvent extends AbilityActivateEvent implements Cancellable {
 
-    private static final HandlerList handlers = new HandlerList();
     private static final Ability TO_MANY_PLANTS = McRPG.getInstance().registryAccess().registry(McRPGRegistryKey.ABILITY).getRegisteredAbility(TooManyPlants.TOO_MANY_PLANTS_KEY);
     private int dropMultiplier;
     private boolean cancelled = false;
@@ -57,14 +55,4 @@ public class TooManyPlantsActivateEvent extends AbilityActivateEvent implements 
         this.cancelled = cancel;
     }
 
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
-    }
 }

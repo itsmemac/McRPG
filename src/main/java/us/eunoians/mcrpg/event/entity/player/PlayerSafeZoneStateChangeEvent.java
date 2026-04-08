@@ -1,6 +1,5 @@
 package us.eunoians.mcrpg.event.entity.player;
 
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 
@@ -10,7 +9,6 @@ import us.eunoians.mcrpg.entity.player.McRPGPlayer;
  */
 public class PlayerSafeZoneStateChangeEvent extends McRPGPlayerEvent {
 
-    private static final HandlerList handlers = new HandlerList();
     private SafeZoneStateChangeType safeZoneStateChangeType;
 
     public PlayerSafeZoneStateChangeEvent(@NotNull McRPGPlayer mcRPGPlayer, @NotNull SafeZoneStateChangeType safeZoneStateChangeType) {
@@ -26,17 +24,6 @@ public class PlayerSafeZoneStateChangeEvent extends McRPGPlayerEvent {
     @NotNull
     public SafeZoneStateChangeType getSafeZoneStateChangeType() {
         return safeZoneStateChangeType;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 
     /**

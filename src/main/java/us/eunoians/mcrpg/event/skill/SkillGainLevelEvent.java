@@ -1,7 +1,6 @@
 package us.eunoians.mcrpg.event.skill;
 
 import org.bukkit.NamespacedKey;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.entity.holder.SkillHolder;
 
@@ -9,8 +8,6 @@ import us.eunoians.mcrpg.entity.holder.SkillHolder;
  * This event is called whenever a player gains a skill level
  */
 public class SkillGainLevelEvent extends SkillEvent {
-
-    private static final HandlerList handlers = new HandlerList();
 
     private final SkillHolder skillHolder;
     private int levels;
@@ -47,16 +44,5 @@ public class SkillGainLevelEvent extends SkillEvent {
      */
     public void setLevels(int levels) {
         this.levels = Math.max(0, levels);
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

@@ -1,7 +1,6 @@
 package us.eunoians.mcrpg.event.ability.woodcutting;
 
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.McRPG;
 import us.eunoians.mcrpg.ability.Ability;
@@ -15,7 +14,6 @@ import us.eunoians.mcrpg.registry.McRPGRegistryKey;
  */
 public class NymphsVitalityActivateEvent extends AbilityActivateEvent implements Cancellable {
 
-    private static final HandlerList handlers = new HandlerList();
     private static final Ability NYMPHS_VITALITY = McRPG.getInstance().registryAccess().registry(McRPGRegistryKey.ABILITY).getRegisteredAbility(NymphsVitality.NYMPHS_VITALITY_KEY);
     private boolean cancelled = false;
 
@@ -39,14 +37,4 @@ public class NymphsVitalityActivateEvent extends AbilityActivateEvent implements
         this.cancelled = cancel;
     }
 
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
-    }
 }

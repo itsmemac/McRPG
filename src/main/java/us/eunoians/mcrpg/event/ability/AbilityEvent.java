@@ -1,6 +1,7 @@
 package us.eunoians.mcrpg.event.ability;
 
 import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.ability.Ability;
 
@@ -9,6 +10,8 @@ import us.eunoians.mcrpg.ability.Ability;
  * some manner.
  */
 public abstract class AbilityEvent extends Event {
+
+    private static final HandlerList HANDLERS = new HandlerList();
 
     private final Ability ability;
 
@@ -24,5 +27,16 @@ public abstract class AbilityEvent extends Event {
     @NotNull
     public Ability getAbility() {
         return this.ability;
+    }
+
+    @NotNull
+    @Override
+    public HandlerList getHandlers() {
+        return HANDLERS;
+    }
+
+    @NotNull
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
     }
 }

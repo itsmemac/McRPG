@@ -2,7 +2,6 @@ package us.eunoians.mcrpg.event.board;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.quest.board.BoardOffering;
 import us.eunoians.mcrpg.quest.board.QuestBoard;
@@ -12,8 +11,6 @@ import us.eunoians.mcrpg.quest.board.QuestBoard;
  * {@link Cancellable} -- cancelling it prevents the acceptance from proceeding.
  */
 public class BoardOfferingAcceptEvent extends BoardEvent implements Cancellable {
-
-    private static final HandlerList handlers = new HandlerList();
 
     private final Player player;
     private final BoardOffering offering;
@@ -62,16 +59,5 @@ public class BoardOfferingAcceptEvent extends BoardEvent implements Cancellable 
     @Override
     public void setCancelled(boolean cancel) {
         this.cancelled = cancel;
-    }
-
-    @Override
-    @NotNull
-    public HandlerList getHandlers() {
-        return handlers;
-    }
-
-    @NotNull
-    public static HandlerList getHandlerList() {
-        return handlers;
     }
 }

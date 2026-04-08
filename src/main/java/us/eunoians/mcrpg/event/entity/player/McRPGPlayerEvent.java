@@ -1,6 +1,7 @@
 package us.eunoians.mcrpg.event.entity.player;
 
 import org.bukkit.event.Event;
+import org.bukkit.event.HandlerList;
 import org.jetbrains.annotations.NotNull;
 import us.eunoians.mcrpg.entity.player.McRPGPlayer;
 
@@ -9,6 +10,8 @@ import us.eunoians.mcrpg.entity.player.McRPGPlayer;
  * a {@link McRPGPlayer}.
  */
 public abstract class McRPGPlayerEvent extends Event {
+
+    private static final HandlerList HANDLERS = new HandlerList();
 
     private final McRPGPlayer mcRPGPlayer;
 
@@ -24,5 +27,16 @@ public abstract class McRPGPlayerEvent extends Event {
     @NotNull
     public final McRPGPlayer getMcRPGPlayer() {
         return mcRPGPlayer;
+    }
+
+    @NotNull
+    @Override
+    public HandlerList getHandlers() {
+        return HANDLERS;
+    }
+
+    @NotNull
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
     }
 }
